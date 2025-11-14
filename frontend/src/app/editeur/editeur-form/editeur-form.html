@@ -1,1 +1,7 @@
-<p>editeur-form works!</p>
+<form [formGroup]="form" (ngSubmit)="submit()">
+ 
+ <input type="text" formControlName="name"
+        placeholder="Nom" />
+ 
+ <button (click)="add.emit(this.form.value)">Enregistrer</button>
+</form>
