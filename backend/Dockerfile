@@ -19,8 +19,7 @@ RUN npm run build
 # Production image
 FROM node:22-alpine
 
-WORKDIR /usr/src/app
-
+WORKDIR /app
 # Create non-root user for safety
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
