@@ -1,1 +1,81 @@
-<p>festival-form works!</p>
+<div class="festival-form">
+    <h2>Nouveau Festival</h2>
+    
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+        <label for="nom">Nom du festival *</label>
+        <input 
+        id="nom"
+        type="text" 
+        formControlName="nom"
+        class="form-control"
+        [class.error]="form.get('nom')?.invalid && form.get('nom')?.touched">
+        
+        @if (form.get('nom')?.invalid && form.get('nom')?.touched) {
+        <div class="error-message">
+            Le nom est requis (min. 3 caractères)
+        </div>
+        }
+    </div>
+
+    <div class="zones-section">
+        <div class="zones-header">
+        <h3>Zones Tarifaires</h3>
+        <button type="button" class="btn btn-sm" (click)="addZone()">
+            + Ajouter une zone
+        </button>
+        </div>
+
+        <div formArrayName="zonesTarifaires" class="zones-list">
+        @for (zone of zonesTarifaires.controls; track $index) {
+            <div [formGroupName]="$index" class="zone-form">
+            <div class="zone-header">
+                <h4>Zone {{ $index + 1 }}</h4>
+                @if (zonesTarifaires.length > 1) {
+                <button type="button" class="btn btn-sm btn-danger" 
+                        (click)="removeZone($index)">
+                    Supprimer
+                </button>
+                }
+            </div>
+
+            <div class="zone-fields">
+                <div class="form-group">
+                <label>Nom de la zone *</label>
+                <input type="text" formControlName="nom" class="form-control">
+                </div>
+
+                <div class="form-group">
+                <label>Nombre de tables *</label>
+                <input type="number" formControlName="nombreTablesTotal" 
+                        class="form-control" min="1">
+                </div>
+
+                <div class="form-group">
+                <label>Prix par table (€) *</label>
+                <input type="number" formControlName="prixTable" 
+                        class="form-control" min="0" step="0.01">
+                </div>
+
+                <div class="form-group">
+                <label>Prix au m² (€)</label>
+                <input type="number" formControlName="prixM2" 
+                        class="form-control" min="0" step="0.01"
+                        placeholder="Auto-calculé si vide">
+                </div>
+            </div>
+            </div>
+        }
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Annuler
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+        Créer le Festival
+        </button>
+    </div>
+    </form>
+</div>

@@ -1,1 +1,19 @@
-<p>festival-component works!</p>
+<div class="festival-card" 
+     [class.selected]="isSelected()"
+     (click)="onSelect()">
+  
+  <div class="festival-header">
+    <h3>{{ festival().nom }}</h3>
+    @if (isSelected()) {
+      <span class="current-badge">ACTUEL</span>
+    }
+  </div>
+  
+  <div class="festival-stats">
+    <div class="stat">
+      <span class="stat-value">{{ festival().nombreTablesLibres }}</span>
+      <span class="stat-label">Tables disponibles</span>
+    </div>
+  </div>
+  
+</div>
