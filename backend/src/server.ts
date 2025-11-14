@@ -46,8 +46,8 @@ app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
 })
 
 // Certificats (montés dans /app/certs via Docker)
-const key = fs.readFileSync('../app/certs/localhost-key.pem')
-const cert = fs.readFileSync('../app/certs/localhost.pem')
+const key = fs.readFileSync('./certs/localhost-key.pem')
+const cert = fs.readFileSync('./certs/localhost.pem')
 
 // Lancement du serveur HTTPS
 https.createServer({ key, cert }, app).listen(4000, () => {

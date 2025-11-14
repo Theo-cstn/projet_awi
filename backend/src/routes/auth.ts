@@ -8,7 +8,7 @@ import type { TokenPayload } from '../types/token-payload.js'
 
 const router = Router()
 
-router.post('/login', async (req, res) => { // --- LOGIN ---
+router.post('/login', async (req, res) => {
   const { login, password } = req.body
   if (!login || !password)
     return res.status(400).json({ error: 'Identifiants manquants' })
