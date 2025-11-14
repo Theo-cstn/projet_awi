@@ -4,7 +4,9 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validator
 
 @Component({
   selector: 'app-editeur-form',
-  imports: [],
+  imports: [
+    ReactiveFormsModule
+  ],
   templateUrl: './editeur-form.html',
   styleUrl: './editeur-form.css',
 })
