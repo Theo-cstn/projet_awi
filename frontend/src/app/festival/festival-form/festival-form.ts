@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 
@@ -10,12 +10,13 @@ import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } fr
   styleUrl: './festival-form.css'
 })
 export class FestivalForm {
-  @Output() save = new EventEmitter<any>();
-  @Output() cancel = new EventEmitter<void>();
+  save = output<any>();
+  cancel = output<void>();
 
+  private fb = inject(FormBuilder);
   form: FormGroup;
 
-  constructor(private fb: FormBuilder) {
+  constructor() {
     this.form = this.fb.group({
       nom: ['', [Validators.required, Validators.minLength(3)]],
       zonesTarifaires: this.fb.array([this.createZoneGroup()])
@@ -56,10 +57,15 @@ export class FestivalForm {
       }));
 
       this.save.emit(formValue);
+      this.form.reset();
+      this.form.patchValue({
+        zonesTarifaires: [this.createZoneGroup().value]
+      });
     }
   }
 
   onCancel() {
     this.cancel.emit();
+    this.form.reset();
   }
 }
