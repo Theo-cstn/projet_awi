@@ -1,7 +1,11 @@
-<form [formGroup]="form" (ngSubmit)="submit()">
+<form [formGroup]="form">
  
- <input type="text" formControlName="name"
+ <input type="text" formControlName="nom"
         placeholder="Nom" />
  
- <button (click)="add.emit(this.form.value)">Enregistrer</button>
+ @if (form.controls.nom.invalid && submitted) {
+   <div class="error">{{ getErrorMessage(form.controls.nom) }}</div>
+ }
+ 
+ <button type="button" (click)="onSubmit()">Enregistrer</button>
 </form>
