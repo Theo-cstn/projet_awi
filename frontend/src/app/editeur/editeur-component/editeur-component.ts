@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
+import { EditeurDto } from '../../types/editeur-dto';
 
 @Component({
   selector: 'app-editeur-component',
@@ -7,5 +8,6 @@ import { Component, Input } from '@angular/core';
   styleUrl: './editeur-component.css',
 })
 export class EditeurComponent {
-  @Input() editeur: any = {};
+    editeur = input.required<EditeurDto>()
+
 }

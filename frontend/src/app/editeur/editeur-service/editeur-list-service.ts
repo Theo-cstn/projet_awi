@@ -11,10 +11,16 @@ export class EditeurListService {
       id: 1,
       nom: 'editeur1',
       contacts : [ {id: 1,
-                    nom: 'contact1',
+                    nom: 'Cantillon',
                     prenom: 'Tom',
                     fonction: 'président',
-                    mail: 'tom@mail.com',}
+                    mail: 'tom@mail.com'},
+                    
+                    {id: 2,
+                    nom: 'Cantillon',
+                    prenom: 'Tomzer',
+                    fonction: 'employé',
+                    mail: 'tomzer@mail.com'}
                   ]
     },    
   ])

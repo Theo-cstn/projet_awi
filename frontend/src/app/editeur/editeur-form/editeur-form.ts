@@ -13,7 +13,7 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validator
 export class EditeurForm {
   readonly form = new FormGroup({  
     
-      name: new FormControl('', {
+      nom: new FormControl('', {
       nonNullable : true,
       validators: [Validators.required, Validators.minLength(3)]
     }),
@@ -21,9 +21,15 @@ export class EditeurForm {
   });
 
   add = output<any>()
+  submitted = false
 
-  submit():void {
-    console.log(this.form.value);
+  onSubmit(): void {
+    this.submitted= true
+    if (this.form.valid) {
+      this.add.emit(this.form.value)
+      this.form.reset()
+      this.submitted = false
+    }
   }
 
   getErrorMessage(control:AbstractControl|null): string|null {
@@ -31,8 +37,9 @@ export class EditeurForm {
       if (control.errors?.['required']) {
         return "Champ obligatoire"
       }
-      if (control.errors?.['minLength']) {
-        return "Format invalide"
+      if (control.errors?.['minlength']) {
+        const required = control.errors['minlength'].requiredLength;
+        return `Minimum ${required} caractères`;
       }
     }
     return null
