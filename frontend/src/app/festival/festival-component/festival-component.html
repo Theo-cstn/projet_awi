@@ -10,10 +10,26 @@
   </div>
   
   <div class="festival-stats">
-    <div class="stat">
-      <span class="stat-value">{{ festival().nombreTablesLibres }}</span>
-      <span class="stat-label">Tables disponibles</span>
+    <!-- Stock de tables -->
+    <div class="stock-section">
+      <h4>Stock de tables</h4>
+      <ul>
+        <li>Petites : {{ festival().stock.petites }}</li>
+        <li>Grandes : {{ festival().stock.grandes }}</li>
+        <li>Mairie : {{ festival().stock.mairie }}</li>
+      </ul>
+    </div>
+
+    <!-- Zones tarifaires -->
+    <div class="zones-section">
+      <h4>Zones Tarifaires</h4>
+      <ul>
+        @for (zone of festival().zonesTarifaires; track zone.id) {
+          <li>
+            {{ zone.nom }} : {{ zone.nombreTablesLibres }} / {{ zone.nombreTablesTotal }} espaces disponibles
+          </li>
+        }
+      </ul>
     </div>
   </div>
-  
 </div>

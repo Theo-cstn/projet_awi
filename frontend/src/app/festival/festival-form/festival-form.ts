@@ -1,11 +1,12 @@
 import { Component, output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ZoneTarifaireForm } from '../../zoneTarifaire/zoneTarifaire-form/zone-tarifaire-form';
 
 @Component({
   selector: 'app-festival-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ZoneTarifaireForm],
   templateUrl: './festival-form.html',
   styleUrl: './festival-form.css'
 })
@@ -16,10 +17,18 @@ export class FestivalForm {
   private fb = inject(FormBuilder);
   form: FormGroup;
 
+  showZoneForm = false; // Contrôle l'affichage du formulaire ZoneTarifaireForm
+
   constructor() {
     this.form = this.fb.group({
       nom: ['', [Validators.required, Validators.minLength(3)]],
-      zonesTarifaires: this.fb.array([this.createZoneGroup()])
+      stock: this.fb.group({
+        petites: [0, [Validators.required, Validators.min(0)]],
+        grandes: [0, [Validators.required, Validators.min(0)]],
+        mairie: [0, [Validators.required, Validators.min(0)]]
+      }),
+      // Initialise un FormArray vide pour les zones tarifaires du festival.
+      zonesTarifaires: this.fb.array([])
     });
   }
 
@@ -27,40 +36,27 @@ export class FestivalForm {
     return this.form.get('zonesTarifaires') as FormArray;
   }
 
-  private createZoneGroup() {
-    return this.fb.group({
-      nom: ['', Validators.required],
-      nombreTablesTotal: [1, [Validators.required, Validators.min(1)]],
-      prixTable: [0, [Validators.required, Validators.min(0)]],
-      prixM2: [0, Validators.min(0)]
-    });
+  // Ajoute une nouvelle zone en appelant ZoneTarifaireForm
+  onAddZone(zoneData: any) {
+    this.zonesTarifaires.push(this.fb.group(zoneData));
+    this.showZoneForm = false; // Masque le formulaire après ajout
   }
 
-  addZone() {
-    this.zonesTarifaires.push(this.createZoneGroup());
+  // Annule l'ajout d'une zone
+  onCancelZone() {
+    this.showZoneForm = false; // Masque le formulaire sans ajouter de zone
   }
 
+  // Supprime une zone tarifaire
   removeZone(index: number) {
-    if (this.zonesTarifaires.length > 1) {
-      this.zonesTarifaires.removeAt(index);
-    }
+    this.zonesTarifaires.removeAt(index); // Supprime la zone à l'index donné
   }
 
   onSubmit() {
     if (this.form.valid) {
       const formValue = this.form.value;
-      
-      // Auto-calcul du prix m² si non renseigné
-      formValue.zonesTarifaires = formValue.zonesTarifaires.map((zone: any) => ({
-        ...zone,
-        prixM2: zone.prixM2 || (zone.prixTable / 4.5)
-      }));
-
       this.save.emit(formValue);
       this.form.reset();
-      this.form.patchValue({
-        zonesTarifaires: [this.createZoneGroup().value]
-      });
     }
   }
 

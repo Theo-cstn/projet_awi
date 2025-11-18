@@ -52,15 +52,21 @@ export class FestivalList {
     try {
       console.log('Création du festival:', festivalData);
       
-      // Calculer le nombre total de tables
+      // Calculer le nombre total de tables libres
       const nombreTablesLibres = festivalData.zonesTarifaires.reduce(
-        (total: number, zone: any) => total + zone.nombreTablesTotal, 0
+        (total: number, zone: any) => total + zone.nombreTablesLibres,
+        0
       );
 
       // Créer l'objet festival pour le service
       const newFestival = {
         nom: festivalData.nom,
         nombreTablesLibres,
+        stock: {
+          petites: festivalData.stock.petites || 0,
+          grandes: festivalData.stock.grandes || 0,
+          mairie: festivalData.stock.mairie || 0
+        },
         zonesTarifaires: festivalData.zonesTarifaires
       };
 
@@ -68,10 +74,10 @@ export class FestivalList {
       await this.festivalService.addFestival(newFestival);
       
       this.showForm.set(false);
-      console.log('✅ Festival créé avec succès !');
+      console.log('Festival créé avec succès !');
       
     } catch (error) {
-      console.error('❌ Erreur lors de la création:', error);
+      console.error('Erreur lors de la création:', error);
       // TODO: Afficher une notification d'erreur
     }
   }
