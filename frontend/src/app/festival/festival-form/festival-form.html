@@ -1,1 +1,71 @@
-<p>festival-form works!</p>
+<div class="festival-form">
+  <h2>Nouveau Festival</h2>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Nom du festival -->
+    <div class="form-group">
+      <label for="nom">Nom du festival *</label>
+      <input 
+        id="nom"
+        type="text" 
+        formControlName="nom"
+        class="form-control"
+        [class.error]="form.get('nom')?.invalid && form.get('nom')?.touched">
+      
+      @if (form.get('nom')?.invalid && form.get('nom')?.touched) {
+        <div class="error-message">
+          Le nom est requis (min. 3 caractères)
+        </div>
+      }
+    </div>
+
+    <!-- Zones tarifaires -->
+    <div class="zones-section">
+      <div class="zones-header">
+        <h3>Zones Tarifaires</h3>
+        <button type="button" class="btn btn-sm" (click)="showZoneForm = true">
+          + Ajouter une zone
+        </button>
+      </div>
+
+      <!-- Affiche le formulaire ZoneTarifaireForm -->
+      @if (showZoneForm) {
+        <app-zone-tarifaire-form
+          (save)="onAddZone($event)"
+          (cancel)="showZoneForm = false">
+        </app-zone-tarifaire-form>
+      }
+
+      <!-- Liste des zones ajoutées -->
+      <div formArrayName="zonesTarifaires" class="zones-list">
+        @for (zone of zonesTarifaires.controls; track $index) {
+          <div [formGroupName]="$index" class="zone-form">
+            <div class="zone-header">
+              <h4>Zone {{ $index + 1 }}</h4>
+              @if (zonesTarifaires.length > 1) {
+                <button type="button" class="btn btn-sm btn-danger" 
+                        (click)="removeZone($index)">
+                  Supprimer
+                </button>
+              }
+            </div>
+            <div class="zone-fields">
+              <p>Nom : {{ zone.value.nom }}</p>
+              <p>Nombre de tables : {{ zone.value.nombreTablesTotal }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Annuler
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+        Créer le Festival
+      </button>
+    </div>
+  </form>
+</div>
