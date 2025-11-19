@@ -1,47 +1,31 @@
+/* 1. Conteneur principal: la "carte" */
 .festival-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+    border: 1px solid #ddd;
+    /* Coins arrondis */
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #e662252f;
+    /* légère ombre */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
 
-.festival-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.festival-card h3 {
+    color: #333;
+    margin-top: 0;
+    padding-bottom: 10px;
+     /* Séparateur visuel */
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+    }
 
-.current-badge {
-  background: #1976d2;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-}
+.festival-detail p {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    }
 
-.festival-stats {
-  margin-top: 16px;
-}
-
-.stock-section, .zones-section {
-  margin-bottom: 16px;
-}
-
-.stock-section h4, .zones-section h4 {
-  margin-bottom: 8px;
-  font-size: 1rem;
-  color: #333;
-}
-
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-li {
-  font-size: 0.9rem;
-  margin-bottom: 4px;
+/* Mise en évidence du nombre */
+.festival-detail strong {
+    color: #007bff;
+    font-weight: 500;
 }

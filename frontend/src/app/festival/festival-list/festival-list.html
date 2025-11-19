@@ -1,63 +1,30 @@
+<h1>Gestion des Festivals</h1>
+
+<h4>Nombre de festivals: {{ this.nbFestival() }}</h4>
+
+@if (showForm) {
+  <app-festival-form (add)="onAdd($event)"></app-festival-form>
+  <button (click)="showForm = false">Cancel</button>
+}
+@else{
+  <button (click)="add()">Add Festival</button>
+}
+
+@if (festivals().length > 0) {
+  <button (click)="removeAll()">Delete All</button>
+}
+
 <div class="festival-list-container">
-  <div class="header">
-    <h1>Festivals</h1>
-    @if (!showForm()) {
-      <button class="btn btn-primary" (click)="onShowForm()">
-        + Nouveau Festival
-      </button>
-    }
+  @for (festival of festivals(); track festival.id!) {
+    <app-festival-component
+      [festival] = "festival"
+      (remove)="onRemove($event)">
+    </app-festival-component>
+  }
+<div>
+
+@if (festivals().length === 0 && !showForm) {
+  <div class="no-festivals">
+    <p>Aucun festival enregistré. Cliquez sur "Ajouter un Festival" pour commencer.</p>
   </div>
-
-  <!-- Formulaire de création -->
-  @if (showForm()) {
-    <div class="form-section">
-      <app-festival-form 
-        (save)="onSaveFestival($event)"
-        (cancel)="onHideForm()">
-      </app-festival-form>
-    </div>
-  }
-
-  <!-- État de chargement -->
-  @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Chargement des festivals...</p>
-    </div>
-  }
-
-  <!-- Gestion d'erreur -->
-  @else if (error()) {
-    <div class="error-state">
-      <h3>❌ Erreur</h3>
-      <p>{{ error() }}</p>
-      <button class="btn btn-secondary" (click)="onRetryLoad()">
-        Réessayer
-      </button>
-    </div>
-  }
-
-  <!-- Liste des festivals -->
-  @else if (festivals().length > 0) {
-    <div class="festivals-grid">
-      @for (festival of festivals(); track festival.id) {
-        <app-festival-component
-          [festival]="festival"
-          [isSelected]="festival.id === selectedFestivalId()"
-          (select)="onFestivalSelected($event)">
-        </app-festival-component>
-      }
-    </div>
-  }
-
-  <!-- État vide -->
-  @else {
-    <div class="empty-state">
-      <h3>🎲 Aucun festival</h3>
-      <p>Commencez par créer votre premier festival</p>
-      <button class="btn btn-primary" (click)="onShowForm()">
-        Créer un festival
-      </button>
-    </div>
-  }
-</div>
+}

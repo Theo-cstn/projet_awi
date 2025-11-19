@@ -1,1 +1,11 @@
-<p>zone-tarifaire-form works!</p>
+<div style="margin:.5rem 0;">
+    <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
+
+    <input type="text" formControlName="nom" placeholder="nom">
+    <input type="number" formControlName="nbTotalTables" placeholder="nombre total de tables">
+    <input type="number" formControlName="prixTable" placeholder="Prix d'une table">
+    <input type="number" formControlName="prixM" placeholder="Prix au m^2">
+
+    <button type="submit" [disabled]="form.invalid">Add</button>
+    </form>
+</div>

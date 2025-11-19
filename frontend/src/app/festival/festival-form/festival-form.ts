@@ -1,7 +1,12 @@
-import { Component, output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ZoneTarifaireForm } from '../../zoneTarifaire/zoneTarifaire-form/zone-tarifaire-form';
+import { Component, signal, input, output, computed } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { ReactiveFormsModule } from "@angular/forms";
+import { FormControl, FormGroup } from "@angular/forms";
+
+import { Festival } from "../../types/festival-dto";
+import { ZoneTarifaire } from "../../types/zone-tarifaire-dto";
+import { ZoneTarifaireForm } from "../../zoneTarifaire/zoneTarifaire-form/zone-tarifaire-form";
+
 
 @Component({
   selector: 'app-festival-form',
@@ -10,58 +15,57 @@ import { ZoneTarifaireForm } from '../../zoneTarifaire/zoneTarifaire-form/zone-t
   templateUrl: './festival-form.html',
   styleUrl: './festival-form.css'
 })
+
 export class FestivalForm {
-  save = output<any>();
-  cancel = output<void>();
+  add = output<Omit<Festival, 'id'>>();
+  zonesTarifaires = signal<ZoneTarifaire[]>([]);
+  nextZoneId = signal<number>(0);
 
-  private fb = inject(FormBuilder);
-  form: FormGroup;
+  readonly form = new FormGroup({
+    nom: new FormControl('', { nonNullable: true }),
+    date: new FormControl('', { nonNullable: true }),
+    nbTablesPetites: new FormControl(0, { nonNullable: true }),
+    nbTablesGrandes: new FormControl(0, { nonNullable: true }),
+    nbTablesMairie: new FormControl(0, { nonNullable: true })
+  })
 
-  showZoneForm = false; // Contrôle l'affichage du formulaire ZoneTarifaireForm
+  nbTotalTables = computed(() => {
+    const formValue = this.form.getRawValue();
+    return formValue.nbTablesGrandes + formValue.nbTablesMairie + formValue.nbTablesPetites ;
+  })
 
-  constructor() {
-    this.form = this.fb.group({
-      nom: ['', [Validators.required, Validators.minLength(3)]],
-      stock: this.fb.group({
-        petites: [0, [Validators.required, Validators.min(0)]],
-        grandes: [0, [Validators.required, Validators.min(0)]],
-        mairie: [0, [Validators.required, Validators.min(0)]]
-      }),
-      // Initialise un FormArray vide pour les zones tarifaires du festival.
-      zonesTarifaires: this.fb.array([])
-    });
-  }
-
-  get zonesTarifaires() {
-    return this.form.get('zonesTarifaires') as FormArray;
-  }
-
-  // Ajoute une nouvelle zone en appelant ZoneTarifaireForm
-  onAddZone(zoneData: any) {
-    this.zonesTarifaires.push(this.fb.group(zoneData));
-    this.showZoneForm = false; // Masque le formulaire après ajout
-  }
-
-  // Annule l'ajout d'une zone
-  onCancelZone() {
-    this.showZoneForm = false; // Masque le formulaire sans ajouter de zone
-  }
-
-  // Supprime une zone tarifaire
-  removeZone(index: number) {
-    this.zonesTarifaires.removeAt(index); // Supprime la zone à l'index donné
-  }
-
-  onSubmit() {
-    if (this.form.valid) {
-      const formValue = this.form.value;
-      this.save.emit(formValue);
-      this.form.reset();
+  onSubmitForm(): void {
+    const formValue = this.form.getRawValue();
+    if (this.form.valid){
+      const festival: Omit<Festival, 'id'> = {
+        nom: formValue.nom,
+        date: new Date(formValue.date),
+        nbTablesPetites: formValue.nbTablesPetites,
+        nbTablesGrandes: formValue.nbTablesGrandes,
+        nbTablesMairie: formValue.nbTablesMairie,
+        nbTotalTables: this.nbTotalTables(),
+        zonesTarifaires: this.zonesTarifaires()
+      };
+      this.add.emit(festival);
+      
+      this.form.reset({
+        nom: '', date: '', nbTablesPetites: undefined, nbTablesGrandes: undefined, nbTablesMairie: undefined
+      });
+      this.zonesTarifaires.set([]);
+      this.nextZoneId.set(0);
     }
   }
 
-  onCancel() {
-    this.cancel.emit();
-    this.form.reset();
+  onAddZone(newZone: Omit<ZoneTarifaire, 'id'>): void {
+    const zoneWithId: ZoneTarifaire={...newZone, id: this.nextZoneId()
+    };
+    this.zonesTarifaires.update(zones => [...zones, zoneWithId]);
+    this.nextZoneId.update(id => id+1);
+  }
+
+  onRemoveZone(idZone: number): void{
+    this.zonesTarifaires.update(zones =>
+      zones.filter(zone => zone.id !== idZone)
+    );
   }
 }
