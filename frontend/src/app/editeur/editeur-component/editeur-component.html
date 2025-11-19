@@ -1,1 +1,18 @@
-<p>editeur-component works!</p>
+<div class="card">
+    <h2> {{ this.editeur().nom }} </h2>
+
+    <div class="contacts">
+        <h3>Contacts :</h3>
+        @if (editeur().contacts?.length) {
+            @for (contact of editeur().contacts; track contact.id) {
+                <div class="contact">
+                    {{ contact.prenom }} {{ contact.nom }} - {{ contact.fonction }}<br>
+                    Email : {{ contact.mail }}
+                </div>
+            }
+        } @else {
+            <p>Aucun contact</p>
+        }
+    </div>
+    
+</div>

@@ -1,0 +1,35 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // Environment Settings - See also https://aka.ms/tsconfig/module
+    // File Layout
+    "rootDir": "./src", // Répertoire racine des fichiers source TS à compiler.
+    "outDir": "./dist", // Répertoire de sortie des fichiers compilés.
+    /* === Module System === */
+    "target": "es2022", "lib": ["es2022"], "module": "nodenext", "moduleResolution": "nodenext", "verbatimModuleSyntax": true, // Version ECMAScript de sortie : garantit la compatibilité avec Node 20+.
+    // Bibliothèques standard disponibles (sans DOM inutile sur un projet Node).
+    // Système de modules ESM natif pour Node.js (import/export modernes).
+    // Résolution des modules : utilise la stratégie de résolution des modules ESM.
+    // (Option avancée) impose de conserver les extensions .js dans les imports
+    // - nécessaire avec "nodenext" pour un build prod correct.
+    /* === Compatibilité Node ESM === */
+    "types": ["node"], // Inclut les types du runtime Node (fs, path, process, etc.).
+    "esModuleInterop": true, // Permet d'importer facilement les modules CommonJS (ex: express, bcrypt).
+    "allowSyntheticDefaultImports": true,// Autorise l'import par défaut sur des modules CJS sans export default explicite.
+    /* === Compilation === */
+    "noEmit": false, "sourceMap": true, "skipLibCheck": true, // compile pour prod : active la génération de JS (sinon TS n'analyse que les types).
+    // produit des fichiers .map pour le débogage (utile dans Docker et VSCode).
+    // Ignore la vérification de type dans node_modules (accélère la compilation).
+    /* === Sécurité et style === */
+    "strict": true,
+    "noUncheckedIndexedAccess": true, // Interdit les variables non typées (force la rigueur dans les signatures).
+    "exactOptionalPropertyTypes": true, // Fait respecter la différence entre "optionnel" et "undefined explicite".
+    "isolatedModules": true, // chaque fichier doit être indépendant (utile avec ESM & outils comme esbuild/Vite).
+    "moduleDetection": "force", // Force TypeScript à reconnaître tout fichier import/export comme un module TS.
+    "noImplicitOverride": true, // Exige que toute méthode redéfinie soit marquée "override" (clarté en héritage).
+    "noUncheckedSideEffectImports": true,// Avertit quand un import n’a d’effet que par exécution et non par export.
+    "noImplicitAny": true,
+  },
+  "include": ["src/**/*"], // Tous les fichiers TypeScript du dossier src sont inclus dans la compilation.
+}
+

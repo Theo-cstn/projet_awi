@@ -1,0 +1,6 @@
+backend/certs/
+backend/node_modules/
+/node_modules/
+/dist/
+backend/.env
+.DS_Store

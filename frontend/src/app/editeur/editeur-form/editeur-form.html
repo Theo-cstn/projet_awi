@@ -1,1 +1,11 @@
-<p>editeur-form works!</p>
+<form [formGroup]="form">
+ 
+ <input type="text" formControlName="nom"
+        placeholder="Nom" />
+ 
+ @if (form.controls.nom.invalid && submitted) {
+   <div class="error">{{ getErrorMessage(form.controls.nom) }}</div>
+ }
+ 
+ <button type="button" (click)="onSubmit()">Enregistrer</button>
+</form>

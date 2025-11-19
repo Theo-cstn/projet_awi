@@ -1,1 +1,11 @@
-<p>editeur-list works!</p>
+<app-editeur-form
+    (add)="this.onAdd($event)"
+/>
+
+<h1> Liste des éditeurs</h1>
+
+@for (editeur of editeurs(); track editeur.id) {
+        <app-editeur-component
+            [editeur]="editeur"
+        />
+}
