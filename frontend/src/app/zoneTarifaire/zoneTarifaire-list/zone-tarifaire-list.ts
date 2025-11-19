@@ -7,5 +7,5 @@ import { Component } from '@angular/core';
   styleUrl: './zone-tarifaire-list.css',
 })
 export class ZoneTarifaireList {
-
+  
 }

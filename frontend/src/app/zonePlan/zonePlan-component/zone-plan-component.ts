@@ -7,5 +7,5 @@ import { Component } from '@angular/core';
   styleUrl: './zone-plan-component.css',
 })
 export class ZonePlanComponent {
-
+  
 }
