@@ -1,1 +1,11 @@
-<p>jeu-list works!</p>
+<app-jeu-form
+    (add)="this.onAdd($event)"
+/>
+
+<h1> Liste des jeux</h1>
+
+@for (jeu of jeux(); track jeu.id) {
+        <app-jeu-component
+            [jeu]="jeu"
+        />
+}
