@@ -4,12 +4,13 @@ import { Festival } from "../../types/festival-dto";
 import { FestivalComponent } from "../festival-component/festival-component";
 import { FestivalForm } from "../festival-form/festival-form";
 import { FestivalListService } from "../festival-service/festival-list-service";
+import { RouterLink } from "@angular/router";
 
 
 @Component({
   selector: 'app-festival-list',
   standalone: true,
-  imports: [CommonModule, FestivalComponent, FestivalForm],
+  imports: [CommonModule, FestivalComponent, FestivalForm, RouterLink],
   templateUrl: './festival-list.html',
   styleUrl: './festival-list.css'
 })

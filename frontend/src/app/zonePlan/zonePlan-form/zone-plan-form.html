@@ -1,0 +1,9 @@
+<div style="margin:.5rem 0;">
+    <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
+
+    <input type="text" formControlName="nom" placeholder="nom">
+    <input type="number" formControlName="nbTables" placeholder="nombre de tables">
+
+    <button type="submit" [disabled]="form.invalid">Add</button>
+    </form>
+</div>

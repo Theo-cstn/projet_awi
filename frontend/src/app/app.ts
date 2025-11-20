@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
-import { FestivalList } from "./festival/festival-list/festival-list";
+import { RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [FestivalList],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

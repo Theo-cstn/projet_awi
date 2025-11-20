@@ -1,4 +1,4 @@
-import { Component, signal, input, output, computed } from "@angular/core";
+import { Component, signal, output, computed } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ReactiveFormsModule } from "@angular/forms";
 import { FormControl, FormGroup } from "@angular/forms";
@@ -35,7 +35,9 @@ export class FestivalForm {
   })
 
   onSubmitForm(): void {
+
     const formValue = this.form.getRawValue();
+
     if (this.form.valid){
       const festival: Omit<Festival, 'id'> = {
         nom: formValue.nom,
@@ -46,6 +48,7 @@ export class FestivalForm {
         nbTotalTables: this.nbTotalTables(),
         zonesTarifaires: this.zonesTarifaires()
       };
+      
       this.add.emit(festival);
       
       this.form.reset({
