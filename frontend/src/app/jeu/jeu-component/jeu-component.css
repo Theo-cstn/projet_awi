@@ -1,0 +1,17 @@
+.card {
+    background-color: #e0e0e0;
+    border: 1px solid #999;
+    padding: 20px;
+    width: 400px;
+    margin: 20px auto;
+}
+
+.info {
+    margin-top: 15px;
+    text-align: left;
+}
+
+.info p {
+    margin: 0;
+    line-height: 1.8;
+}
