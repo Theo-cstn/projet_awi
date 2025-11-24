@@ -1,11 +1,7 @@
-<app-editeur-form
-    (add)="this.onAdd($event)"
-/>
+<app-editeur-form (add)="onAdd($event)" />
 
-<h1> Liste des éditeurs</h1>
+<h1>Liste des éditeurs</h1>
 
 @for (editeur of editeurs(); track editeur.id) {
-        <app-editeur-component
-            [editeur]="editeur"
-        />
+    <app-editeur-component [editeur]="editeur" />
 }

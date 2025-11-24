@@ -21,17 +21,6 @@
     <div class="error">{{ getErrorMessage(form.controls.ageMax) }}</div>
   }
 
-  <select formControlName="editeur">
-    <option value="">Sélectionner un éditeur</option>
-    @for (editeur of editeurs; track editeur.id) {
-      <option [value]="editeur.id">{{ editeur.nom }}</option>
-    }
-  </select>
-  
-  @if (form.controls.editeur.invalid && submitted) {
-    <div class="error">{{ getErrorMessage(form.controls.editeur) }}</div>
-  }
-
   <input type="text" formControlName="type"
          placeholder="Type de jeu" />
   

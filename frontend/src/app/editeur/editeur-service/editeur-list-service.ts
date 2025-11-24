@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { PersonneDto } from '../../types/personne-dto';
 import { EditeurDto } from '../../types/editeur-dto';
 
@@ -6,6 +6,7 @@ import { EditeurDto } from '../../types/editeur-dto';
   providedIn: 'root',
 })
 export class EditeurListService {
+  
   private readonly _editeurs = signal<EditeurDto[]>([
     { 
       id: 1,
@@ -21,7 +22,8 @@ export class EditeurListService {
                     prenom: 'Tomzer',
                     fonction: 'employé',
                     mail: 'tomzer@mail.com'}
-                  ]
+                  ],
+      jeux: undefined
     },    
   ])
 

@@ -1,11 +1,15 @@
-<app-jeu-form
-    (add)="this.onAdd($event)"
-/>
+@if (editeur()) {
+  <button (click)="retourEditeurs()">← Retour aux éditeurs</button>
+  <h1>Jeux de {{ editeur()?.nom }}</h1>
+}
 
-<h1> Liste des jeux</h1>
+<app-jeu-form 
+  [editeurId]="editeurId()!"
+    (add)="onAdd($event)" 
+    />
 
 @for (jeu of jeux(); track jeu.id) {
-        <app-jeu-component
-            [jeu]="jeu"
-        />
+    <app-jeu-component [jeu]="jeu" />
+} @empty {
+  <p>Aucun jeu{{ editeur() ? ' pour cet éditeur' : '' }}</p>
 }
