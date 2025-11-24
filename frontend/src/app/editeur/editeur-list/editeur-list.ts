@@ -1,9 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { EditeurListService } from '../editeur-service/editeur-list-service';
-import { EditeurDto } from '../../types/editeur-dto';
 import { EditeurComponent } from '../editeur-component/editeur-component';
 import { EditeurForm } from '../editeur-form/editeur-form';
-
+import { EditeurDto } from '../../types/editeur-dto';
 
 @Component({
   selector: 'app-editeur-list',
@@ -15,12 +14,13 @@ export class EditeurList {
   readonly svc = inject(EditeurListService)
   editeurs = this.svc.editeurs
 
-  onAdd(formData: any):void{
-    const newediteur: EditeurDto = {
+  onAdd(formData: any): void {
+    const nouvelEditeur: EditeurDto = {
       id: undefined,
       nom: formData.nom,
-      contacts: undefined
+      contacts: undefined,
+      jeux: undefined
     }
-    this.svc.add(newediteur)
+    this.svc.add(nouvelEditeur)
   }
 }

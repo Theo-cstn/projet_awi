@@ -1,4 +1,4 @@
-import { Component, output, inject } from '@angular/core';
+import { Component, output, inject,input  } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
 
@@ -11,6 +11,8 @@ import { EditeurListService } from '../../editeur/editeur-service/editeur-list-s
 })
 export class JeuForm {
 private readonly editeurService = inject(EditeurListService);
+
+    editeurId = input.required<number>()
 
   readonly form = new FormGroup({  
     nom: new FormControl('', {
@@ -26,9 +28,6 @@ private readonly editeurService = inject(EditeurListService);
       validators: [Validators.min(0)]
     }),
     
-    editeur: new FormControl<number | undefined>(undefined, {
-      validators: [Validators.required]
-    }),
     
     auteur: new FormControl<number | undefined>(undefined),
     
