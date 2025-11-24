@@ -1,71 +1,80 @@
 import { Router } from 'express';
-import pool from '../db/database.js';
+import pool from '../db/database';
+
 const router = Router();
 
 // GET /editeurs - Retrieve all editors
 router.get('/', async (_req, res) => {
   try {
-    const editors = await pool.query('SELECT * FROM "Editeur"');
-    res.status(200).json(editors.rows);
+    const result = await pool.query('SELECT * FROM "Editeur"');
+    res.status(200).json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch editors' });
+    console.error('Error fetching editors:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// POST /editeurs - Create a new editor
+// POST /editeurs - Add a new editor
 router.post('/', async (req, res) => {
+  const { nom, est_actif } = req.body;
   try {
-    const { nom } = req.body;
     const result = await pool.query(
-      'INSERT INTO "Editeur" (nom) VALUES ($1) RETURNING *',
-      [nom]
+      'INSERT INTO "Editeur" (nom, est_actif) VALUES ($1, $2) RETURNING *',
+      [nom, est_actif || true]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create editor' });
+    console.error('Error adding editor:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // GET /editeurs/:id - Retrieve an editor by ID
 router.get('/:id', async (req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
-    const editor = await pool.query('SELECT * FROM "Editeur" WHERE id = $1', [id]);
-    if (editor.rows.length === 0) {
+    const result = await pool.query('SELECT * FROM "Editeur" WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Editor not found' });
     }
-    res.status(200).json(editor.rows[0]);
+    res.status(200).json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch editor' });
+    console.error('Error fetching editor:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // PUT /editeurs/:id - Update an editor
 router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nom, est_actif } = req.body;
   try {
-    const { id } = req.params;
-    const { nom } = req.body;
     const result = await pool.query(
-      'UPDATE "Editeur" SET nom = $1 WHERE id = $2 RETURNING *',
-      [nom, id]
+      'UPDATE "Editeur" SET nom = $1, est_actif = $2 WHERE id = $3 RETURNING *',
+      [nom, est_actif, id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Editor not found' });
     }
     res.status(200).json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update editor' });
+    console.error('Error updating editor:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // DELETE /editeurs/:id - Delete an editor
 router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
-    await pool.query('DELETE FROM "Editeur" WHERE id = $1', [id]);
+    const result = await pool.query('DELETE FROM "Editeur" WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Editor not found' });
+    }
     res.status(200).json({ message: 'Editor deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete editor' });
+    console.error('Error deleting editor:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
