@@ -76,6 +76,9 @@ CREATE TABLE Festival (
     nom VARCHAR(255) UNIQUE NOT NULL,
     date_debut DATE NOT NULL,
     date_fin DATE NOT NULL,
+    stock_tables_petites INT DEFAULT 0,
+    stock_tables_grandes INT DEFAULT 0,
+    stock_tables_mairie INT DEFAULT 0,   
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
