@@ -1,35 +1,21 @@
-<div class="festival-card" 
-     [class.selected]="isSelected()"
-     (click)="onSelect()">
-  
-  <div class="festival-header">
-    <h3>{{ festival().nom }}</h3>
-    @if (isSelected()) {
-      <span class="current-badge">ACTUEL</span>
-    }
-  </div>
-  
-  <div class="festival-stats">
-    <!-- Stock de tables -->
-    <div class="stock-section">
-      <h4>Stock de tables</h4>
-      <ul>
-        <li>Petites : {{ festival().stock.petites }}</li>
-        <li>Grandes : {{ festival().stock.grandes }}</li>
-        <li>Mairie : {{ festival().stock.mairie }}</li>
-      </ul>
-    </div>
+<div class="festival-card">
+  <h2>{{ this.festival()!.nom }}</h2>
 
-    <!-- Zones tarifaires -->
-    <div class="zones-section">
-      <h4>Zones Tarifaires</h4>
-      <ul>
-        @for (zone of festival().zonesTarifaires; track zone.id) {
-          <li>
-            {{ zone.nom }} : {{ zone.nombreTablesLibres }} / {{ zone.nombreTablesTotal }} espaces disponibles
-          </li>
-        }
-      </ul>
-    </div>
+  <div class="festival-detail">
+    <p>Date : {{ this.festival()!.date | date: 'longDate' }}</p>
   </div>
+
+  <div class="festival-detail">
+    <p>Nombre total de tables en stock :</p>
+  </div>
+    <p> - petites : {{ this.festival()!.nbTablesPetites }}</p>
+    <p> - grandes : {{ this.festival()!.nbTablesGrandes }}</p>
+    <p> - mairie : {{ this.festival()!.nbTablesMairie }}</p>
+  
+
+  @for (zone of this.festival().zonesTarifaires; track zone.id!) {
+    <app-zone-tarifaire-component
+      [zoneT]="zone">
+    </app-zone-tarifaire-component>
+  }
 </div>

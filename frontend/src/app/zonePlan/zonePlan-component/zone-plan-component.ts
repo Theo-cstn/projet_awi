@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
+import { ZonePlan } from '../../types/zone-plan-dto';
 
 @Component({
   selector: 'app-zone-plan-component',
@@ -7,5 +8,5 @@ import { Component } from '@angular/core';
   styleUrl: './zone-plan-component.css',
 })
 export class ZonePlanComponent {
-
+  zoneP = input<ZonePlan|null>(null);
 }

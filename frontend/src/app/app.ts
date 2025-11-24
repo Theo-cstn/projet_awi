@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
-import { FestivalList } from './festival/festival-list/festival-list';
+import { RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [FestivalList],
-  template: `
-    <div style="background: #f5f5f5; min-height: 100vh;">
-      <app-festival-list></app-festival-list>
-    </div>
-  `
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
 })
-export class App {}
+export class App {
+
+}
