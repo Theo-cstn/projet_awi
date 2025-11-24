@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { EditeurListService } from '../editeur-service/editeur-list-service';
 import { EditeurComponent } from '../editeur-component/editeur-component';
 import { EditeurForm } from '../editeur-form/editeur-form';
@@ -23,4 +23,11 @@ export class EditeurList {
     }
     this.svc.add(nouvelEditeur)
   }
+
+  afficherFormulaire = signal(false)
+  
+  toggleFormulaire(): void {
+    this.afficherFormulaire.update(v => !v)
+  }
+
 }

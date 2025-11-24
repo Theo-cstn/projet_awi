@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JeuListService } from '../jeu-service/jeu-list-service';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
@@ -60,4 +60,11 @@ export class JeuList {
   retourEditeurs(): void {
     this.router.navigate(['/editeurs'])
   }
+
+  afficherFormulaire = signal(false)
+
+  toggleFormulaire(): void {
+    this.afficherFormulaire.update(v => !v)
+  }
+
 }
