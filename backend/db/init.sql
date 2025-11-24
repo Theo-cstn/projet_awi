@@ -2,13 +2,10 @@
 -- 1. TYPES & ENUMS
 -- ============================================================
 
--- Rôles utilisateurs (Admin, organisateurs...)
 CREATE TYPE role_type AS ENUM ('no-role','visiteur','organisateur_jeux', 'organisateur_reservations', 'admin');
-
--- Types de jeux de société
 CREATE TYPE game_type AS ENUM ('Action', 'Aventure','RPG','Reflexion','Simulation','Strategie','Sport','Carte');
 
--- CRM (Customer relationship management): État du suivi commercial (Avant réservation)
+-- CRM : État du suivi commercial (Avant réservation)
 CREATE TYPE etat_suivi AS ENUM ('A_CONTACTER', 'CONTACTE', 'DISCUSSION', 'REFUS', 'CONFIRME');
 
 -- Réservation : État de la commande (Après accord)
@@ -50,13 +47,12 @@ CREATE TABLE Editeur_Contact (
     editeur_id INT REFERENCES Editeur(id) ON DELETE CASCADE, 
     contact_id INT REFERENCES Personne(id) ON DELETE CASCADE,
     est_contact_principal BOOLEAN DEFAULT false,
-    poste VARCHAR(100), -- Ex: Commercial, DG... On le met ici comme ca une meme personne peut avoir plusieurs postes (par exemple pour 2 éditeurs différents)
+    poste VARCHAR(100), 
     PRIMARY KEY (editeur_id, contact_id)
 );
 
 CREATE TABLE Jeu (
     id SERIAL PRIMARY KEY,
-    -- RESTRICT implicite : Impossible de supprimer un éditeur s'il a des jeux
     editeur_id INT NOT NULL REFERENCES Editeur(id), 
     nom VARCHAR(255) NOT NULL,
     typeG game_type,
@@ -65,9 +61,7 @@ CREATE TABLE Jeu (
 );
 
 CREATE TABLE Auteurs_Jeux (
-    -- Si l'admin supprime le jeu (erreur de saisie), le lien saute (Pratique)
-    jeu_id INT REFERENCES Jeu(id) ON DELETE CASCADE,
-    -- Si l'admin essaie de supprimer la personne, ça bloque (Sécurité)
+    jeu_id INT REFERENCES Jeu(id) ON DELETE CASCADE, 
     auteur_id INT REFERENCES Personne(id), 
     PRIMARY KEY (jeu_id, auteur_id)
 );
@@ -106,7 +100,7 @@ CREATE TABLE ZonePlan (
 -- 5. PROCESSUS MÉTIER (CRM & Réservations)
 -- ============================================================
 
--- TABLE A : CRM (Suivi commercial des éditeurs pour un festival)
+-- TABLE A : CRM (Suivi commercial)
 CREATE TABLE SuiviEditeur (
     festival_id INT NOT NULL REFERENCES Festival(id) ON DELETE CASCADE,
     editeur_id INT NOT NULL REFERENCES Editeur(id) ON DELETE CASCADE,
@@ -116,31 +110,34 @@ CREATE TABLE SuiviEditeur (
     PRIMARY KEY (festival_id, editeur_id)
 );
 
--- TABLE B : Réservations fermes (Commandes)
+-- TABLE B : Réservations (La "Carte Editeur" du mockup)
 CREATE TABLE Reservation (
     id SERIAL PRIMARY KEY,
     festival_id INT NOT NULL REFERENCES Festival(id) ON DELETE CASCADE,
     
-    -- Qui réserve ? 
     type type_reservant NOT NULL,
-    
-    -- RESTRICT implicite : Impossible de supprimer l'éditeur s'il a une réservation
     editeur_id INT REFERENCES Editeur(id), 
-    
-    -- Si c'est une Boutique/Asso (qui n'a pas de table dédiée), on remplit ça
     autre_nom_reservant VARCHAR(255), 
     
-    statut etat_reservation DEFAULT 'EN_ATTENTE_VALIDATION', -- C'est l'état "brouillon", la venue de l'éfiteur est confirmée mais le nombre de table etc.. n'est pas défini
+    -- Champs ajoutés suite aux Mockups
+    nombre_prises INT DEFAULT 0, 
+    est_present BOOLEAN DEFAULT true, 
+    remise_generale DECIMAL(10, 2) DEFAULT 0,
+
+    -- Statuts et Dates de suivi (Demandé dans le dernier mockup)
+    statut etat_reservation DEFAULT 'EN_ATTENTE_VALIDATION',
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_validation TIMESTAMP,  -- Quand on passe à VALIDEE
+    date_facturation TIMESTAMP, -- Quand on passe à FACTUREE
+    date_paiement TIMESTAMP,    -- Quand on passe à PAYEE
     
-    -- Contrainte : On s'assure qu'on a soit un ID éditeur, soit un nom libre
     CHECK (
         (type = 'Editeur' AND editeur_id IS NOT NULL) OR 
         (type != 'Editeur' AND autre_nom_reservant IS NOT NULL)
     )
 );
 
--- Détail de la facture (Tables, m2...)
+-- Détail ("t1 dans z1", "t3 dans z1")
 CREATE TABLE LigneReservation (
     id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL REFERENCES Reservation(id) ON DELETE CASCADE,
@@ -150,7 +147,7 @@ CREATE TABLE LigneReservation (
     prix_unitaire_applique DECIMAL(10, 2) NOT NULL
 );
 
--- Jeux que l'exposant prévoit d'amener
+-- Liste des jeux ("on associe un jeu à une zone plan")
 CREATE TABLE JeuReserve (
     id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL REFERENCES Reservation(id) ON DELETE CASCADE,
