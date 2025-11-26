@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
+import { JeuDto } from '../../types/jeu-dto';
 
 @Component({
   selector: 'app-jeu-component',
@@ -7,5 +8,6 @@ import { Component } from '@angular/core';
   styleUrl: './jeu-component.css',
 })
 export class JeuComponent {
+    jeu = input.required<JeuDto>()
 
 }

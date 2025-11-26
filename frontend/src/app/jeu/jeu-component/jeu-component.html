@@ -1,1 +1,46 @@
-<p>jeu-component works!</p>
+<div class="card">
+    <h2>{{ this.jeu().nom }}</h2>
+
+    <div class="info">
+        <p>
+            <strong>Type :</strong> {{ this.jeu().type }}<br>
+            
+            <strong>Âge minimum :</strong> 
+            @if (jeu().ageMin !== undefined) {
+                {{ jeu().ageMin }} ans
+            } @else {
+                À compléter
+            }
+            <br>
+            
+            <strong>Âge maximum :</strong> 
+            @if (jeu().ageMax !== undefined) {
+                {{ jeu().ageMax }} ans
+            } @else {
+                À compléter
+            }
+            <br>
+            
+            <strong>Éditeur :</strong> {{ this.jeu().editeur.nom }}<br>
+            
+            <strong>Auteur :</strong>
+            @if (jeu().auteur?.prenom && jeu().auteur?.nom) {
+                {{ jeu().auteur?.prenom }} {{ jeu().auteur?.nom }}
+            } @else {
+                À compléter
+            }
+            <br>
+            
+            <strong>Taille :</strong> 
+            @if (jeu().taille) {
+                @switch (jeu().taille) {
+                    @case('petit') { Petit }
+                    @case('grand') { Grand }
+                }
+            } @else {
+                À compléter
+            }
+            <br>
+        </p>
+    </div>
+</div>

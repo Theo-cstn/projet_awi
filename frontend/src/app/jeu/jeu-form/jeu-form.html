@@ -1,1 +1,38 @@
-<p>jeu-form works!</p>
+<form [formGroup]="form">
+ 
+  <input type="text" formControlName="nom"
+         placeholder="Nom du jeu" />
+  
+  @if (form.controls.nom.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.nom) }}</div>
+  }
+
+  <input type="number" formControlName="ageMin"
+         placeholder="Âge minimum" />
+  
+  @if (form.controls.ageMin.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.ageMin) }}</div>
+  }
+
+  <input type="number" formControlName="ageMax"
+         placeholder="Âge maximum" />
+  
+  @if (form.controls.ageMax.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.ageMax) }}</div>
+  }
+
+  <input type="text" formControlName="type"
+         placeholder="Type de jeu" />
+  
+  @if (form.controls.type.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.type) }}</div>
+  }
+
+  <select formControlName="taille">
+    <option [value]="undefined">Taille (optionnel)</option>
+    <option value="petit">Petit</option>
+    <option value="grand">Grand</option>
+  </select>
+ 
+  <button type="button" (click)="onSubmit()">Enregistrer</button>
+</form>

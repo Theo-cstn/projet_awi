@@ -1,11 +1,13 @@
-<app-editeur-form
-    (add)="this.onAdd($event)"
-/>
+<h1>Liste des éditeurs</h1>
 
-<h1> Liste des éditeurs</h1>
+<button (click)="toggleFormulaire()">
+  {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un éditeur' }}
+</button>
+
+@if (afficherFormulaire()) {
+  <app-editeur-form (add)="onAdd($event)" />
+}
 
 @for (editeur of editeurs(); track editeur.id) {
-        <app-editeur-component
-            [editeur]="editeur"
-        />
+    <app-editeur-component [editeur]="editeur" />
 }
