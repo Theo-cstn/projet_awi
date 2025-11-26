@@ -1,10 +1,7 @@
-import pkg from 'pg'
-const { Pool } = pkg
+import { Pool } from 'pg';
 
 const pool = new Pool({
-    connectionString:
-        process.env.DATABASE_URL ||
-        'postgres://festival_app:festival_app@localhost:5432/festival_app',
-})
+    connectionString: process.env.DATABASE_URL || `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@db:5432/${process.env.POSTGRES_DB}`,
+});
 
-export default pool
+export default pool;

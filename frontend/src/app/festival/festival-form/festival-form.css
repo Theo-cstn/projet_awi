@@ -1,0 +1,50 @@
+.form-container {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: black;
+  max-width: 1000px;
+  margin: 20px auto;
+  text-align: center;
+}
+
+h2, h3, h4 {
+  color: #1976d2;
+  margin-top: 0;
+}
+
+strong {
+  display: block;
+  margin: 1rem 0;
+  color: #1976d2;
+}
+
+.zones-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #1a2227;
+}
+
+.zones-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #e3f2fd;
+  border-radius: 4px;
+}
+
+.empty-message {
+  display: block;
+  color: #90a4ae;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.btn-submit {
+  background: #64b5f6;
+  color: white;
+  width: 100%;
+  margin-top: 1.5rem;
+}

@@ -1,1 +1,21 @@
-<p>zone-tarifaire-component works!</p>
+<div class="zone-card">
+    <h3>{{ zoneT()!.nom }} </h3>
+
+    <div class="zone-detail">
+    <p>Nombre de tables : <strong>{{ zoneT()!.nbTotalTables }}</strong></p>
+    </div>
+
+    <div class="zone-detail">
+    <p>Prix d'une table : <strong>{{ zoneT()!.prixTable }} €</strong></p>
+    </div>
+
+    <div class="zone-detail">
+    <p>Prix au m² : <strong>{{ zoneT()!.prixM }} €</strong></p>
+    </div>
+
+    @for (zone of this.zoneT()!.zonesPlan; track zone.id!){
+        <app-zone-plan-component
+            [zoneP]="zone">
+        </app-zone-plan-component>
+    }
+</div>
