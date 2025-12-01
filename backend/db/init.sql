@@ -14,6 +14,7 @@ CREATE TYPE etat_reservation AS ENUM ('PRESENT', 'FACTUREE', 'PAYEE');
 -- Qui réserve ?
 CREATE TYPE type_reservant AS ENUM ('Editeur', 'Boutique', 'Association', 'Prestataire', 'Autre');
 
+-- Logistique : Tailles physiques des tables
 CREATE TYPE taille_table AS ENUM ('PETITE', 'GRANDE', 'MAIRIE');
 
 
@@ -78,6 +79,7 @@ CREATE TABLE Festival (
     nom VARCHAR(255) UNIQUE NOT NULL,
     date_debut DATE NOT NULL,
     date_fin DATE NOT NULL,
+    -- Stock global de matériel disponible pour ce festival
     stock_tables_petites INT DEFAULT 0,
     stock_tables_grandes INT DEFAULT 0,
     stock_tables_mairie INT DEFAULT 0,   
@@ -99,6 +101,7 @@ CREATE TABLE ZonePlan (
     nom VARCHAR(100) NOT NULL,
     nombre_tables INT NOT NULL
 );
+
 
 -- ============================================================
 -- 5. PROCESSUS MÉTIER (CRM & Réservations)
@@ -145,60 +148,6 @@ CREATE TABLE LigneReservation (
     id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL REFERENCES Reservation(id) ON DELETE CASCADE,
     zone_tarifaire_id INT NOT NULL REFERENCES ZoneTarifaire(id),
-    quantite INT NOT NULL, --Nombre de tables (unité espace)
-);
-
--- ============================================================
--- 5. PROCESSUS MÉTIER (CRM & Réservations)
--- ============================================================
-
--- TABLE A : CRM (Avant la vente)
-CREATE TABLE SuiviEditeur (
-    festival_id INT NOT NULL REFERENCES Festival(id) ON DELETE CASCADE,
-    editeur_id INT NOT NULL REFERENCES Editeur(id) ON DELETE CASCADE,
-    etat etat_suivi DEFAULT 'A_CONTACTER',
-    compte_rendu TEXT, 
-    responsable_id INT REFERENCES users(id),
-    PRIMARY KEY (festival_id, editeur_id)
-);
-
--- TABLE B : Réservations (Le Contrat Global)
-CREATE TABLE Reservation (
-    id SERIAL PRIMARY KEY,
-    festival_id INT NOT NULL REFERENCES Festival(id) ON DELETE CASCADE,
-    type type_reservant NOT NULL,
-    editeur_id INT REFERENCES Editeur(id), 
-    autre_nom_reservant VARCHAR(255), 
-    
-    -- STEP 1 : Données Commerciales
-    nombre_prises INT DEFAULT 0, 
-    est_present BOOLEAN DEFAULT true,
-    
-    -- Gestion des Remises (Globales)
-    -- Si on offre des tables, on peut soit baisser le prix de la ligne, 
-    -- soit mettre un montant ici qui sera déduit du total.
-    remise_generale DECIMAL(10, 2) DEFAULT 0,
-    
-    preferences_tables TEXT, -- "On veut être à côté de la buvette"
-
-    -- Cycle de vie
-    statut etat_reservation DEFAULT 'EN_ATTENTE_VALIDATION',
-    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    date_facturation TIMESTAMP,
-    date_paiement TIMESTAMP,
-    
-    CHECK (
-        (type = 'Editeur' AND editeur_id IS NOT NULL) OR 
-        (type != 'Editeur' AND autre_nom_reservant IS NOT NULL)
-    )
-);
-
--- TABLE C : LigneReservation (Step 1 - LA FACTURE)
--- "Tu as le droit d'occuper X tables dans la zone Y"
-CREATE TABLE LigneReservation (
-    id SERIAL PRIMARY KEY,
-    reservation_id INT NOT NULL REFERENCES Reservation(id) ON DELETE CASCADE,
-    zone_tarifaire_id INT NOT NULL REFERENCES ZoneTarifaire(id),
     
     type_emplacement VARCHAR(10) CHECK (type_emplacement IN ('TABLE', 'M2')),
     
@@ -210,24 +159,18 @@ CREATE TABLE LigneReservation (
 );
 
 -- TABLE D : JeuReserve (Step 2 & 3 - L'INSTALLATION)
--- "Je place ce jeu ici et il consomme tant de tables"
 CREATE TABLE JeuReserve (
     id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL REFERENCES Reservation(id) ON DELETE CASCADE,
     jeu_id INT NOT NULL REFERENCES Jeu(id),
     
     -- Placement physique (Step 3)
-    -- Le Backend devra vérifier que cette ZonePlan appartient bien 
-    -- à une ZoneTarifaire payée dans LigneReservation.
     zone_plan_id INT REFERENCES ZonePlan(id),
     
     -- Type de table souhaité (Info pour les bénévoles qui installent)
     type_table taille_table DEFAULT 'PETITE', 
     
-    -- NOUVEAU : Consommation d'espace
-    -- 1 = Une table entière
-    -- 0.5 = Partage une table (2 jeux sur 1 table)
-    -- 2 = Gros jeu (prend 2 tables)
+    -- Consommation d'espace (1 = Une table entière, 0.5 = Partage)
     tables_occupees DECIMAL(3, 1) DEFAULT 1.0,
     
     nb_exemplaires INT DEFAULT 1,

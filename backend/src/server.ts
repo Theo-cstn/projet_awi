@@ -10,6 +10,12 @@ import usersRouter from './routes/users.js'
 import authRouter from './routes/auth.js'
 import { verifyToken } from './middleware/token-management.js'
 import { requireAdmin } from './middleware/auth-admin.js'
+import editeursRoutes from './routes/editeurs.js';
+import personnesRoutes from './routes/personnes.js';
+import jeuxRoutes from './routes/jeux.js';
+import festivalsRoutes from './routes/festivals.js';
+import reservationsRoutes from './routes/reservations.js';
+import suiviRoutes from './routes/suivi.js';
 import 'dotenv/config'
 
 // Création de l’application Express
@@ -44,6 +50,13 @@ app.use('/api/users', verifyToken, usersRouter); // protégé
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Bienvenue admin' });
 })
+
+app.use('/api/editeurs', editeursRoutes);
+app.use('/api/personnes', personnesRoutes);
+app.use('/api/jeux', jeuxRoutes);
+app.use('/api/festivals', festivalsRoutes);
+app.use('/api/reservations', reservationsRoutes);
+app.use('/api/suivi', suiviRoutes);
 
 // Certificats (montés dans /app/certs via Docker)
 const key = fs.readFileSync('./certs/localhost-key.pem')
