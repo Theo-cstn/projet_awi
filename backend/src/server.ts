@@ -1,71 +1,53 @@
-import 'dotenv/config'
-import fs from 'fs'
-import https from 'https'
-import express from 'express'
-import cors from 'cors'
-import morgan from 'morgan'
-import cookieParser from 'cookie-parser'
-import publicRouter from './routes/public.js'
-import { ensureDefaultUsers } from './db/initAdmin.js'
-import usersRouter from './routes/users.js'
-import authRouter from './routes/auth.js'
-import { verifyToken } from './middleware/token-management.js'
-import { requireAdmin } from './middleware/auth-admin.js'
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+// Import du middleware d'authentification
+import { verifyToken } from './middleware/token-management.js';
+
+// Import des routes
+import authRoutes from './routes/auth.js';
+import publicRoutes from './routes/public.js';
+import usersRoutes from './routes/users.js';
 import editeursRoutes from './routes/editeurs.js';
-import personnesRoutes from './routes/personnes.js';
-import jeuxRoutes from './routes/jeux.js';
 import festivalsRoutes from './routes/festivals.js';
 import reservationsRoutes from './routes/reservations.js';
+import jeuxRoutes from './routes/jeux.js';
 import suiviRoutes from './routes/suivi.js';
+import personnesRoutes from './routes/personnes.js';
 
-// Création de l’application Express
-const app = express()
-await ensureDefaultUsers()
-// Ajout manuel des principaux en-têtes HTTP de sécurité
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff')
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN')
-  res.setHeader('Referrer-Policy', 'no-referrer')
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin')
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin')
-  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp')
-  next();
-})
-app.use(morgan('dev'))
-app.use(express.json())
-app.use(cookieParser())
+dotenv.config();
 
-// CORS: utilise la variable d'env si dispo, sinon le front Docker (8080)
-app.use(cors({
-  origin: process.env.FRONTEND_URL ?? 'http://localhost:8080',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}))
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Routes
-app.use('/api/public', publicRouter)
-app.use('/api/auth', authRouter);
-app.use('/api/users', verifyToken, usersRouter); // protégé
-app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
-  res.json({ message: 'Bienvenue admin' });
-})
+// Middlewares globaux
+app.use(cors());
+app.use(express.json());
 
-app.use('/api/editeurs', editeursRoutes);
-app.use('/api/personnes', personnesRoutes);
-app.use('/api/jeux', jeuxRoutes);
-app.use('/api/festivals', festivalsRoutes);
-app.use('/api/reservations', reservationsRoutes);
-app.use('/api/suivi', suiviRoutes);
+// Routes publiques (pas de protection)
+app.use('/api/auth', authRoutes);
+app.use('/api/public', publicRoutes);
 
-// Certificats SSL
-const keyPath = process.env.HTTPS_KEY_PATH || './certs/key.pem';
-const certPath = process.env.HTTPS_CERT_PATH || './certs/cert.pem';
-const key = fs.readFileSync(keyPath);
-const cert = fs.readFileSync(certPath);
+// PROTECTION GLOBALE : Toutes les routes métier nécessitent un token valide
+app.use('/api/users', verifyToken, usersRoutes);
+app.use('/api/editeurs', verifyToken, editeursRoutes);
+app.use('/api/festivals', verifyToken, festivalsRoutes);
+app.use('/api/reservations', verifyToken, reservationsRoutes);
+app.use('/api/jeux', verifyToken, jeuxRoutes);
+app.use('/api/suivi', verifyToken, suiviRoutes);
+app.use('/api/personnes', verifyToken, personnesRoutes);
 
-// Lancement du serveur HTTPS
-const port = process.env.PORT || 4000;
-https.createServer({ key, cert }, app).listen(port, () => {
-  console.log(`👍 Serveur API démarré sur https://localhost:${port}`)
-})
+// Route de santé
+app.get('/health', (req, res) => {
+  res.status(200).json({ message: 'Server is running' });
+});
+
+// Gestion des erreurs 404
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
