@@ -3,11 +3,11 @@ import { PersonneDto } from "./personne-dto"
 
 export interface JeuDto {
     id : number | undefined
-    nom : string 
+    nom : string
     
     ageMin : number | undefined
     ageMax : number | undefined
-    
+
     editeur : EditeurDto
     auteur : PersonneDto | undefined
 

@@ -5,6 +5,8 @@ import { EditeurListService } from '../../editeur/editeur-service/editeur-list-s
 import { JeuDto } from '../../types/jeu-dto';
 import { JeuComponent } from '../jeu-component/jeu-component';
 import { JeuForm } from '../jeu-form/jeu-form';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'app-jeu-list',
@@ -19,10 +21,13 @@ export class JeuList {
   readonly router = inject(Router)
   
   // Récupérer l'ID de l'éditeur depuis l'URL
-  editeurId = computed(() => {
-    const id = this.route.snapshot.paramMap.get('id')
-    return id ? Number(id) : undefined
-  })
+  editeurId = toSignal(this.route.paramMap.pipe(
+      map(params => {
+        const id = params.get('id');
+        return id ? Number(id) : undefined;
+      })
+    )
+  );
   
   // Filtrer les jeux si un éditeur est sélectionné
   jeux = computed(() => {
@@ -40,7 +45,9 @@ export class JeuList {
   })
 
   onAdd(formData: any): void {
-    const editeur = this.editeur()
+    // reucperer l'id du l'éditeur soit par le formulaire ( creation du jeu à partir de al liste générale) soit depuis le contexte ( creation du jeu depuis la liste de jeux d'un editeur)
+    const editeurId = this.editeurId() || formData.editeur
+    const editeur = this.editeurService.findById(editeurId)
     
     if (editeur) {
       const newJeu: JeuDto = {
@@ -54,6 +61,7 @@ export class JeuList {
         taille: formData.taille
       }
       this.svc.add(newJeu)
+      this.afficherFormulaire.set(false)
     }
   }
   

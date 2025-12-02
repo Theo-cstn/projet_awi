@@ -3,16 +3,16 @@
 
     <div class="contacts">
         <h3>Contacts :</h3>
-        @if (editeur().contacts?.length) {
-            @for (contact of editeur().contacts; track contact.id) {
-                <div class="contact">
-                    {{ contact.prenom }} {{ contact.nom }} - {{ contact.fonction }}<br>
-                    Email : {{ contact.mail }}
-                </div>
-            }
-        } @else {
-            <p>Aucun contact</p>
-        }
+        <a [routerLink]="['/editeurs', editeur().id, 'contacts']">
+            <button>Voir les contacts</button>
+        </a>
+    </div>
+
+    <div>
+        <h3>Jeux :</h3>
+        <a [routerLink]="['/editeurs', editeur().id, 'jeux']">
+            <button>Voir les jeux</button>
+        </a>
     </div>
 
     <div> 
