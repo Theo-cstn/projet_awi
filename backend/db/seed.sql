@@ -88,7 +88,7 @@ INSERT INTO SuiviEditeur (festival_id, editeur_id, etat, compte_rendu) VALUES
 (1, 1, 'CONFIRME', 'Ils viennent avec un gros stand de 100m2.'),
 (1, 2, 'CONFIRME', 'Viennent pour présenter Quoridor.'),
 (1, 3, 'DISCUSSION', 'Hésitent encore sur la surface, rappeler semaine prochaine.'),
-(1, 4, 'A_CONTACTER', NULL),
+(1, 4, 'PAS_CONTACTE', NULL),
 (1, 5, 'REFUS', 'Pas de budget cette année.'),
 (1, 6, 'CONTACTE', 'Message laissé sur répondeur.');
 
