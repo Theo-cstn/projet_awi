@@ -8,6 +8,5 @@ import { JeuDto } from '../../types/jeu-dto';
   styleUrl: './jeu-component.css',
 })
 export class JeuComponent {
-    jeu = input.required<JeuDto>()
-
+  jeu = input.required<JeuDto>()
 }

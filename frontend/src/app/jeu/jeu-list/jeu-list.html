@@ -1,19 +1,28 @@
-<button (click)="retourEditeurs()">← Retour aux éditeurs</button>
-<h1>Jeux de {{ editeur()?.nom }}</h1>
+@if (editeurId()) {
+  <h1>Jeux de {{ editeur()?.nom ?? 'Éditeur inconnu' }}</h1>
+  <button (click)="retourEditeurs()">← Retour aux éditeurs</button>
+} @else {
+  <h1>Liste de Jeux</h1>
+}
 
 <button (click)="toggleFormulaire()">
   {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un jeu' }}
 </button>
 
 @if (afficherFormulaire()) {
-  <app-jeu-form 
-    [editeurId]="editeurId()!"
-    (add)="onAdd($event)" 
-  />
+  <app-jeu-form
+    [editeurId]="editeurId()"
+    (add)="onAdd($event)">
+  </app-jeu-form>
 }
 
-@for (jeu of jeux(); track jeu.id) {
-    <app-jeu-component [jeu]="jeu" />
-} @empty {
-  <p>Aucun jeu pour cet éditeur. Ajoutez-en un !</p>
+
+@if (jeux(); as jeuxList) {
+  @for (jeu of jeuxList; track jeu.id) {
+    <app-jeu-component [jeu]="jeu"></app-jeu-component>
+  } @empty {
+    <p>Aucun jeu pour cet éditeur. Ajoutez-en un !</p>
+  }
+} @else {
+  <p>Chargement des jeux...</p>
 }

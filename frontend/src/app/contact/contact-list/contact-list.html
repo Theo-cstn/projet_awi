@@ -1,0 +1,30 @@
+@if(editeurId()){
+    <h1>Contacts de {{ editeur()!.nom}}</h1>
+    <button (click)="retourEditeurs()">← Retour aux éditeurs</button>
+    } @else {
+    <h1>Liste de Contacts</h1>
+}
+
+
+<button (click)="toggleFormulaire()">
+    {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un contact' }}
+</button>
+
+@if (afficherFormulaire()) {
+    <app-contact-form
+        [editeurId]="editeurId()"
+        (add)="onAdd($event)">
+    </app-contact-form>
+}
+
+
+@if (contacts(); as contactList) {
+    @for (contact of contactList; track contact.id) {
+        <app-contact-component
+            [contact]="contact">
+        </app-contact-component>
+    }
+}
+@else {
+    <p>Chargement des contacts...</p>
+}

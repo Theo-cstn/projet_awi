@@ -19,7 +19,7 @@ export class JeuListService {
       auteur: undefined,
       type: 'stratégie',
       taille: 'petit'
-    },     
+    },
   ])
 
   private lastID : number = 1

@@ -5,7 +5,7 @@
         <p>
             <strong>Type :</strong> {{ this.jeu().type }}<br>
             
-            <strong>Âge minimum :</strong> 
+            <strong>Âge minimum :</strong>
             @if (jeu().ageMin !== undefined) {
                 {{ jeu().ageMin }} ans
             } @else {
@@ -13,7 +13,7 @@
             }
             <br>
             
-            <strong>Âge maximum :</strong> 
+            <strong>Âge maximum :</strong>
             @if (jeu().ageMax !== undefined) {
                 {{ jeu().ageMax }} ans
             } @else {
@@ -31,15 +31,7 @@
             }
             <br>
             
-            <strong>Taille :</strong> 
-            @if (jeu().taille) {
-                @switch (jeu().taille) {
-                    @case('petit') { Petit }
-                    @case('grand') { Grand }
-                }
-            } @else {
-                À compléter
-            }
+            <strong>Taille :</strong> {{ this.jeu().taille ?? 'À compléter' }}
             <br>
         </p>
     </div>

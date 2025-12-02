@@ -1,3 +1,8 @@
 <nav>
-    <a routerLink="" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Festivals</a>
+    <!--Besoin d'ajouter routerLinkActive pour desactiver les interconnections-->
+    <a routerLink="festival" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Festivals    --   </a>
+    <a routerLink="editeurs" routerLinkActive="active"[routerLinkActiveOptions]="{exact: true}">Editeurs    --   </a>
+    <a routerLink="jeux" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Jeux</a>
+
 </nav>
+<router-outlet></router-outlet>

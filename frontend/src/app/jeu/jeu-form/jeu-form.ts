@@ -1,4 +1,4 @@
-import { Component, output, inject,input  } from '@angular/core';
+import { Component, output, inject, input, computed } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
 
@@ -10,11 +10,12 @@ import { EditeurListService } from '../../editeur/editeur-service/editeur-list-s
   styleUrl: './jeu-form.css',
 })
 export class JeuForm {
-private readonly editeurService = inject(EditeurListService);
+  private readonly editeurService = inject(EditeurListService);
+  // id de l'éditeur est optionnel - présent seulement si on vient d'un éditeur spécifique
+  editeurId = input<number|undefined>(undefined)
+  editeurPreSelected = computed(() => this.editeurId !== undefined)
 
-    editeurId = input.required<number>()
-
-  readonly form = new FormGroup({  
+  readonly form = new FormGroup({
     nom: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(3)]
@@ -27,12 +28,14 @@ private readonly editeurService = inject(EditeurListService);
     ageMax: new FormControl<number | undefined>(undefined, {
       validators: [Validators.min(0)]
     }),
-    
+
+    editeur: new FormControl<number|undefined>(undefined, {
+      validators: [Validators.required]
+    }),
     
     auteur: new FormControl<number | undefined>(undefined),
     
     type: new FormControl('', {
-      nonNullable: true,
       validators: [Validators.required]
     }),
     
@@ -42,8 +45,20 @@ private readonly editeurService = inject(EditeurListService);
   add = output<any>()
   submitted = false
 
+  constructor(){
+    // si un editeur est preselectionner, on le met dans le formulaire
+    if (this.editeurId()){
+      this.form.patchValue({ editeur: this.editeurId() });
+    }
+  }
+
   onSubmit(): void {
     this.submitted= true
+
+    if (this.editeurPreSelected()){
+      this.form.patchValue({ editeur: this.editeurId() })
+    }
+
     if (this.form.valid) {
       this.add.emit(this.form.value)
       this.form.reset()
@@ -52,7 +67,7 @@ private readonly editeurService = inject(EditeurListService);
   }
 
   getErrorMessage(control: AbstractControl | null): string | null {
-    if (control != null) {  
+    if (control != null) {
       if (control.errors?.['required']) {
         return "Champ obligatoire"
       }
@@ -67,7 +82,21 @@ private readonly editeurService = inject(EditeurListService);
     return null
   }
 
-  get editeurs() {
+  editeurs() {
     return this.editeurService.editeurs();
   }
+  getNomEditeur(): string {
+    const editeur = this.editeurs().find(e=>e.id === this.editeurId())
+    return editeur?.nom || 'Editeur selectionné'
+  }
+
+  readonly typesJeu = [
+    'Tout public',
+    'Ambiance',
+    'Experts',
+    'Enfants',
+    'Classiques',
+    'Initiés',
+    'Jeu de rôle'
+  ];
 }

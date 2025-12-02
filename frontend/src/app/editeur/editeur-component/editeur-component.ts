@@ -12,5 +12,6 @@ export class EditeurComponent {
     editeur = input.required<EditeurDto>()
 
     voirJeux = output<number>()  // Émet l'ID de l'éditeur
+    voirContacts = output<number>()  // Émet l'ID de l'éditeur
     modifier = output<EditeurDto>()  // Émet l'éditeur complet à modifier
 }
