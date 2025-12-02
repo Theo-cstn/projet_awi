@@ -6,6 +6,7 @@ import { PersonneDto } from '../../types/personne-dto';
   providedIn: 'root',
 })
 export class EditeurListService {
+  
   private readonly _editeurs = signal<EditeurDto[]>([
     {
       id: 1,

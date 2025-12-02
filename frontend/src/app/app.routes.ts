@@ -5,6 +5,7 @@ import { FestivalList } from './festival/festival-list/festival-list';
 import { ContactList } from './contact/contact-list/contact-list';
 
 
+
 export const routes: Routes = [
   { path: '', redirectTo: '/festival', pathMatch: 'full' },
   { path: 'festival', component: FestivalList },

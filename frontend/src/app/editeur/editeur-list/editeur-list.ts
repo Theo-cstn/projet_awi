@@ -31,4 +31,5 @@ export class EditeurList {
   toggleFormulaire(): void {
     this.afficherFormulaire.update(v => !v)
   }
+
 }
