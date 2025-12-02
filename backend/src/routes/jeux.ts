@@ -2,70 +2,79 @@ import { Router } from 'express';
 import pool from '../db/database.js';
 const router = Router();
 
-// GET /jeux - Retrieve all games
+// GET /jeux - Récupère les jeux AVEC leurs auteurs aggrégés
 router.get('/', async (_req, res) => {
   try {
-    const games = await pool.query('SELECT * FROM "Jeu"');
-    res.status(200).json(games.rows);
+    const query = `
+      SELECT 
+        j.id, j.nom, j.typeG, j.age_min, j.age_max, j.editeur_id, e.nom as nom_editeur,
+        COALESCE(
+          json_agg(json_build_object('id', p.id, 'nom', p.nom, 'prenom', p.prenom)) 
+          FILTER (WHERE p.id IS NOT NULL), 
+          '[]'
+        ) as auteurs
+      FROM Jeu j
+      JOIN Editeur e ON j.editeur_id = e.id
+      LEFT JOIN Auteurs_Jeux aj ON j.id = aj.jeu_id
+      LEFT JOIN Personne p ON aj.auteur_id = p.id
+      GROUP BY j.id, e.nom
+      ORDER BY j.nom ASC
+    `;
+    const result = await pool.query(query);
+    res.status(200).json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch games' });
+    console.error(error);
+    res.status(500).json({ error: 'Erreur chargement jeux' });
   }
 });
 
-// POST /jeux - Create a new game
+// POST /jeux - Création avec transaction (Jeu + Liaison Auteurs)
 router.post('/', async (req, res) => {
+  const client = await pool.connect();
   try {
-    const { editeur_id, nom, auteurs, type, age_min, age_max, duree_moyenne } = req.body;
-    const result = await pool.query(
-      'INSERT INTO "Jeu" (editeur_id, nom, auteurs, type, age_min, age_max, duree_moyenne) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [editeur_id, nom, auteurs, type, age_min, age_max, duree_moyenne]
+    // auteurs_ids est un tableau d'IDs : [1, 5, 8]
+    const { editeur_id, nom, typeG, age_min, age_max, auteurs_ids } = req.body;
+
+    await client.query('BEGIN');
+
+    // 1. Créer le jeu
+    const gameResult = await client.query(
+      `INSERT INTO Jeu (editeur_id, nom, typeG, age_min, age_max) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [editeur_id, nom, typeG, age_min, age_max]
     );
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create game' });
-  }
-});
+    const newGame = gameResult.rows[0];
 
-// GET /jeux/:id - Retrieve a game by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const game = await pool.query('SELECT * FROM "Jeu" WHERE id = $1', [id]);
-    if (game.rows.length === 0) {
-      return res.status(404).json({ error: 'Game not found' });
+    // 2. Créer les liens auteurs (si fournis)
+    if (auteurs_ids && Array.isArray(auteurs_ids) && auteurs_ids.length > 0) {
+        for (const auteurId of auteurs_ids) {
+            await client.query(
+                'INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES ($1, $2)',
+                [newGame.id, auteurId]
+            );
+        }
     }
-    res.status(200).json(game.rows[0]);
+
+    await client.query('COMMIT');
+    res.status(201).json(newGame);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch game' });
+    await client.query('ROLLBACK');
+    console.error(error);
+    res.status(500).json({ error: 'Erreur création jeu' });
+  } finally {
+    client.release();
   }
 });
 
-// PUT /jeux/:id - Update a game
-router.put('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { nom, auteurs, type, age_min, age_max, duree_moyenne } = req.body;
-    const result = await pool.query(
-      'UPDATE "Jeu" SET nom = $1, auteurs = $2, type = $3, age_min = $4, age_max = $5, duree_moyenne = $6 WHERE id = $7 RETURNING *',
-      [nom, auteurs, type, age_min, age_max, duree_moyenne, id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Game not found' });
-    }
-    res.status(200).json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update game' });
-  }
-});
-
-// DELETE /jeux/:id - Delete a game
+// DELETE /jeux/:id
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM "Jeu" WHERE id = $1', [id]);
-    res.status(200).json({ message: 'Game deleted successfully' });
+    // Le ON DELETE CASCADE SQL nettoie les liens auteurs tout seul
+    await pool.query('DELETE FROM Jeu WHERE id = $1', [id]);
+    res.status(200).json({ message: 'Jeu supprimé' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete game' });
+    res.status(500).json({ error: 'Erreur suppression' });
   }
 });
 

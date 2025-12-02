@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import fs from 'fs'
 import https from 'https'
 import express from 'express'
@@ -10,7 +11,12 @@ import usersRouter from './routes/users.js'
 import authRouter from './routes/auth.js'
 import { verifyToken } from './middleware/token-management.js'
 import { requireAdmin } from './middleware/auth-admin.js'
-import 'dotenv/config'
+import editeursRoutes from './routes/editeurs.js';
+import personnesRoutes from './routes/personnes.js';
+import jeuxRoutes from './routes/jeux.js';
+import festivalsRoutes from './routes/festivals.js';
+import reservationsRoutes from './routes/reservations.js';
+import suiviRoutes from './routes/suivi.js';
 
 // Création de l’application Express
 const app = express()
@@ -45,11 +51,21 @@ app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Bienvenue admin' });
 })
 
-// Certificats (montés dans /app/certs via Docker)
-const key = fs.readFileSync('./certs/localhost-key.pem')
-const cert = fs.readFileSync('./certs/localhost.pem')
+app.use('/api/editeurs', editeursRoutes);
+app.use('/api/personnes', personnesRoutes);
+app.use('/api/jeux', jeuxRoutes);
+app.use('/api/festivals', festivalsRoutes);
+app.use('/api/reservations', reservationsRoutes);
+app.use('/api/suivi', suiviRoutes);
+
+// Certificats SSL
+const keyPath = process.env.HTTPS_KEY_PATH || './certs/key.pem';
+const certPath = process.env.HTTPS_CERT_PATH || './certs/cert.pem';
+const key = fs.readFileSync(keyPath);
+const cert = fs.readFileSync(certPath);
 
 // Lancement du serveur HTTPS
-https.createServer({ key, cert }, app).listen(4000, () => {
-  console.log('👍 Serveur API démarré sur https://localhost:4000')
+const port = process.env.PORT || 4000;
+https.createServer({ key, cert }, app).listen(port, () => {
+  console.log(`👍 Serveur API démarré sur https://localhost:${port}`)
 })
