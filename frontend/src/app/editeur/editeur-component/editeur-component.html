@@ -6,8 +6,8 @@
         @if (editeur().contacts?.length) {
             @for (contact of editeur().contacts; track contact.id) {
                 <div class="contact">
-                    {{ contact.prenom }} {{ contact.nom }} - {{ contact.fonction }}<br>
-                    Email : {{ contact.mail }}
+                    {{ contact.prenom }} {{ contact.nom }}<br>
+                    Email : {{ contact.email }}
                 </div>
             }
         } @else {

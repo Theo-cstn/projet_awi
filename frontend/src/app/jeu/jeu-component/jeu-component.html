@@ -3,44 +3,37 @@
 
     <div class="info">
         <p>
-            <strong>Type :</strong> {{ this.jeu().type }}<br>
+            <strong>Type :</strong> {{ this.jeu().typeG }}<br>
             
             <strong>Âge minimum :</strong> 
-            @if (jeu().ageMin !== undefined) {
-                {{ jeu().ageMin }} ans
+            @if (jeu().age_min !== undefined) {
+                {{ jeu().age_min }} ans
             } @else {
                 À compléter
             }
             <br>
             
             <strong>Âge maximum :</strong> 
-            @if (jeu().ageMax !== undefined) {
-                {{ jeu().ageMax }} ans
+            @if (jeu().age_max !== undefined) {
+                {{ jeu().age_max }} ans
             } @else {
                 À compléter
             }
             <br>
             
-            <strong>Éditeur :</strong> {{ this.jeu().editeur.nom }}<br>
-            
-            <strong>Auteur :</strong>
-            @if (jeu().auteur?.prenom && jeu().auteur?.nom) {
-                {{ jeu().auteur?.prenom }} {{ jeu().auteur?.nom }}
-            } @else {
-                À compléter
-            }
-            <br>
-            
-            <strong>Taille :</strong> 
-            @if (jeu().taille) {
-                @switch (jeu().taille) {
-                    @case('petit') { Petit }
-                    @case('grand') { Grand }
+            @if (jeu().editeur) {
+                <strong>Éditeur :</strong> {{ jeu().editeur!.nom }}<br>
+            }    
+                    
+            @if (jeu().auteurs && jeu().auteurs!.length > 0) {
+                <strong>Auteurs :</strong>
+                @for (auteur of jeu().auteurs; track auteur.id) {
+                    {{ auteur.prenom }} {{ auteur.nom }}
+                    @if (!$last) { , }
                 }
-            } @else {
-                À compléter
+                <br>
             }
-            <br>
+            
         </p>
     </div>
 </div>

@@ -10,24 +10,26 @@ export class EditeurListService {
   private readonly _editeurs = signal<EditeurDto[]>([
     { 
       id: 1,
-      nom: 'editeur1',
-      contacts : [ {id: 1,
-                    nom: 'Cantillon',
-                    prenom: 'Tom',
-                    fonction: 'président',
-                    mail: 'tom@mail.com'},
-                    
-                    {id: 2,
-                    nom: 'Cantillon',
-                    prenom: 'Tomzer',
-                    fonction: 'employé',
-                    mail: 'tomzer@mail.com'}
-                  ],
-      jeux: undefined
-    },    
+      nom: 'Asmodée',
+      contacts : [ 
+        {
+          id: 1,
+          nom: 'Dupont',
+          prenom: 'Marie',
+          email: 'marie.dupont@asmodee.com'  
+        },
+        {
+          id: 2,
+          nom: 'Martin',
+          prenom: 'Pierre',
+          email: 'pierre.martin@asmodee.com' 
+        }
+      ]
+    },
+    
   ])
 
-  private lastID : number = 1
+  private lastID : number = 3
 
   readonly editeurs = this._editeurs.asReadonly() // Contrat public : lecture seule
 

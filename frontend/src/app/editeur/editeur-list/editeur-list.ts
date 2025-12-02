@@ -19,7 +19,6 @@ export class EditeurList {
       id: undefined,
       nom: formData.nom,
       contacts: undefined,
-      jeux: undefined
     }
     this.svc.add(nouvelEditeur)
   }
