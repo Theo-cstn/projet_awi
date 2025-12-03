@@ -4,18 +4,14 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validator
 
 @Component({
   selector: 'app-editeur-form',
-  imports: [
-    ReactiveFormsModule
-  ],
+  imports: [ReactiveFormsModule],
   templateUrl: './editeur-form.html',
   styleUrl: './editeur-form.css',
 })
 export class EditeurForm {
-  readonly form = new FormGroup({  
-    
-      nom: new FormControl('', {
-      nonNullable : true,
-      validators: [Validators.required, Validators.minLength(3)]
+  readonly form = new FormGroup({
+      nom: new FormControl('', {nonNullable : true,
+        validators: [Validators.required, Validators.minLength(3)]
     }),
     
   });
@@ -33,7 +29,7 @@ export class EditeurForm {
   }
 
   getErrorMessage(control:AbstractControl|null): string|null {
-    if (control != null){  
+    if (control != null){
       if (control.errors?.['required']) {
         return "Champ obligatoire"
       }

@@ -1,25 +1,40 @@
 import { Router } from 'express';
+import { requireVisiteur, requireAdmin } from '../middleware/roles.js';
 import pool from '../db/database.js';
 
 const router = Router();
 
 // ==============================================================================
-// GET /editeurs - Liste tous les éditeurs (Triés par nom)
+// 1. LECTURE PUBLIQUE (Visiteurs+)
 // ==============================================================================
-router.get('/', async (_req, res) => {
+
+// GET /editeurs - Liste tous les éditeurs (Triés par nom)
+router.get('/', requireVisiteur(), async (_req, res) => {
   try {
     const result = await pool.query('SELECT * FROM Editeur ORDER BY nom ASC');
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error fetching editors:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// ==============================================================================
-// GET /editeurs/:id/contacts - Récupère les contacts d'un éditeur
-// ==============================================================================
-router.get('/:id/contacts', async (req, res) => {
+// GET /editeurs/:id - Un seul éditeur
+router.get('/:id', requireVisiteur(), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('SELECT * FROM Editeur WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Éditeur non trouvé' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// GET /editeurs/:id/contacts - Récupère les contacts d'un éditeur spécifique
+router.get('/:id/contacts', requireVisiteur(), async (req, res) => {
   const { id } = req.params;
   try {
     const query = `
@@ -27,19 +42,82 @@ router.get('/:id/contacts', async (req, res) => {
       FROM Personne p
       JOIN Editeur_Contact ec ON p.id = ec.contact_id
       WHERE ec.editeur_id = $1
+      ORDER BY ec.est_contact_principal DESC, p.nom ASC
     `;
     const result = await pool.query(query, [id]);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error fetching editor contacts:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 // ==============================================================================
-// POST /editeurs/:id/contacts - AJOUTER UN CONTACT (Upsert)
+// 2. ÉCRITURE ÉDITEUR (Admin Uniquement)
 // ==============================================================================
-router.post('/:id/contacts', async (req, res) => {
+
+// POST /editeurs - Création simple
+router.post('/', requireAdmin(), async (req, res) => {
+  const { nom } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO Editeur (nom) VALUES ($1) RETURNING *',
+      [nom]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (error.code === '23505') {
+        return res.status(409).json({ error: "Cet éditeur existe déjà." });
+    }
+    console.error('Error adding editor:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// PUT /editeurs/:id - Modifier le nom
+router.put('/:id', requireAdmin(), async (req, res) => {
+  const { id } = req.params;
+  const { nom } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE Editeur SET nom = $1 WHERE id = $2 RETURNING *',
+      [nom, id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Éditeur non trouvé' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// DELETE /editeurs/:id - Supprimer l'éditeur
+router.delete('/:id', requireAdmin(), async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Le DELETE RESTRICT (SQL) bloquera si des jeux/réservations existent
+    const result = await pool.query('DELETE FROM Editeur WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Éditeur non trouvé' });
+    }
+    res.status(200).json({ message: 'Éditeur supprimé avec succès' });
+  } catch (error: any) {
+    if (error.code === '23503') {
+        return res.status(409).json({ error: "Impossible de supprimer : cet éditeur est lié à des jeux ou des réservations." });
+    }
+    console.error('Error deleting editor:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ==============================================================================
+// 3. GESTION DES CONTACTS (Admin Uniquement - Modification de l'éditeur)
+// ==============================================================================
+
+// POST /editeurs/:id/contacts - AJOUTER UN CONTACT (Upsert Intelligent)
+router.post('/:id/contacts', requireAdmin(), async (req, res) => {
   const editeurId = req.params.id;
   const { nom, prenom, email, fonction, est_contact_principal } = req.body;
 
@@ -52,7 +130,7 @@ router.post('/:id/contacts', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // 1. Gérer la Personne (Créer ou Récupérer + Mettre à jour)
+    // 1. Gérer la Personne (Créer ou Récupérer + Mettre à jour si existe)
     const personneQuery = `
       INSERT INTO Personne (nom, prenom, email)
       VALUES ($1, $2, $3)
@@ -84,69 +162,14 @@ router.post('/:id/contacts', async (req, res) => {
   } catch (error) {
     await client.query('ROLLBACK');
     console.error(error);
-    res.status(500).json({ error: 'Erreur lors de l\'ajout du contact' });
+    res.status(500).json({ error: 'Erreur serveur lors de l\'ajout du contact' });
   } finally {
     client.release();
   }
 });
 
-// ==============================================================================
-// POST /editeurs - Création d'un éditeur
-// ==============================================================================
-router.post('/', async (req, res) => {
-  const { nom } = req.body;
-  try {
-    const result = await pool.query(
-      'INSERT INTO Editeur (nom) VALUES ($1) RETURNING *',
-      [nom]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error adding editor:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ==============================================================================
-// GET /editeurs/:id - Détail d'un éditeur
-// ==============================================================================
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await pool.query('SELECT * FROM Editeur WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Editor not found' });
-    }
-    res.status(200).json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ==============================================================================
-// PUT /editeurs/:id - Mise à jour d'un éditeur
-// ==============================================================================
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { nom } = req.body;
-  try {
-    const result = await pool.query(
-      'UPDATE Editeur SET nom = $1 WHERE id = $2 RETURNING *',
-      [nom, id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Editor not found' });
-    }
-    res.status(200).json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ==============================================================================
 // DELETE /editeurs/:id/contacts/:contactId - Supprimer un contact (Smart Delete)
-// ==============================================================================
-router.delete('/:id/contacts/:contactId', async (req, res) => {
+router.delete('/:id/contacts/:contactId', requireAdmin(), async (req, res) => {
   const { id, contactId } = req.params;
   const client = await pool.connect();
 
@@ -160,11 +183,13 @@ router.delete('/:id/contacts/:contactId', async (req, res) => {
     );
 
     // 2. VÉRIFICATION D'ORPHELIN
+    // Est-ce que cette personne est liée à un AUTRE éditeur ?
     const checkContact = await client.query(
       'SELECT 1 FROM Editeur_Contact WHERE contact_id = $1 LIMIT 1', 
       [contactId]
     );
     
+    // Est-ce que cette personne est liée à un JEU (Auteur) ?
     const checkAuteur = await client.query(
       'SELECT 1 FROM Auteurs_Jeux WHERE auteur_id = $1 LIMIT 1', 
       [contactId]
@@ -172,10 +197,10 @@ router.delete('/:id/contacts/:contactId', async (req, res) => {
 
     let message = 'Contact retiré de cet éditeur.';
 
-    // 3. Si elle n'est nulle part ailleurs, on la supprime définitivement
+    // 3. Si elle n'est nulle part ailleurs, on la supprime définitivement pour nettoyer la base
     if (checkContact.rowCount === 0 && checkAuteur.rowCount === 0) {
       await client.query('DELETE FROM Personne WHERE id = $1', [contactId]);
-      message += ' (Personne supprimée car orpheline).';
+      message += ' (Fiche personne supprimée car orpheline).';
     }
 
     await client.query('COMMIT');
@@ -187,30 +212,6 @@ router.delete('/:id/contacts/:contactId', async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   } finally {
     client.release();
-  }
-});
-
-// ==============================================================================
-// DELETE /editeurs/:id - Supprimer l'éditeur lui-même
-// ==============================================================================
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    // Si des jeux ou réservations existent, le DELETE RESTRICT (SQL) bloquera automatiquement
-    // et renverra une erreur, ce qui est le comportement voulu.
-    const result = await pool.query('DELETE FROM Editeur WHERE id = $1 RETURNING *', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Editor not found' });
-    }
-    res.status(200).json({ message: 'Editor deleted successfully' });
-  } catch (error: any) {
-    // Gestion spécifique de l'erreur RESTRICT (Foreign Key Violation)
-    if (error.code === '23503') {
-        return res.status(409).json({ error: "Impossible de supprimer cet éditeur car il est lié à des jeux ou des réservations." });
-    }
-    console.error('Error deleting editor:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

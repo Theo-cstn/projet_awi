@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { requireVisiteur, requireAdmin } from '../middleware/roles.js';
 import pool from '../db/database.js';
 
 const router = Router();
@@ -7,8 +8,8 @@ const router = Router();
 // FESTIVALS - CRUD
 // ==============================================================================
 
-// GET /festivals - Liste des festivals (du plus récent au plus vieux)
-router.get('/', async (req, res) => {
+// LECTURE : Historique complet (Passé/Présent/Futur) -> ADMIN SEULEMENT
+router.get('/', requireAdmin(), async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM Festival ORDER BY date_debut DESC');
     res.json(result.rows);
@@ -18,20 +19,24 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /festivals/current - Récupère le festival "en cours" (le plus récent)
-// Utile pour charger l'interface par défaut
-router.get('/current', async (req, res) => {
+// LECTURE : Festivals "Courants" (Actifs/Futurs) -> VISITEUR+
+// Ce sont les espaces de travail pour les organisateurs.
+router.get('/current', requireVisiteur(), async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM Festival ORDER BY date_debut DESC LIMIT 1');
-      if (result.rows.length === 0) return res.status(404).json({ error: 'Aucun festival trouvé' });
-      res.json(result.rows[0]);
+      // On prend tous les festivals qui ne sont pas encore finis (date_fin >= aujourd'hui)
+      const result = await pool.query(`
+        SELECT * FROM Festival 
+        WHERE date_fin >= CURRENT_DATE 
+        ORDER BY date_debut ASC
+      `);
+      res.json(result.rows); 
     } catch (error) {
       res.status(500).json({ error: 'Erreur serveur' });
     }
-  });
+});
 
-// POST /festivals - Créer un nouveau festival
-router.post('/', async (req, res) => {
+// ÉCRITURE : Création -> ADMIN SEULEMENT
+router.post('/', requireAdmin(), async (req, res) => {
   const { nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie } = req.body;
   try {
     const query = `
@@ -39,47 +44,48 @@ router.post('/', async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
-    const result = await pool.query(query, [
-        nom, date_debut, date_fin, 
-        stock_tables_petites || 0, 
-        stock_tables_grandes || 0, 
-        stock_tables_mairie || 0
-    ]);
+    const result = await pool.query(query, [nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erreur lors de la création du festival' });
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// PUT /festivals/:id - Mettre à jour (ex: modifier le stock de tables)
-router.put('/:id', async (req, res) => {
+// ÉCRITURE : Modification -> ADMIN SEULEMENT
+router.put('/:id', requireAdmin(), async (req, res) => {
     const { id } = req.params;
     const { nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie } = req.body;
     try {
       const query = `
         UPDATE Festival 
-        SET nom=$1, date_debut=$2, date_fin=$3, stock_tables_petites=$4, stock_tables_grandes=$5, stock_tables_mairie=$6
-        WHERE id=$7 RETURNING *
+        SET nom = $1, date_debut = $2, date_fin = $3, 
+            stock_tables_petites = $4, stock_tables_grandes = $5, stock_tables_mairie = $6
+        WHERE id = $7
+        RETURNING *
       `;
       const result = await pool.query(query, [nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie, id]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Festival non trouvé' });
+      }
+      
       res.json(result.rows[0]);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: 'Erreur serveur' });
     }
-  });
+});
 
 // ==============================================================================
-// ZONES TARIFAIRES (Nested Routes)
+// ZONES TARIFAIRES
 // ==============================================================================
 
-// GET /festivals/:id/zones - Récupère TOUTES les zones (Tarifaires + Plans imbriqués)
-// C'est cette route qui servira à afficher ton onglet "Plan / Zones"
-router.get('/:id/zones', async (req, res) => {
+// LECTURE : Voir les zones d'un festival précis -> VISITEUR+
+router.get('/:id/zones', requireVisiteur(), async (req, res) => {
     const { id } = req.params;
     try {
-        // On récupère les zones tarifaires et on imbrique les zones plans (salles) dedans
-        const query = `
+      const query = `
             SELECT 
                 zt.id, zt.nom, zt.prix_table, zt.prix_m2,
                 COALESCE(
@@ -92,58 +98,68 @@ router.get('/:id/zones', async (req, res) => {
             WHERE zt.festival_id = $1
             GROUP BY zt.id
             ORDER BY zt.nom
-        `;
-        const result = await pool.query(query, [id]);
-        res.json(result.rows);
+      `;
+      const result = await pool.query(query, [id]);
+      res.json(result.rows);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erreur récupération zones' });
+      console.error(error);
+      res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
-// POST /festivals/:id/zones - Créer une Zone Tarifaire (ex: "Zone Famille")
-router.post('/:id/zones', async (req, res) => {
+// CONFIGURATION ZONES -> ADMIN SEULEMENT
+router.post('/:id/zones', requireAdmin(), async (req, res) => {
     const { id } = req.params;
     const { nom, prix_table, prix_m2 } = req.body;
     try {
-        const result = await pool.query(
-            'INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2) VALUES ($1, $2, $3, $4) RETURNING *',
-            [id, nom, prix_table, prix_m2]
-        );
-        res.status(201).json(result.rows[0]);
+      const query = `
+        INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `;
+      const result = await pool.query(query, [id, nom, prix_table, prix_m2]);
+      res.status(201).json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: 'Erreur création zone tarifaire' });
+      console.error(error);
+      res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
-// DELETE /zones/:id - Supprimer une Zone Tarifaire
-// Attention : CASCADE supprimera aussi les Salles et les Lignes de Réservation liées !
-router.delete('/zones/:id', async (req, res) => {
+router.delete('/zones/:id', requireAdmin(), async (req, res) => {
     const { id } = req.params;
     try {
-        await pool.query('DELETE FROM ZoneTarifaire WHERE id = $1', [id]);
-        res.json({ message: 'Zone tarifaire supprimée' });
+      const result = await pool.query(`
+        DELETE FROM ZoneTarifaire 
+        WHERE id = $1 
+        RETURNING *
+      `, [id]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Zone tarifaire non trouvée' });
+      }
+      
+      res.json({ message: 'Zone tarifaire supprimée', data: result.rows[0] });
     } catch (error) {
-        res.status(500).json({ error: 'Erreur suppression' });
+      console.error(error);
+      res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
-// ==============================================================================
-// ZONES PLANS (Salles physiques)
-// ==============================================================================
-
-// POST /zones/:id/salles - Ajouter une salle à une zone tarifaire existante
-router.post('/zones/:id/salles', async (req, res) => {
-    const { id } = req.params; // C'est l'ID de la ZoneTarifaire
+// CONFIGURATION SALLES -> ADMIN SEULEMENT
+router.post('/zones/:id/salles', requireAdmin(), async (req, res) => {
+    const { id } = req.params;
     const { nom, nombre_tables } = req.body;
     try {
-        const result = await pool.query(
-            'INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables) VALUES ($1, $2, $3) RETURNING *',
-            [id, nom, nombre_tables]
-        );
-        res.status(201).json(result.rows[0]);
+      const query = `
+        INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables)
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `;
+      const result = await pool.query(query, [id, nom, nombre_tables]);
+      res.status(201).json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: 'Erreur création salle' });
+      console.error(error);
+      res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
