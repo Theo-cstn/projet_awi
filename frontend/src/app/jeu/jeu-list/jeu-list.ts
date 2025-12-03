@@ -32,8 +32,8 @@ export class JeuList {
   // Filtrer les jeux si un éditeur est sélectionné
   jeux = computed(() => {
     const id = this.editeurId()
-    if (id) {
-      return this.svc.jeux().filter(j => j.editeur.id === id)
+    if (id ) {
+      return this.svc.jeux().filter(j => j.editeur_id === id)
     }
     return this.svc.jeux()
   })
@@ -53,12 +53,12 @@ export class JeuList {
       const newJeu: JeuDto = {
         id: undefined,
         nom: formData.nom,
-        ageMin: formData.ageMin,
-        ageMax: formData.ageMax,
+        typeG: formData.type,  
+        age_min: formData.ageMin,  
+        age_max: formData.ageMax,  
+        editeur_id: editeur.id!,
         editeur: editeur,
-        auteur: undefined,
-        type: formData.type,
-        taille: formData.taille
+        auteurs: []
       }
       this.svc.add(newJeu)
       this.afficherFormulaire.set(false)

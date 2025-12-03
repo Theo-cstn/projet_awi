@@ -10,42 +10,33 @@ export class EditeurListService {
   private readonly _editeurs = signal<EditeurDto[]>([
     {
       id: 1,
-      nom: 'editeur1',
-      contacts: [
+      nom: 'Asmodée',
+      contacts : [ 
         {
           id: 1,
-          nom: 'Cantillon',
-          prenom: 'Tom',
-          fonction: 'président',
-          mail: 'tom@mail.com'
+          nom: 'Dupont',
+          prenom: 'Marie',
+          email: 'marie.dupont@asmodee.com'  
         },
         {
           id: 2,
-          nom: 'Cantillon',
-          prenom: 'Tomzer',
-          fonction: 'employé',
-          mail: 'tomzer@mail.com'
+          nom: 'Martin',
+          prenom: 'Pierre',
+          email: 'pierre.martin@asmodee.com' 
         }
-      ],
-      jeux: []
+      ]
     },
-  ]);
+    
+  ])
 
-  private lastID: number = 1;
-  private lastContactID: number = 2;
+  private lastID : number = 3
 
-  readonly editeurs = this._editeurs.asReadonly();
+  readonly editeurs = this._editeurs.asReadonly() // Contrat public : lecture seule
 
-  add(editeur: EditeurDto): void {
-    if (editeur.id === undefined) {
-      editeur.id = this.lastID + 1;
-      this.lastID += 1;
-    }
-    if (!editeur.contacts) {
-      editeur.contacts = [];
-    }
-    if (!editeur.jeux) {
-      editeur.jeux = [];
+  add(editeur: EditeurDto):void{
+    if (editeur.id === undefined){
+      editeur.id = this.lastID + 1
+      this.lastID += 1
     }
     this._editeurs.update((list: EditeurDto[]) => [...list, editeur]);
   }

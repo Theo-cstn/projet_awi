@@ -2,15 +2,14 @@ import { EditeurDto } from "./editeur-dto"
 import { PersonneDto } from "./personne-dto"
 
 export interface JeuDto {
-    id : number | undefined
-    nom : string
+    id: number | undefined
+    nom: string 
+    typeG: string  
+    age_min: number | undefined
+    age_max: number | undefined
     
-    ageMin : number | undefined
-    ageMax : number | undefined
-
-    editeur : EditeurDto
-    auteur : PersonneDto | undefined
-
-    type : string
-    taille : 'petit' | 'grand' | undefined
+    // Relations
+    editeur_id: number  
+    editeur?: EditeurDto  
+    auteurs?: PersonneDto[]
 }
