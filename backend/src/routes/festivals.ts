@@ -35,20 +35,108 @@ router.get('/current', requireVisiteur(), async (req, res) => {
     }
 });
 
+
 // ÉCRITURE : Création -> ADMIN SEULEMENT
 router.post('/', requireAdmin(), async (req, res) => {
-  const { nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie } = req.body;
+  // 1. Extraction des données
+  const { 
+    nom, 
+    date_debut, 
+    date_fin, 
+    nbTablesPetites, 
+    nbTablesGrandes, 
+    nbTablesMairie, 
+    zonesTarifaires 
+  } = req.body;
+  
+  const client = await pool.connect();
+  
   try {
-    const query = `
-      INSERT INTO Festival (nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie)
+    // 2. Démarrage de la Transaction
+    await client.query('BEGIN');
+
+    // 3. Insertion du Festival
+    // Mapping : Frontend (nbTables...) -> DB (stock_tables...)
+    const festivalQuery = `
+      INSERT INTO Festival (
+        nom, 
+        date_debut, 
+        date_fin, 
+        stock_tables_petites, 
+        stock_tables_grandes, 
+        stock_tables_mairie
+      )
       VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
+      RETURNING id
     `;
-    const result = await pool.query(query, [nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie]);
-    res.status(201).json(result.rows[0]);
+    
+    const festivalRes = await client.query(festivalQuery, [
+      nom, 
+      date_debut, 
+      date_fin, 
+      nbTablesPetites || 0, 
+      nbTablesGrandes || 0, 
+      nbTablesMairie  || 0
+    ]);
+    
+    const festivalId = festivalRes.rows[0].id;
+
+    // 4. Boucle sur les Zones Tarifaires (si présentes)
+    if (zonesTarifaires && Array.isArray(zonesTarifaires)) {
+      for (const zone of zonesTarifaires) {
+        
+        // Insertion de la Zone Tarifaire liée au festival
+        const zoneQuery = `
+          INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2) 
+          VALUES ($1, $2, $3, $4) 
+          RETURNING id
+        `;
+        // Mapping : Frontend (prixTable, prixM) -> DB (prix_table, prix_m2)
+        const zoneRes = await client.query(zoneQuery, [
+          festivalId, 
+          zone.nom, 
+          zone.prixTable, 
+          zone.prixM
+        ]);
+        
+        const zoneId = zoneRes.rows[0].id;
+
+        // 5. Boucle sur les Zones Plans à l'intérieur de cette zone
+        if (zone.zonesPlan && Array.isArray(zone.zonesPlan)) {
+          for (const plan of zone.zonesPlan) {
+             
+             // Insertion de la Zone Plan liée à la Zone Tarifaire
+             const planQuery = `
+               INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables)
+               VALUES ($1, $2, $3)
+             `;
+             // Mapping : Frontend (nbTables) -> DB (nombre_tables)
+             await client.query(planQuery, [
+               zoneId, 
+               plan.nom, 
+               plan.nbTables
+             ]);
+          }
+        }
+      }
+    }
+
+    // 6. Validation finale (Commit)
+    await client.query('COMMIT');
+    
+    res.status(201).json({ 
+      message: "Festival complet créé avec succès", 
+      id: festivalId 
+    });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    // 7. En cas d'erreur, on annule TOUT (Rollback)
+    await client.query('ROLLBACK');
+    console.error("Erreur création festival (Deep Insert) :", error);
+    res.status(500).json({ error: 'Erreur serveur lors de la création du festival' });
+  } finally {
+    // 8. Libération du client DB
+    client.release();
   }
 });
 
@@ -145,8 +233,8 @@ router.delete('/zones/:id', requireAdmin(), async (req, res) => {
     }
 });
 
-// CONFIGURATION SALLES -> ADMIN SEULEMENT
-router.post('/zones/:id/salles', requireAdmin(), async (req, res) => {
+// CONFIGURATION ZONE PLANS -> ADMIN SEULEMENT
+router.post('/zones/:id/zones-plans', requireAdmin(), async (req, res) => {
     const { id } = req.params;
     const { nom, nombre_tables } = req.body;
     try {

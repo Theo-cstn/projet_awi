@@ -23,7 +23,8 @@ export class FestivalForm {
 
   readonly form = new FormGroup({
     nom: new FormControl('', { nonNullable: true }),
-    date: new FormControl('', { nonNullable: true }),
+    date_debut: new FormControl('', { nonNullable: true }),
+    date_fin: new FormControl('', { nonNullable: true }),
     nbTablesPetites: new FormControl(0, { nonNullable: true }),
     nbTablesGrandes: new FormControl(0, { nonNullable: true }),
     nbTablesMairie: new FormControl(0, { nonNullable: true })
@@ -41,7 +42,8 @@ export class FestivalForm {
     if (this.form.valid){
       const festival: Omit<Festival, 'id'> = {
         nom: formValue.nom,
-        date: new Date(formValue.date),
+        date_debut: new Date(formValue.date_debut),
+        date_fin: new Date(formValue.date_fin),
         nbTablesPetites: formValue.nbTablesPetites,
         nbTablesGrandes: formValue.nbTablesGrandes,
         nbTablesMairie: formValue.nbTablesMairie,
@@ -52,7 +54,12 @@ export class FestivalForm {
       this.add.emit(festival);
       
       this.form.reset({
-        nom: '', date: '', nbTablesPetites: undefined, nbTablesGrandes: undefined, nbTablesMairie: undefined
+        nom: '', 
+        date_debut: '',
+        date_fin: '',
+        nbTablesPetites: undefined, 
+        nbTablesGrandes: undefined, 
+        nbTablesMairie: undefined
       });
       this.zonesTarifaires.set([]);
       this.nextZoneId.set(0);
