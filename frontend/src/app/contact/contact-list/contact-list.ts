@@ -45,10 +45,8 @@ export class ContactList {
         id: undefined,
         nom: formData.nom,
         prenom: formData.prenom,
-        fonction: formData.fonction,
-        mail: formData.mail,
+        email: formData.email,
       }
-      // CORRECTION : utiliser addContact au lieu de add
       this.editeurService.addContact(editeurId, newContact)
       this.afficherFormulaire.set(false)
     }

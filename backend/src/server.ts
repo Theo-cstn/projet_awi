@@ -69,7 +69,7 @@ app.get('/health', (req, res) => {
 
 // Gestion des erreurs 404
 app.use((req, res) => {
-  res. status(404).json({ error: 'Route not found' });
+  res.status(404).json({ error: 'Route not found' });
 });
 
 // Tentative de démarrage en HTTPS, fallback en HTTP si certificats non disponibles
