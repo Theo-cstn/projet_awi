@@ -15,7 +15,7 @@ export async function ensureDefaultUsers() {
   const hashTheo = await bcrypt.hash('password', 10);
   await pool.query(
     `INSERT INTO users (login, password_hash, role)
-     VALUES ('Théo', $1, 'visiteur')
+     VALUES ('Theo', $1, 'visiteur')
      ON CONFLICT (login) DO NOTHING`,
     [hashTheo]
   );
