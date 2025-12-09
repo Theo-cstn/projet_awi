@@ -1,4 +1,4 @@
-## 🔧 Configuration de l'environnement
+## Configuration de l'environnement
 
 ### 1. Cloner et installer
 ```bash
