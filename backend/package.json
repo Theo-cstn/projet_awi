@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/papaparse": "^5.5.1",
     "bcryptjs": "^3.0.2",
     "better-sqlite3": "^12.4.1",
     "cookie-parser": "^1.4.7",
@@ -20,6 +21,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
+    "papaparse": "^5.5.3",
     "pg": "^8.16.3"
   },
   "devDependencies": {
