@@ -3,7 +3,12 @@
   
   <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
       <input type="text" id="nom" formControlName="nom" placeholder="Nom du festival">
-      <input type="date" id="date" formControlName="date">
+      <div class="date-group">
+          <label>Du :</label>
+          <input type="date" id="date_debut" formControlName="date_debut">
+          <label>Au :</label>
+          <input type="date" id="date_fin" formControlName="date_fin">
+      </div>
       <input type="number" id="nbTablesPetites" formControlName="nbTablesPetites" min="0">
       <input type="number" id="nbTablesGrandes" formControlName="nbTablesGrandes" min="0">
       <input type="number" id="nbTablesMairie" formControlName="nbTablesMairie" min="0">

@@ -26,7 +26,7 @@ export class FestivalList {
   }
 
   onAdd(newFestival: Omit<Festival, 'id'>){
-    if (!newFestival.nom || !newFestival.date || newFestival.zonesTarifaires.length === 0){
+    if (!newFestival.nom || !newFestival.date_debut || !newFestival.date_fin || newFestival.zonesTarifaires.length === 0){
       return;
     }
     this.svc.onAdd(newFestival);

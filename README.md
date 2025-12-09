@@ -1,8 +1,8 @@
-## 🔧 Configuration de l'environnement
+## Configuration de l'environnement
 
 ### 1. Cloner et installer
 ```bash
-git clone [url-du-repo]
+git clone git@github.com:Theo-cstn/projet_awi.git
 cd projet_awi/backend
 npm install
 ```

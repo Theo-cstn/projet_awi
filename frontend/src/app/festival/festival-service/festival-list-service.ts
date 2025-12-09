@@ -8,7 +8,15 @@ export class FestivalListService {
   lastId: number = 2;
 
   private readonly _festivals = signal<Festival[]>([
-    {id: 0, nom: 'Festival du Printemps', date: new Date(2025, 4, 15), nbTablesPetites: 10, nbTablesGrandes: 5, nbTablesMairie: 3, nbTotalTables: 18, 
+    {
+      id: 0, 
+      nom: 'Festival du Printemps', 
+      date_debut: new Date(2025, 4, 15), 
+      date_fin: new Date(2025, 4, 17),
+      nbTablesPetites: 10, 
+      nbTablesGrandes: 5, 
+      nbTablesMairie: 3, 
+      nbTotalTables: 18, 
       zonesTarifaires: [
         { id: 0, nom: 'Zone A', nbTotalTables: 10, prixTable: 50, prixM: 11.11, 
           zonesPlan: [
@@ -22,7 +30,15 @@ export class FestivalListService {
         }
       ]
     },
-    {id: 1, nom: 'Festival d\'Été', date: new Date(2025, 6, 20), nbTablesPetites: 15, nbTablesGrandes: 8, nbTablesMairie: 2, nbTotalTables: 25,
+    {
+      id: 1, 
+      nom: 'Festival d\'Été', 
+      date_debut: new Date(2025, 6, 20), 
+      date_fin: new Date(2025, 6, 22),
+      nbTablesPetites: 15, 
+      nbTablesGrandes: 8, 
+      nbTablesMairie: 2, 
+      nbTotalTables: 25,
       zonesTarifaires: [
         { id: 2, nom: 'Zone Principale', nbTotalTables: 20, prixTable: 60, prixM: 13.33, 
           zonesPlan: [

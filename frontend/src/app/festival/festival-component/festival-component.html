@@ -2,7 +2,10 @@
   <h2>{{ this.festival()!.nom }}</h2>
 
   <div class="festival-detail">
-    <p>Date : {{ this.festival()!.date | date: 'longDate' }}</p>
+    <p>
+      <strong>Dates :</strong> 
+      {{ this.festival()!.date_debut | date: 'longDate' }} - {{ this.festival()!.date_fin | date: 'longDate' }}
+    </p>
   </div>
 
   <div class="festival-detail">

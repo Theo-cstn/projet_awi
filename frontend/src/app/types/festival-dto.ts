@@ -17,7 +17,8 @@ export interface Festival {
 */
   id?: number;
   nom: string;
-  date: Date;
+  date_debut: Date;
+  date_fin: Date;
   nbTablesPetites: number;
   nbTablesGrandes: number;
   nbTablesMairie: number;
