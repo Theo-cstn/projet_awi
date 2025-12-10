@@ -1,81 +1,69 @@
-import { Injectable, signal } from '@angular/core'
+import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Festival } from '../../types/festival-dto';
-import { FestivalList } from '../festival-list/festival-list';
 
 @Injectable({ providedIn: 'root' })
 export class FestivalListService {
+  private readonly apiUrl = 'https://localhost:4000/api/festivals/'; // URL du backend
+  private readonly _festivals = signal<Festival[]>([]); // Signal pour stocker les festivals
+  readonly festivals = this._festivals.asReadonly(); // Signal en lecture seule
+
   showForm: boolean = false;
   lastId: number = 2;
 
-  private readonly _festivals = signal<Festival[]>([
-    {
-      id: 0, 
-      nom: 'Festival du Printemps', 
-      date_debut: new Date(2025, 4, 15), 
-      date_fin: new Date(2025, 4, 17),
-      nbTablesPetites: 10, 
-      nbTablesGrandes: 5, 
-      nbTablesMairie: 3, 
-      nbTotalTables: 18, 
-      zonesTarifaires: [
-        { id: 0, nom: 'Zone A', nbTotalTables: 10, prixTable: 50, prixM: 11.11, 
-          zonesPlan: [
-            { id: 0, nom: 'zone plan1', nbTables: 0}
-          ] },
-        { id: 1, nom: 'Zone B', nbTotalTables: 8, prixTable: 30, prixM: 6.67,
-          zonesPlan: [
-            { id: 0, nom: 'zone plan1', nbTables: 0},
-            { id: 1, nom: 'zone plan2', nbTables: 2}
-          ]
-        }
-      ]
-    },
-    {
-      id: 1, 
-      nom: 'Festival d\'Été', 
-      date_debut: new Date(2025, 6, 20), 
-      date_fin: new Date(2025, 6, 22),
-      nbTablesPetites: 15, 
-      nbTablesGrandes: 8, 
-      nbTablesMairie: 2, 
-      nbTotalTables: 25,
-      zonesTarifaires: [
-        { id: 2, nom: 'Zone Principale', nbTotalTables: 20, prixTable: 60, prixM: 13.33, 
-          zonesPlan: [
-            { id: 0, nom: 'zone plan1', nbTables: 0}
-          ]
-        }
-      ]
-    }
-  ]);
+  constructor(private http: HttpClient) {}
 
-  readonly festivals = this._festivals.asReadonly();
+  /**
+   * Charge les festivals depuis le backend.
+   */
+  loadFestivals(): void {
+    this.http.get<Festival[]>(this.apiUrl).subscribe({
+      next: (data) => this._festivals.set(data),
+      error: (err) => console.error('Erreur lors du chargement des festivals :', err),
+    });
+  }
 
-  onRemove(idFestival: number){
-    this._festivals.update(festivalList =>
-      festivalList.filter(festival => festival.id !== idFestival)
+  /**
+   * Supprime un festival par son ID.
+   */
+  onRemove(idFestival: number): void {
+    this._festivals.update((festivalList) =>
+      festivalList.filter((festival) => festival.id !== idFestival)
     );
   }
 
-  findById(id: number): Festival|undefined {
-    return this._festivals().find(f => f.id = id);
+  /**
+   * Trouve un festival par son ID.
+   */
+  findById(id: number): Festival | undefined {
+    return this._festivals().find((f) => f.id === id);
   }
 
-  onAdd(newFestival: Omit<Festival, 'id'>) {
-    this._festivals.update(festivalList => [
-      ...festivalList, {...newFestival, id: this.lastId}
+  /**
+   * Ajoute un nouveau festival.
+   */
+  onAdd(newFestival: Omit<Festival, 'id'>): void {
+    this._festivals.update((festivalList) => [
+      ...festivalList,
+      { ...newFestival, id: this.lastId },
     ]);
     this.showForm = false;
     this.lastId = this.lastId + 1;
   }
 
-  update(partial: Partial<Festival> & {id: number}) {
-    this._festivals.update(festivalList =>
-      festivalList.map(f => (f.id === partial.id ? {...f, ...partial}: f))
-    )
+  /**
+   * Met à jour un festival existant.
+   */
+  update(partial: Partial<Festival> & { id: number }): void {
+    this._festivals.update((festivalList) =>
+      festivalList.map((f) => (f.id === partial.id ? { ...f, ...partial } : f))
+    );
   }
 
-  removeAll(){
-    this._festivals.set([])
+  /**
+   * Supprime tous les festivals.
+   */
+  removeAll(): void {
+    this._festivals.set([]);
   }
 }

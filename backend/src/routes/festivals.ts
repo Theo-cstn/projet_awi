@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireVisiteur, requireAdmin } from '../middleware/roles.js';
+import {mapFestivalData} from '../utils/mappers.js'
 import pool from '../db/database.js';
 
 const router = Router();
@@ -11,10 +12,52 @@ const router = Router();
 // LECTURE : Historique complet (Passé/Présent/Futur) -> ADMIN SEULEMENT
 router.get('/', requireAdmin(), async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM Festival ORDER BY date_debut DESC');
-    res.json(result.rows);
+    const query = `
+      SELECT 
+        f.id AS festival_id, 
+        f.nom AS festival_nom, 
+        f.date_debut, 
+        f.date_fin, 
+        f.stock_tables_petites, 
+        f.stock_tables_grandes, 
+        f.stock_tables_mairie,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', zt.id,
+              'nom', zt.nom,
+              'prix_table', zt.prix_table,
+              'prix_m2', zt.prix_m2,
+              'zones_plan', (
+                SELECT COALESCE(
+                  json_agg(
+                    json_build_object(
+                      'id', zp.id,
+                      'nom', zp.nom,
+                      'nombre_tables', zp.nombre_tables
+                    )
+                  ), '[]'
+                )
+                FROM ZonePlan zp
+                WHERE zp.zone_tarifaire_id = zt.id
+              )
+            )
+          ) FILTER (WHERE zt.id IS NOT NULL), 
+          '[]'
+        ) AS zones_tarifaires
+      FROM Festival f
+      LEFT JOIN ZoneTarifaire zt ON zt.festival_id = f.id
+      GROUP BY f.id
+      ORDER BY f.date_debut DESC;
+    `;
+
+    const result = await pool.query(query);
+
+    // Appliquer le mapping
+    const mappedFestivals = result.rows.map(mapFestivalData);
+    res.json(mappedFestivals);
   } catch (error) {
-    console.error(error);
+    console.error('Erreur lors de la récupération des festivals :', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -22,17 +65,56 @@ router.get('/', requireAdmin(), async (req, res) => {
 // LECTURE : Festivals "Courants" (Actifs/Futurs) -> VISITEUR+
 // Ce sont les espaces de travail pour les organisateurs.
 router.get('/current', requireVisiteur(), async (req, res) => {
-    try {
-      // On prend tous les festivals qui ne sont pas encore finis (date_fin >= aujourd'hui)
-      const result = await pool.query(`
-        SELECT * FROM Festival 
-        WHERE date_fin >= CURRENT_DATE 
-        ORDER BY date_debut ASC
-      `);
-      res.json(result.rows); 
-    } catch (error) {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+  try {
+    const query = `
+      SELECT 
+        f.id AS festival_id, 
+        f.nom AS festival_nom, 
+        f.date_debut, 
+        f.date_fin, 
+        f.stock_tables_petites, 
+        f.stock_tables_grandes, 
+        f.stock_tables_mairie,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', zt.id,
+              'nom', zt.nom,
+              'prix_table', zt.prix_table,
+              'prix_m2', zt.prix_m2,
+              'zones_plan', (
+                SELECT COALESCE(
+                  json_agg(
+                    json_build_object(
+                      'id', zp.id,
+                      'nom', zp.nom,
+                      'nombre_tables', zp.nombre_tables
+                    )
+                  ), '[]'
+                )
+                FROM ZonePlan zp
+                WHERE zp.zone_tarifaire_id = zt.id
+              )
+            )
+          ) FILTER (WHERE zt.id IS NOT NULL), 
+          '[]'
+        ) AS zones_tarifaires
+      FROM Festival f
+      LEFT JOIN ZoneTarifaire zt ON zt.festival_id = f.id
+      WHERE f.date_fin >= CURRENT_DATE
+      GROUP BY f.id
+      ORDER BY f.date_debut ASC;
+    `;
+
+    const result = await pool.query(query);
+
+    // Appliquer le mapping
+    const mappedFestivals = result.rows.map(mapFestivalData);
+    res.json(mappedFestivals);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des festivals :', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 
