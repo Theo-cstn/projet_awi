@@ -328,4 +328,68 @@ router.post('/zones/:id/zones-plans', requireAdmin(), async (req, res) => {
     }
 });
 
+
+// Modification d'une zone tarifaire
+router.put('/zones/:id', requireAdmin(), async (req, res) => {
+  const { id } = req.params;
+  const { nom, prix_table, prix_m2 } = req.body;
+  try {
+    const query = `
+      UPDATE ZoneTarifaire
+      SET nom = $1, prix_table = $2, prix_m2 = $3
+      WHERE id = $4
+      RETURNING *
+    `;
+    const result = await pool.query(query, [nom, prix_table, prix_m2, id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Zone tarifaire non trouvée.' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+
+// Modification d'une zone plan
+router.put('/zones-plans/:id', requireAdmin(), async (req, res) => {
+  const { id } = req.params;
+  const { nom, nombre_tables } = req.body;
+  try {
+    const query = `
+      UPDATE ZonePlan
+      SET nom = $1, nombre_tables = $2
+      WHERE id = $3
+      RETURNING *
+    `;
+    const result = await pool.query(query, [nom, nombre_tables, id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Zone plan non trouvée.' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+router.delete('/zones-plans/:id', requireAdmin(), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(`
+      DELETE FROM ZonePlan
+      WHERE id = $1
+      RETURNING *
+    `, [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Zone plan non trouvée.' });
+    }
+    res.json({ message: 'Zone plan supprimée', data: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
 export default router;
