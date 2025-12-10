@@ -1,24 +1,28 @@
 <div class="festival-card">
-  <h2>{{ this.festival()!.nom }}</h2>
+  <h2>{{ festival()!.nom }}</h2>
 
   <div class="festival-detail">
     <p>
       <strong>Dates :</strong> 
-      {{ this.festival()!.date_debut | date: 'longDate' }} - {{ this.festival()!.date_fin | date: 'longDate' }}
+      {{ festival()!.date_debut | date: 'longDate' }} - {{ festival()!.date_fin | date: 'longDate' }}
     </p>
   </div>
 
   <div class="festival-detail">
-    <p>Nombre total de tables en stock :</p>
+    <p><strong>Nombre total de tables en stock :</strong> {{ festival()!.nbTotalTables }}</p>
+    <ul>
+      <li>Petites : {{ festival()!.nbTablesPetites }}</li>
+      <li>Grandes : {{ festival()!.nbTablesGrandes }}</li>
+      <li>Mairie : {{ festival()!.nbTablesMairie }}</li>
+    </ul>
   </div>
-    <p> - petites : {{ this.festival()!.nbTablesPetites }}</p>
-    <p> - grandes : {{ this.festival()!.nbTablesGrandes }}</p>
-    <p> - mairie : {{ this.festival()!.nbTablesMairie }}</p>
-  
 
-  @for (zone of this.festival().zonesTarifaires; track zone.id!) {
-    <app-zone-tarifaire-component
-      [zoneT]="zone">
-    </app-zone-tarifaire-component>
-  }
+  <div class="zones-tarifaires">
+    <h3>Zones tarifaires :</h3>
+    @for (zone of festival()!.zonesTarifaires; track zone.id!) {
+      <app-zone-tarifaire-component
+        [zoneT]="zone">
+      </app-zone-tarifaire-component>
+    }
+  </div>
 </div>

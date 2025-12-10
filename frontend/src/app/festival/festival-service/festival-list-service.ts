@@ -11,14 +11,42 @@ export class FestivalListService {
   showForm: boolean = false;
   lastId: number = 2;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // Charger les festivals dès que le service est injecté
+    this.loadFestivals();
+  }
 
   /**
    * Charge les festivals depuis le backend.
    */
   loadFestivals(): void {
-    this.http.get<Festival[]>(this.apiUrl).subscribe({
-      next: (data) => this._festivals.set(data),
+    this.http.get<any[]>(this.apiUrl).subscribe({
+      next: (data) => {
+        const festivals: Festival[] = data.map(festival => ({
+          id: festival.festival_id,
+          nom: festival.festival_nom,
+          date_debut: new Date(festival.date_debut), // Conversion en Date
+          date_fin: new Date(festival.date_fin), // Conversion en Date
+          nbTablesPetites: festival.stock_tables_petites,
+          nbTablesGrandes: festival.stock_tables_grandes,
+          nbTablesMairie: festival.stock_tables_mairie,
+          nbTotalTables: festival.stock_tables_petites + festival.stock_tables_grandes + festival.stock_tables_mairie, // Calcul automatique
+          zonesTarifaires: festival.zones_tarifaires.map((zone: any) => ({
+            id: zone.id,
+            nom: zone.nom,
+            prixTable: zone.prix_table,
+            prixM: zone.prix_table / 4, // Calcul automatique du prix au m²
+            zonesPlan: zone.zones_plan.map((plan: any) => ({
+              id: plan.id,
+              nom: plan.nom,
+              nbTables: plan.nombre_tables,
+            })),
+            nbTotalTables: zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0), // Calcul automatique du nombre total de tables
+            nbTablesLibres: zone.nb_tables_libres ?? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0), // Calcul automatique des tables libres
+          })),
+        }));
+        this._festivals.set(festivals);
+      },
       error: (err) => console.error('Erreur lors du chargement des festivals :', err),
     });
   }

@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { requireVisiteur, requireAdmin } from '../middleware/roles.js';
-import {mapFestivalData} from '../utils/mappers.js'
 import pool from '../db/database.js';
 
 const router = Router();
@@ -52,10 +51,7 @@ router.get('/', requireAdmin(), async (req, res) => {
     `;
 
     const result = await pool.query(query);
-
-    // Appliquer le mapping
-    const mappedFestivals = result.rows.map(mapFestivalData);
-    res.json(mappedFestivals);
+    res.json(result.rows); // Renvoie les données brutes
   } catch (error) {
     console.error('Erreur lors de la récupération des festivals :', error);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -109,8 +105,7 @@ router.get('/current', requireVisiteur(), async (req, res) => {
     const result = await pool.query(query);
 
     // Appliquer le mapping
-    const mappedFestivals = result.rows.map(mapFestivalData);
-    res.json(mappedFestivals);
+    res.json(result.rows);
   } catch (error) {
     console.error('Erreur lors de la récupération des festivals :', error);
     res.status(500).json({ error: 'Erreur serveur' });
