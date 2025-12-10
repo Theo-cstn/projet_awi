@@ -55,9 +55,15 @@ export class FestivalListService {
    * Supprime un festival par son ID.
    */
   onRemove(idFestival: number): void {
-    this._festivals.update((festivalList) =>
-      festivalList.filter((festival) => festival.id !== idFestival)
-    );
+    this.http.delete(`${this.apiUrl}${idFestival}`).subscribe({
+      next: () => {
+        this._festivals.update((festivalList) =>
+          festivalList.filter((festival) => festival.id !== idFestival)
+        );
+        console.log(`Festival avec l'ID ${idFestival} supprimé avec succès.`);
+      },
+      error: (err) => console.error('Erreur lors de la suppression du festival :', err),
+    });
   }
 
   /**
@@ -71,12 +77,14 @@ export class FestivalListService {
    * Ajoute un nouveau festival.
    */
   onAdd(newFestival: Omit<Festival, 'id'>): void {
-    this._festivals.update((festivalList) => [
-      ...festivalList,
-      { ...newFestival, id: this.lastId },
-    ]);
-    this.showForm = false;
-    this.lastId = this.lastId + 1;
+    this.http.post<{ message: string; id: number }>(this.apiUrl, newFestival).subscribe({
+      next: (response) => {
+        console.log('Festival ajouté avec succès :', response);
+        // Recharger la liste des festivals après l'ajout
+        this.loadFestivals();
+      },
+      error: (err) => console.error('Erreur lors de l\'ajout du festival :', err),
+    });
   }
 
   /**

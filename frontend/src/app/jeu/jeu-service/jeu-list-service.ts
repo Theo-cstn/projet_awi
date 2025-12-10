@@ -25,7 +25,7 @@ export class JeuListService {
         const jeux: JeuDto[] = data.map(jeu => ({
           id: jeu.id,
           nom: jeu.nom,
-          typeG: jeu.typeG,
+          typeG: jeu.typeg,
           age_min: jeu.age_min,
           age_max: jeu.age_max,
           editeur_id: jeu.editeur_id,
