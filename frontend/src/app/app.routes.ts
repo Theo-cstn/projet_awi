@@ -15,7 +15,8 @@ export const routes: Routes = [
   { 
     path: 'admin/users', 
     component: AdminUsersComponent,
-    canActivate: [AuthGuard] 
+    canActivate: [AuthGuard],
+    data: { roles: ['admin'] }
   },
   { 
     path: 'festival', 

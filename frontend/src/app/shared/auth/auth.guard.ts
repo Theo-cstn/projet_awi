@@ -1,35 +1,43 @@
-import { Injectable, inject } from '@angular/core'
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router'
-import { Observable, of } from 'rxjs'
-import { map, catchError } from 'rxjs/operators'
-import { AuthService } from './auth.service'
+import { Injectable, inject } from '@angular/core';
+import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { AuthService } from './auth.service';
+import { UserDto } from '../../types/user-dto'; // Assure-toi que le chemin est bon
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
-  private auth = inject(AuthService)
-  private router = inject(Router)
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | boolean {
-    // 1) Si on sait déjà que l'utilisateur est connecté, autorise directement
+    const requiredRoles = route.data['roles'] as string[] | undefined;
+
+    const checkAccess = (user: UserDto | null): boolean => {
+      if (!user) {
+        this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+        return false;
+      }
+      if (requiredRoles && !requiredRoles.includes(user.role)) {
+        // Redirection si rôle insuffisant
+        this.router.navigate(['/festival']); 
+        return false;
+      }
+      return true;
+    };
+
     if (this.auth.isLoggedIn()) {
-      return true
+      return checkAccess(this.auth.currentUser());
     }
 
-    // 2) Sinon, on appelle whoami$() et on attend la réponse (utile si page reload et cookie httpOnly présent)
     return this.auth.whoami$().pipe(
-      map(user => {
-        if (user) return true
-        // non connecté => redirection vers login
-        this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } })
-        return false
-      }),
-      catchError(err => {
-        // En cas d'erreur, redirection vers login
-        this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } })
-        return of(false)
+      map(user => checkAccess(user)),
+      catchError(() => {
+        this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+        return of(false);
       })
-    )
+    );
   }
 }
