@@ -6,11 +6,17 @@ import { ContactList } from './contact/contact-list/contact-list';
 import { LoginComponent } from './shared/auth/login.component/login.component';
 import { AuthGuard } from './shared/auth/auth.guard';
 import { RegisterComponent } from './shared/register.component/register.component';
+import { AdminUsersComponent } from './admin/list-users.component/list-users.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { 
+    path: 'admin/users', 
+    component: AdminUsersComponent,
+    canActivate: [AuthGuard] 
+  },
   { 
     path: 'festival', 
     component: FestivalList,
