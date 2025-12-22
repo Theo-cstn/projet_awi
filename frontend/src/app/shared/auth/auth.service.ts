@@ -53,6 +53,20 @@ export class AuthService {
         ).subscribe()
     }
 
+    register(login: string, password: string) {
+        this._isLoading.set(true);
+        this._error.set(null);
+        return this.http.post<{ user: UserDto }>(
+            `${environment.apiUrl}/auth/register`,
+            { login, password }
+        ).pipe(
+            tap(() => {
+               this.login(login, password);
+            }),
+            finalize(() => this._isLoading.set(false))
+        );
+    }
+
     // --- Déconnexion ---
     logout() {
         this._isLoading.set(true)

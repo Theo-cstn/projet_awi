@@ -5,10 +5,12 @@ import { FestivalList } from './festival/festival-list/festival-list';
 import { ContactList } from './contact/contact-list/contact-list';
 import { LoginComponent } from './shared/auth/login.component/login.component';
 import { AuthGuard } from './shared/auth/auth.guard';
+import { RegisterComponent } from './shared/register.component/register.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
   { 
     path: 'festival', 
     component: FestivalList,

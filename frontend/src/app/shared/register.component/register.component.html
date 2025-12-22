@@ -1,5 +1,5 @@
-<form [formGroup]="form" (submit)="onSubmit(); $event.preventDefault()" class="login-form" novalidate>
-  <h2>Connexion</h2>
+<form [formGroup]="form" (submit)="onSubmit(); $event.preventDefault()" class="register-form" novalidate>
+  <h2>Créer un compte</h2>
 
   <div class="form-group">
     <label for="login">Login</label>
@@ -12,17 +12,17 @@
 
   <div class="form-group">
     <label for="password">Mot de passe</label>
-    <input id="password" type="password" formControlName="password" autocomplete="current-password" />
+    <input id="password" type="password" formControlName="password" autocomplete="new-password" />
 
     @if (passwordControl?.touched && passwordControl?.invalid) {
       <div class="error">Le mot de passe est requis.</div>
     }
   </div>
 
-  <button type="submit" [disabled]="form.invalid || auth.isLoading()">Se connecter</button>
+  <button type="submit" [disabled]="form.invalid || auth.isLoading()">Créer mon compte</button>
 
   @if (auth.isLoading()) {
-    <div class="status">Connexion en cours… (le réseau met du temps à répondre)</div>
+    <div class="status">Création du compte…</div>
   }
 
   @if (auth.error()) {
@@ -30,6 +30,6 @@
   }
 
   <div class="link">
-    <p>Première connexion ? <a routerLink="/register">Créer votre compte</a></p>
+    <p>Déjà inscrit ? <a routerLink="/login">Se connecter</a></p>
   </div>
 </form>
