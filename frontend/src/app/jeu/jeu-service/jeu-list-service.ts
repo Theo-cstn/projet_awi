@@ -64,9 +64,28 @@ export class JeuListService {
    * Met à jour un jeu existant.
    */
   update(jeu: Partial<JeuDto> & { id: number }): void {
-    this.http.put<JeuDto>(`${this.apiUrl}/jeux/${jeu.id}`, jeu).subscribe({
-      next: (updatedJeu) => {
-        console.log('✅ Jeu mis à jour:', updatedJeu);
+    this.http.put<any>(`${this.apiUrl}/jeux/${jeu.id}`, jeu).subscribe({
+      next: (data) => {
+        console.log('✅ Jeu mis à jour (réponse backend):', data);
+        
+        const updatedJeu: JeuDto = {
+          id: data.id,
+          nom: data.nom,
+          typeG: data.typeg, // ← Backend retourne 'typeg' en minuscule
+          age_min: data.age_min,
+          age_max: data.age_max,
+          editeur_id: data.editeur_id,
+          editeur: {
+            id: data.editeur_id,
+            nom: data.nom_editeur, // ← Backend retourne 'nom_editeur'
+          },
+          auteurs: data.auteurs?.map((auteur: any) => ({
+            id: auteur.id,
+            nom: auteur.nom,
+            prenom: auteur.prenom,
+          })) || [],
+        };
+        
         this._jeux.update((list) =>
           list.map((j) => (j.id === updatedJeu.id ? updatedJeu : j))
         );

@@ -30,6 +30,9 @@ export class JeuList {
   // Signal pour afficher/masquer le formulaire
   afficherFormulaire = signal(false);
 
+  // Signal pour stocker le jeu que l'on souhaite éditer 
+  jeuEnEdition = signal<JeuDto | undefined>(undefined);
+
   // Récupérer l'ID de l'éditeur depuis l'URL (transformé en Signal)
   editeurId = toSignal(this.route.paramMap.pipe(
       map(params => {
@@ -62,30 +65,50 @@ export class JeuList {
     this.router.navigate(['/editeurs']);
   }
 
-  onAdd(formData: any): void {
-    // Logique de récupération de l'éditeur
-    const currentEditeurId = this.editeurId();
-    const targetEditeurId = currentEditeurId || formData.editeur;
+  onEdit(jeu: JeuDto): void {
+    this.jeuEnEdition.set(jeu);
+    this.afficherFormulaire.set(true);
+  }
+
+  onDelete(id: number): void {
+    if (confirm('Voulez-vous vraiment supprimer ce jeu ?')) {
+      this.svc.delete(id);
+    }
+  }
+
+  onAdd(formData: Omit<JeuDto, 'id'>): void {
+    console.log('Ajout d\'un nouveau jeu:', formData);
     
-    // Si on est dans le contexte d'un éditeur, on l'utilise, sinon on le cherche
-    const editeur = this.editeurService.findById(Number(targetEditeurId));
+    const editeur = this.editeurService.findById(formData.editeur_id);
     
     if (editeur) {
       const newJeu: JeuDto = {
+        ...formData,
         id: undefined,
-        nom: formData.nom,
-        typeG: formData.type,  
-        age_min: formData.ageMin,  
-        age_max: formData.ageMax,  
-        editeur_id: editeur.id!,
-        editeur: editeur, // Attention aux références circulaires selon ton DTO
-        auteurs: [] // Gestion des auteurs à prévoir plus tard
+        editeur: editeur
       };
       
       this.svc.add(newJeu);
       this.afficherFormulaire.set(false);
     } else {
-        console.error("Impossible de trouver l'éditeur pour ce jeu");
+      console.error("Impossible de trouver l'éditeur pour ce jeu");
     }
+  }
+
+  onUpdate(updatedJeu: JeuDto): void {
+    console.log('✏️ Modification du jeu:', updatedJeu);
+    
+    // ✨ Envoyer uniquement les champs que le backend attend
+    this.svc.update({
+      id: updatedJeu.id!,
+      nom: updatedJeu.nom,
+      typeG: updatedJeu.typeG,
+      age_min: updatedJeu.age_min,
+      age_max: updatedJeu.age_max,
+      editeur_id: updatedJeu.editeur_id
+    });
+    
+    this.afficherFormulaire.set(false);
+    this.jeuEnEdition.set(undefined);
   }
 }
