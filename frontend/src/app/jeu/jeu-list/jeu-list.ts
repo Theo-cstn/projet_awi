@@ -20,7 +20,7 @@ export class JeuList implements OnInit {
   readonly svc = inject(JeuListService);
   readonly editeurService = inject(EditeurListService);
   readonly auth = inject(AuthService);
-  
+  jeuEnEdition = signal<JeuDto | undefined>(undefined);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   
@@ -92,6 +92,17 @@ export class JeuList implements OnInit {
   retourEditeurs(): void {
     this.router.navigate(['/editeurs']);
   }
+  
+  onEdit(jeu: JeuDto): void {
+    this.jeuEnEdition.set(jeu); 
+    this.afficherFormulaire.set(true);
+  }
+
+  onDelete(id: number): void {
+    if (confirm('Voulez-vous vraiment supprimer ce jeu ?')) {
+      this.svc.delete(id);
+    }
+  }
 
   onAdd(formData: any): void {
     // Si on est sur la page d'un éditeur, on force l'ID
@@ -110,5 +121,22 @@ export class JeuList implements OnInit {
     
     this.svc.add(newJeu);
     this.afficherFormulaire.set(false);
+  }
+
+  onUpdate(updatedJeu: JeuDto): void {
+    console.log('✏️ Modification du jeu:', updatedJeu);
+    
+    // ✨ Envoyer uniquement les champs que le backend attend
+    this.svc.update({
+      id: updatedJeu.id!,
+      nom: updatedJeu.nom,
+      typeG: updatedJeu.typeG,
+      age_min: updatedJeu.age_min,
+      age_max: updatedJeu.age_max,
+      editeur_id: updatedJeu.editeur_id
+    });
+    
+    this.afficherFormulaire.set(false);
+    this.jeuEnEdition.set(undefined);
   }
 }

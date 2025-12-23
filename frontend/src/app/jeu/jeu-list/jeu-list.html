@@ -21,7 +21,9 @@
   <div class="form-wrapper">
     <app-jeu-form
       [editeurId]="editeurId()"
-      (add)="onAdd($event)">
+      [jeuAEditer]="jeuEnEdition()"
+      (add)="onAdd($event)"
+      (update)="onUpdate($event)">
     </app-jeu-form>
   </div>
 }
@@ -29,7 +31,17 @@
 @if (jeux(); as jeuxList) {
   <div class="games-grid">
     @for (jeu of jeuxList; track jeu.id) {
-      <app-jeu-component [jeu]="jeu"></app-jeu-component>
+      <div class="jeu-card">
+        <app-jeu-component [jeu]="jeu"></app-jeu-component>
+        
+        @if (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux') {
+          <div class="jeu-actions">
+            <button (click)="onEdit(jeu)" class="btn-edit">
+              Éditer
+            </button>
+          </div>
+        }
+      </div>
     } @empty {
       <div class="empty-message">
         <p>Aucun jeu trouvé.</p>

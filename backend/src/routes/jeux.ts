@@ -125,7 +125,7 @@ router.put('/:id', requireOrganisateurJeux(), async (req, res) => {
     // 1. Modifier le jeu
     const gameResult = await client.query(
       `UPDATE Jeu 
-       SET editeur_id = $1, nom = $2, typeG = $3, age_min = $4, age_max = $5
+       SET editeur_id = $1, nom = $2, typeg = $3, age_min = $4, age_max = $5
        WHERE id = $6 
        RETURNING *`,
       [editeur_id, nom, typeG, age_min, age_max, id]
@@ -148,8 +148,26 @@ router.put('/:id', requireOrganisateurJeux(), async (req, res) => {
       }
     }
 
+    // 3. Récupérer le jeu complet avec éditeur et auteurs
+    const fullGameResult = await client.query(
+      `SELECT 
+        j.id, j.nom, j.typeG, j.age_min, j.age_max, j.editeur_id, e.nom as nom_editeur,
+        COALESCE(
+          json_agg(json_build_object('id', p.id, 'nom', p.nom, 'prenom', p.prenom)) 
+          FILTER (WHERE p.id IS NOT NULL), 
+          '[]'
+        ) as auteurs
+      FROM Jeu j
+      JOIN Editeur e ON j.editeur_id = e.id
+      LEFT JOIN Auteurs_Jeux aj ON j.id = aj.jeu_id
+      LEFT JOIN Personne p ON aj.auteur_id = p.id
+      WHERE j.id = $1
+      GROUP BY j.id, e.nom`,
+      [id]
+    );
+
     await client.query('COMMIT');
-    res.json(gameResult.rows[0]);
+    res.json(fullGameResult.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
     console.error(error);
