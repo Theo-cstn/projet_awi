@@ -1,13 +1,30 @@
-<h1>Liste des éditeurs</h1>
-
-<button (click)="toggleFormulaire()">
-  {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un éditeur' }}
-</button>
+<div class="header">
+  <h2>Liste des Éditeurs</h2>
+  
+  @if (auth.isAdmin()) {
+    <button (click)="toggleFormulaire()">
+      {{ afficherFormulaire() ? 'Fermer' : 'Ajouter un éditeur' }}
+    </button>
+  }
+</div>
 
 @if (afficherFormulaire()) {
-  <app-editeur-form (add)="onAdd($event)" />
+  <div class="form-container">
+    <app-editeur-form (add)="onAdd($event)"></app-editeur-form>
+  </div>
 }
 
 @for (editeur of editeurs(); track editeur.id) {
-    <app-editeur-component [editeur]="editeur" />
+  <div class="card">
+    <app-editeur-component [editeur]="editeur">
+       </app-editeur-component>
+
+    <div class="actions">
+        @if (auth.isAdmin()) {
+           <button (click)="edit(editeur)">✏️</button>
+        }
+     </div>
+  </div>
+} @empty {
+    <p>Aucun éditeur trouvé.</p>
 }

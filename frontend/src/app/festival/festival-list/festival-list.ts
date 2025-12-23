@@ -40,20 +40,6 @@ export class FestivalList implements OnInit {
     console.log(`onAdd festival : ${JSON.stringify(newFestival)}`);
   }
 
-  onRemove(idFestival: number) {
-    if (confirm('Etes-vous sûr de vouloir supprimer ce festival ?')) {
-      this.svc.onRemove(idFestival);
-    }
-  }
-
-  removeAll() {
-    if (confirm('Etes-vous sûr de vouloir supprimer tous les festivals ?')) {
-      this.festivals().forEach(f => {
-        this.svc.onRemove(f.id!);
-      });
-    }
-  }
-
   nbFestival = computed(() => {
     return this.festivals.length;
   });

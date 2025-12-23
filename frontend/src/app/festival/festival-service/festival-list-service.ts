@@ -20,7 +20,7 @@ export class FestivalListService {
    * Charge les festivals depuis le backend.
    */
   loadFestivals(): void {
-    this.http.get<any[]>(this.apiUrl).subscribe({
+    this.http.get<any[]>(this.apiUrl, { withCredentials: true }).subscribe({
       next: (data) => {
         const festivals: Festival[] = data.map(festival => ({
           id: festival.festival_id,
@@ -51,20 +51,6 @@ export class FestivalListService {
     });
   }
 
-  /**
-   * Supprime un festival par son ID.
-   */
-  onRemove(idFestival: number): void {
-    this.http.delete(`${this.apiUrl}${idFestival}`).subscribe({
-      next: () => {
-        this._festivals.update((festivalList) =>
-          festivalList.filter((festival) => festival.id !== idFestival)
-        );
-        console.log(`Festival avec l'ID ${idFestival} supprimé avec succès.`);
-      },
-      error: (err) => console.error('Erreur lors de la suppression du festival :', err),
-    });
-  }
 
   /**
    * Trouve un festival par son ID.

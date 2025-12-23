@@ -9,9 +9,11 @@ const router = Router();
 // ==============================================================================
 
 // LECTURE : Historique complet (Passé/Présent/Futur) -> ADMIN SEULEMENT
-router.get('/', requireAdmin(), async (req, res) => {
+router.get('/', requireVisiteur(), async (req, res) => {
   try {
-    const query = `
+    const isAdmin = req.user?.role === 'admin';
+
+    let sql = `
       SELECT 
         f.id AS festival_id, 
         f.nom AS festival_nom, 
@@ -46,68 +48,29 @@ router.get('/', requireAdmin(), async (req, res) => {
         ) AS zones_tarifaires
       FROM Festival f
       LEFT JOIN ZoneTarifaire zt ON zt.festival_id = f.id
-      GROUP BY f.id
-      ORDER BY f.date_debut DESC;
     `;
 
-    const result = await pool.query(query);
-    res.json(result.rows); // Renvoie les données brutes
-  } catch (error) {
-    console.error('Erreur lors de la récupération des festivals :', error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
+    if (!isAdmin) {
+      // Si PAS admin, on filtre les festivals passés
+      sql += ` WHERE f.date_fin >= CURRENT_DATE `;
+    }
 
-// LECTURE : Festivals "Courants" (Actifs/Futurs) -> VISITEUR+
-// Ce sont les espaces de travail pour les organisateurs.
-router.get('/current', requireVisiteur(), async (req, res) => {
-  try {
-    const query = `
-      SELECT 
-        f.id AS festival_id, 
-        f.nom AS festival_nom, 
-        f.date_debut, 
-        f.date_fin, 
-        f.stock_tables_petites, 
-        f.stock_tables_grandes, 
-        f.stock_tables_mairie,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', zt.id,
-              'nom', zt.nom,
-              'prix_table', zt.prix_table,
-              'prix_m2', zt.prix_m2,
-              'zones_plan', (
-                SELECT COALESCE(
-                  json_agg(
-                    json_build_object(
-                      'id', zp.id,
-                      'nom', zp.nom,
-                      'nombre_tables', zp.nombre_tables
-                    )
-                  ), '[]'
-                )
-                FROM ZonePlan zp
-                WHERE zp.zone_tarifaire_id = zt.id
-              )
-            )
-          ) FILTER (WHERE zt.id IS NOT NULL), 
-          '[]'
-        ) AS zones_tarifaires
-      FROM Festival f
-      LEFT JOIN ZoneTarifaire zt ON zt.festival_id = f.id
-      WHERE f.date_fin >= CURRENT_DATE
-      GROUP BY f.id
-      ORDER BY f.date_debut ASC;
-    `;
+    sql += ` GROUP BY f.id `;
 
-    const result = await pool.query(query);
+    // ORDRE DYNAMIQUE
+    // Admin : Veut voir les derniers créés/modifiés en premier (Souvent les futurs ou récents passés)
+    // Visiteur : Veut voir le PROCHAIN festival (le plus proche dans le futur)
+    if (isAdmin) {
+        sql += ` ORDER BY f.date_debut DESC`; 
+    } else {
+        sql += ` ORDER BY f.date_debut ASC`;
+    }
 
-    // Appliquer le mapping
+    const result = await pool.query(sql);
     res.json(result.rows);
+
   } catch (error) {
-    console.error('Erreur lors de la récupération des festivals :', error);
+    console.error('Erreur récupération festivals :', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

@@ -10,15 +10,11 @@
   <button (click)="add()">Add Festival</button>
 }
 
-@if (festivals().length > 0) {
-  <button (click)="removeAll()">Delete All</button>
-}
 
 <div class="festival-list-container">
   @for (festival of festivals(); track festival.id!) {
     <app-festival-component
-      [festival] = "festival"
-      (remove)="onRemove($event)">
+      [festival] = "festival">
     </app-festival-component>
   }
 <div>
