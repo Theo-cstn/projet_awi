@@ -1,20 +1,24 @@
-<div class="header-jeux">
-  @if (editeurId()) {
-    <h1>Jeux de {{ editeur()?.nom ?? 'Éditeur inconnu' }}</h1>
-    <button (click)="retourEditeurs()">← Retour aux éditeurs</button>
-  } @else {
-    <h1>Liste de Jeux</h1>
-  }
+<div class="page-header">
+  <div class="title-group">
+    @if (editeurId()) {
+      <h1>Jeux de {{ editeur()?.nom ?? '...' }}</h1>
+      <button (click)="retourEditeurs()" class="link-back">
+        ← Retour aux éditeurs
+      </button>
+    } @else {
+      <h1>Liste des Jeux</h1>
+    }
+  </div>
 
   @if (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux') {
-    <button (click)="toggleFormulaire()">
-      {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un jeu' }}
+    <button (click)="toggleFormulaire()" class="btn-action">
+      {{ afficherFormulaire() ? 'Annuler' : '+ Ajouter un jeu' }}
     </button>
   }
 </div>
 
 @if (afficherFormulaire()) {
-  <div class="form-section">
+  <div class="form-wrapper">
     <app-jeu-form
       [editeurId]="editeurId()"
       [jeuAEditer]="jeuEnEdition()"
@@ -25,7 +29,7 @@
 }
 
 @if (jeux(); as jeuxList) {
-  <div class="game-grid">
+  <div class="games-grid">
     @for (jeu of jeuxList; track jeu.id) {
       <div class="jeu-card">
         <app-jeu-component [jeu]="jeu"></app-jeu-component>
@@ -39,12 +43,14 @@
         }
       </div>
     } @empty {
-      <p>Aucun jeu trouvé.</p>
-      @if (editeurId()) {
-        <p>Soyez le premier à ajouter un jeu pour cet éditeur !</p>
-      }
+      <div class="empty-message">
+        <p>Aucun jeu trouvé.</p>
+        @if (editeurId()) {
+           <p>Soyez le premier à ajouter un jeu pour cet éditeur !</p>
+        }
+      </div>
     }
   </div>
 } @else {
-  <p>Chargement des jeux...</p>
+  <p class="loading">Chargement des jeux...</p>
 }

@@ -2,3 +2,148 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* src/styles.css */
+
+/* --- 1. STRUCTURE GLOBALE --- */
+.app-shell {
+  background: #cbe6ff5e;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* STABILITÉ : Empêche le site de sauter quand la scrollbar apparait/disparait */
+html {
+  scrollbar-gutter: stable;
+}
+
+.container-fluid {
+  flex: 1;
+  padding: 20px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* --- 2. BARRE DE NAVIGATION --- */
+.app-navbar {
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem; /* Padding horizontal */
+  height: 64px;      /* HAUTEUR FIXE IMPORTANTE pour éviter les sauts entre layouts */
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  justify-content: space-between; 
+  box-sizing: border-box;
+}
+
+/* Groupe de liens */
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 100%; /* Prend toute la hauteur de la barre */
+}
+
+/* --- 3. LIENS DE NAVIGATION --- */
+.nav-link {
+  text-decoration: none;
+  color: #555;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s; /* On n'anime plus la taille */
+  cursor: pointer;
+  white-space: nowrap;
+  
+  /* Astuce pour éviter le décalage au survol/active si on voulait du gras */
+  /* Mais ici on va simplement changer la couleur de fond */
+}
+
+.nav-link:hover {
+  background-color: #e9ecef;
+  color: #333;
+}
+
+.nav-link.active {
+  background-color: #e7f1ff;
+  color: #007bff;
+  /* J'ai retiré 'font-weight: bold' pour éviter que le texte s'élargisse et pousse le bouton déconnexion */
+  /* Si tu tiens absolument au gras, dis-le moi, il y a une astuce CSS complexe pour ça */
+  font-weight: 500; 
+  border-bottom: 2px solid #007bff; /* On ajoute une bordure en bas pour bien marquer l'actif sans bouger le texte */
+}
+
+/* Lien Admin Spécifique */
+.nav-link.admin {
+  color: #d32f2f;
+}
+.nav-link.admin.active {
+  background-color: #ffebee;
+  color: #b71c1c;
+  border-bottom-color: #b71c1c;
+}
+
+/* --- 4. BOUTONS UTILITAIRES --- */
+.btn-action {
+  text-decoration: none;
+  border: none;
+  padding: 5px 15px; /* Largeur fixe plus confortable */
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  height: 36px; /* Hauteur fixe pour alignement parfait */
+}
+
+/* Bouton Logout */
+.btn-action.logout {
+  background-color: #6c757d;
+  color: white;
+}
+.btn-action.logout:hover {
+  background-color: #5a6268;
+}
+
+/* Bouton Retour */
+.btn-action.back {
+  background: transparent;
+  color: #6c757d;
+}
+.btn-action.back:hover {
+  background-color: #e9ecef;
+  color: #333;
+}
+
+/* --- 5. DASHBOARD SPECIFIQUE --- */
+.festival-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  /* On force le flex-start ici pour coller à gauche, mais on garde la hauteur fixe */
+  justify-content: flex-start; 
+}
+
+.context-border {
+  padding-right: 20px;
+  margin-right: 10px;
+  border-right: 1px solid #ddd;
+  height: 40px; /* Hauteur du séparateur */
+  display: flex;
+  align-items: center;
+}
+
+.festival-title {
+  font-weight: bold;
+  color: #333;
+  font-size: 1.1rem;
+  white-space: nowrap;
+}

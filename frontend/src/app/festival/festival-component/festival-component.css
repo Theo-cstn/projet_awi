@@ -29,3 +29,14 @@
     color: #007bff;
     font-weight: 500;
 }
+
+:host {
+  display: block; /* Rend le composant "solide" comme une div */
+  cursor: pointer; /* Affiche la main */
+  transition: transform 0.2s ease; /* Petit effet fluide */
+}
+
+/* Effet au survol (optionnel mais sympa) */
+:host:hover {
+  transform: translateY(-5px); /* Monte légèrement */
+}

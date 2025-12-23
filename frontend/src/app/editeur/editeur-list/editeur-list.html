@@ -1,30 +1,35 @@
-<div class="header">
-  <h2>Liste des Éditeurs</h2>
-  
-  @if (auth.isAdmin()) {
-    <button (click)="toggleFormulaire()">
-      {{ afficherFormulaire() ? 'Fermer' : 'Ajouter un éditeur' }}
+<div class="page-header">
+  <h1>Liste des Éditeurs</h1>
+
+  @if (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux') {
+    <button (click)="toggleFormulaire()" class="btn-action">
+      {{ afficherFormulaire() ? 'Annuler' : '+ Nouvel Éditeur' }}
     </button>
   }
 </div>
 
 @if (afficherFormulaire()) {
-  <div class="form-container">
+  <div class="form-wrapper">
     <app-editeur-form (add)="onAdd($event)"></app-editeur-form>
   </div>
 }
 
-@for (editeur of editeurs(); track editeur.id) {
-  <div class="card">
-    <app-editeur-component [editeur]="editeur">
-       </app-editeur-component>
+@if (editeurs(); as liste) {
+  <div class="editors-grid">
+    @for (editeur of liste; track editeur.id) {
+      
+      <app-editeur-component
+        [editeur]="editeur"
+        [routerLink]="['./', editeur.id, 'jeux']"
+        class="editor-card">
+      </app-editeur-component>
 
-    <div class="actions">
-        @if (auth.isAdmin()) {
-           <button (click)="edit(editeur)">✏️</button>
-        }
-     </div>
+    } @empty {
+      <div class="empty-message">
+        <p>Aucun éditeur trouvé.</p>
+      </div>
+    }
   </div>
-} @empty {
-    <p>Aucun éditeur trouvé.</p>
+} @else {
+  <p class="loading">Chargement des éditeurs...</p>
 }

@@ -75,6 +75,105 @@ router.get('/', requireVisiteur(), async (req, res) => {
   }
 });
 
+// LECTURE : Récupérer un SEUL festival pour un ID donné -> VISITEUR+
+router.get('/:id', requireVisiteur(), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const sql = `
+      SELECT 
+        f.id AS festival_id, 
+        f.nom AS festival_nom, 
+        f.date_debut, 
+        f.date_fin, 
+        f.stock_tables_petites, 
+        f.stock_tables_grandes, 
+        f.stock_tables_mairie,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', zt.id,
+              'nom', zt.nom,
+              'prix_table', zt.prix_table,
+              'prix_m2', zt.prix_m2,
+              'zones_plan', (
+                SELECT COALESCE(
+                  json_agg(
+                    json_build_object(
+                      'id', zp.id,
+                      'nom', zp.nom,
+                      'nombre_tables', zp.nombre_tables
+                    )
+                  ), '[]'
+                )
+                FROM ZonePlan zp
+                WHERE zp.zone_tarifaire_id = zt.id
+              )
+            )
+          ) FILTER (WHERE zt.id IS NOT NULL), 
+          '[]'
+        ) AS zones_tarifaires
+      FROM Festival f
+      LEFT JOIN ZoneTarifaire zt ON zt.festival_id = f.id
+      WHERE f.id = $1
+      GROUP BY f.id
+    `;
+
+    const result = await pool.query(sql, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Festival non trouvé' });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (error) {
+    console.error('Erreur récupération festival par ID :', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ==============================================================================
+// SOUS-RESSOURCES (Jeux & Editeurs filtrés par Festival)
+// ==============================================================================
+
+// Récupérer les JEUX présents dans un festival
+router.get('/:id/jeux', requireVisiteur(), async (req, res) => {
+    const { id } = req.params;
+    try {
+        //On passe par la table 'JeuReserve' pour faire le lien
+        const sql = `
+            SELECT DISTINCT j.* FROM Jeu j
+            INNER JOIN JeuReserve jr ON jr.jeu_id = j.id
+            INNER JOIN Reservation r ON jr.reservation_id = r.id
+            WHERE r.festival_id = $1
+            ORDER BY j.nom
+        `;
+        const result = await pool.query(sql, [id]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Erreur SQL récupération jeux festival :', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Récupérer les ÉDITEURS présents dans un festival
+router.get('/:id/editeurs', requireVisiteur(), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const sql = `
+            SELECT DISTINCT e.* FROM Editeur e
+            INNER JOIN Reservation r ON r.editeur_id = e.id
+            WHERE r.festival_id = $1
+            ORDER BY e.nom
+        `;
+        const result = await pool.query(sql, [id]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
 
 // ÉCRITURE : Création -> ADMIN SEULEMENT
 router.post('/', requireAdmin(), async (req, res) => {
