@@ -1,30 +1,47 @@
 import { Injectable, inject } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, UrlTree } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-import { UserDto } from '../../types/user-dto'; // Assure-toi que le chemin est bon
+import { UserDto } from '../../types/user-dto';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate {
   private auth = inject(AuthService);
   private router = inject(Router);
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | boolean {
-    const requiredRoles = route.data['roles'] as string[] | undefined;
-
-    const checkAccess = (user: UserDto | null): boolean => {
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | boolean | UrlTree {
+    
+    // Fonction de vérification centralisée
+    const checkAccess = (user: UserDto | null): boolean | UrlTree => {
+      // Pas connecté -> Login
       if (!user) {
-        this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
-        return false;
+        return this.router.createUrlTree(['/login']);
       }
+
+      // CAS SPÉCIAL : Utilisateur "En attente" (no-role)
+      if (user.role === 'no-role') {
+        // S'il est déjà sur la page pending, on laisse passer
+        if (state.url === '/pending') {
+          return true;
+        }
+        // Sinon, on le force à aller sur pending
+        return this.router.createUrlTree(['/pending']);
+      }
+
+      // CAS INVERSE : Utilisateur validé qui essaie d'aller sur "pending"
+      // On le renvoie vers l'accueil (festival) pour ne pas qu'il reste bloqué
+      if (state.url === '/pending') {
+        return this.router.createUrlTree(['/festival']);
+      }
+
+      // Vérification classique des Rôles (data: { roles: [...] })
+      const requiredRoles = route.data['roles'] as string[] | undefined;
       if (requiredRoles && !requiredRoles.includes(user.role)) {
-        // Redirection si rôle insuffisant
-        this.router.navigate(['/festival']); 
-        return false;
+        // Rôle insuffisant -> Redirection accueil (ou 403 page)
+        return this.router.createUrlTree(['/festival']);
       }
+
       return true;
     };
 
@@ -35,8 +52,7 @@ export class AuthGuard implements CanActivate {
     return this.auth.whoami$().pipe(
       map(user => checkAccess(user)),
       catchError(() => {
-        this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
-        return of(false);
+        return of(this.router.createUrlTree(['/login']));
       })
     );
   }

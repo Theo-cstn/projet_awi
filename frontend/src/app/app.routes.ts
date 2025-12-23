@@ -7,11 +7,17 @@ import { LoginComponent } from './shared/auth/login.component/login.component';
 import { AuthGuard } from './shared/auth/auth.guard';
 import { RegisterComponent } from './shared/register.component/register.component';
 import { AdminUsersComponent } from './admin/list-users.component/list-users.component';
+import { PendingComponent } from './shared/pending.component/pending.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { 
+    path: 'pending', 
+    component: PendingComponent,
+    canActivate: [AuthGuard]
+  },
   { 
     path: 'admin/users', 
     component: AdminUsersComponent,
@@ -21,12 +27,14 @@ export const routes: Routes = [
   { 
     path: 'festival', 
     component: FestivalList,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { roles: ['visiteur', 'organisateur_jeux', 'organisateur_reservations', 'admin'] }
   },
   { 
     path: 'editeurs', 
     component: EditeurList,
-    canActivate: [AuthGuard] 
+    canActivate: [AuthGuard],
+    data: { roles: ['visiteur', 'organisateur_jeux', 'organisateur_reservations', 'admin'] }
   },
   { 
     path: 'editeurs/:id/jeux', 
@@ -41,6 +49,7 @@ export const routes: Routes = [
   { 
     path: 'jeux', 
     component: JeuList,
-    canActivate: [AuthGuard] 
+    canActivate: [AuthGuard],
+    data: { roles: ['visiteur', 'organisateur_jeux', 'organisateur_reservations', 'admin'] }
   }
 ];
