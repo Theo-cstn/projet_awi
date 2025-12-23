@@ -1,91 +1,76 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Festival } from '../../types/festival-dto';
+import { map, Observable, tap } from 'rxjs';
+
 
 @Injectable({ providedIn: 'root' })
 export class FestivalListService {
-  private readonly apiUrl = 'https://localhost:4000/api/festivals/'; // URL du backend
-  private readonly _festivals = signal<Festival[]>([]); // Signal pour stocker les festivals
-  readonly festivals = this._festivals.asReadonly(); // Signal en lecture seule
+  private http = inject(HttpClient);
+  private readonly apiUrl = 'https://localhost:4000/api/festivals';
 
-  showForm: boolean = false;
-  lastId: number = 2;
+  private readonly _festivals = signal<Festival[]>([]); 
+  readonly festivals = this._festivals.asReadonly();
 
-  constructor(private http: HttpClient) {
-    // Charger les festivals dès que le service est injecté
-    this.loadFestivals();
+  // Mapping des données reçues du backend vers le type Festival
+  private mapFestival(data: any): Festival {
+    return {
+      id: data.festival_id,
+      nom: data.festival_nom,
+      date_debut: new Date(data.date_debut),
+      date_fin: new Date(data.date_fin),
+      nbTablesPetites: data.stock_tables_petites,
+      nbTablesGrandes: data.stock_tables_grandes,
+      nbTablesMairie: data.stock_tables_mairie,
+      nbTotalTables: data.stock_tables_petites + data.stock_tables_grandes + data.stock_tables_mairie,
+      zonesTarifaires: data.zones_tarifaires ? data.zones_tarifaires.map((zone: any) => ({
+        id: zone.id,
+        nom: zone.nom,
+        prixTable: zone.prix_table,
+        prixM: zone.prix_table / 4,
+        zonesPlan: zone.zones_plan ? zone.zones_plan.map((plan: any) => ({
+          id: plan.id,
+          nom: plan.nom,
+          nbTables: plan.nombre_tables,
+        })) : [],
+        nbTotalTables: zone.zones_plan ? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0) : 0,
+        nbTablesLibres: zone.nb_tables_libres ?? (zone.zones_plan ? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0) : 0),
+      })) : [],
+    };
   }
 
-  /**
-   * Charge les festivals depuis le backend.
-   */
   loadFestivals(): void {
     this.http.get<any[]>(this.apiUrl, { withCredentials: true }).subscribe({
       next: (data) => {
-        const festivals: Festival[] = data.map(festival => ({
-          id: festival.festival_id,
-          nom: festival.festival_nom,
-          date_debut: new Date(festival.date_debut), // Conversion en Date
-          date_fin: new Date(festival.date_fin), // Conversion en Date
-          nbTablesPetites: festival.stock_tables_petites,
-          nbTablesGrandes: festival.stock_tables_grandes,
-          nbTablesMairie: festival.stock_tables_mairie,
-          nbTotalTables: festival.stock_tables_petites + festival.stock_tables_grandes + festival.stock_tables_mairie, // Calcul automatique
-          zonesTarifaires: festival.zones_tarifaires.map((zone: any) => ({
-            id: zone.id,
-            nom: zone.nom,
-            prixTable: zone.prix_table,
-            prixM: zone.prix_table / 4, // Calcul automatique du prix au m²
-            zonesPlan: zone.zones_plan.map((plan: any) => ({
-              id: plan.id,
-              nom: plan.nom,
-              nbTables: plan.nombre_tables,
-            })),
-            nbTotalTables: zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0), // Calcul automatique du nombre total de tables
-            nbTablesLibres: zone.nb_tables_libres ?? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0), // Calcul automatique des tables libres
-          })),
-        }));
+        const festivals = data.map(item => this.mapFestival(item));
         this._festivals.set(festivals);
       },
-      error: (err) => console.error('Erreur lors du chargement des festivals :', err),
+      error: (err) => console.error('Erreur loadFestivals :', err),
     });
   }
 
 
-  /**
-   * Trouve un festival par son ID.
-   */
-  findById(id: number): Festival | undefined {
-    return this._festivals().find((f) => f.id === id);
-  }
-
-  /**
-   * Ajoute un nouveau festival.
-   */
-  onAdd(newFestival: Omit<Festival, 'id'>): void {
-    this.http.post<{ message: string; id: number }>(this.apiUrl, newFestival).subscribe({
-      next: (response) => {
-        console.log('Festival ajouté avec succès :', response);
-        // Recharger la liste des festivals après l'ajout
-        this.loadFestivals();
-      },
-      error: (err) => console.error('Erreur lors de l\'ajout du festival :', err),
-    });
-  }
-
-  /**
-   * Met à jour un festival existant.
-   */
-  update(partial: Partial<Festival> & { id: number }): void {
-    this._festivals.update((festivalList) =>
-      festivalList.map((f) => (f.id === partial.id ? { ...f, ...partial } : f))
+  getFestivalById(id: number): Observable<Festival> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`, { withCredentials: true }).pipe(
+      map(data => this.mapFestival(data))
     );
   }
 
-  /**
-   * Supprime tous les festivals.
-   */
-  removeAll(): void {
-    this._festivals.set([]);
+  onAdd(newFestival: Omit<Festival, 'id'>): void {
+    this.http.post<{ message: string; id: number }>(this.apiUrl, newFestival, { withCredentials: true }).subscribe({
+      next: () => this.loadFestivals(),
+      error: (err) => console.error('Erreur ajout :', err),
+    });
+  }
+
+    update(partial: Partial<Festival> & { id: number }): void {
+    this.http.patch(`${this.apiUrl}/${partial.id}`, partial, { withCredentials: true }).subscribe({
+      next: () => {
+        this._festivals.update((festivalList) =>
+          festivalList.map((f) => (f.id === partial.id ? { ...f, ...partial } : f))
+        );
+      },
+      error: (err) => console.error('Erreur update :', err)
+    });
   }
 }

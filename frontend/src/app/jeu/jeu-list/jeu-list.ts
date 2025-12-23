@@ -1,58 +1,89 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-
+import { RouterLink, ActivatedRoute, Router } from '@angular/router'; // Ajout de Router
 import { JeuListService } from '../jeu-service/jeu-list-service';
-import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
-import { AuthService } from '../../shared/auth/auth.service'; // Import auth
-import { JeuDto } from '../../types/jeu-dto';
+import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service'; // Ajout du service éditeur
+import { AuthService } from '../../shared/auth/auth.service';
 import { JeuComponent } from '../jeu-component/jeu-component';
 import { JeuForm } from '../jeu-form/jeu-form';
+import { JeuDto } from '../../types/jeu-dto';
 
 @Component({
   selector: 'app-jeu-list',
   standalone: true,
-  imports: [CommonModule, JeuComponent, JeuForm],
+  imports: [CommonModule, RouterLink, JeuComponent, JeuForm],
   templateUrl: './jeu-list.html',
   styleUrl: './jeu-list.css',
 })
-export class JeuList {
+export class JeuList implements OnInit {
+  // Services
   readonly svc = inject(JeuListService);
   readonly editeurService = inject(EditeurListService);
-  readonly route = inject(ActivatedRoute);
-  readonly router = inject(Router);
-  
-  // Injection Auth pour le HTML
   readonly auth = inject(AuthService);
-
-  // Signal pour afficher/masquer le formulaire
-  afficherFormulaire = signal(false);
-
-  // Récupérer l'ID de l'éditeur depuis l'URL (transformé en Signal)
-  editeurId = toSignal(this.route.paramMap.pipe(
-      map(params => {
-        const id = params.get('id');
-        return id ? Number(id) : undefined;
-      })
-    )
-  );
   
-  // Filtrer les jeux
-  jeux = computed(() => {
-    const id = this.editeurId();
-    if (id) {
-      return this.svc.jeux().filter(j => j.editeur_id === id);
-    }
-    return this.svc.jeux();
-  });
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   
-  // Récupérer l'éditeur courant (Computed)
+  // --- ÉTATS DU COMPOSANT ---
+
+  // Contexte Éditeur (Si on est sur /editeurs/:id/jeux)
+  editeurId = signal<number | undefined>(undefined);
+  
+  // On récupère l'objet éditeur complet si on a un ID
   editeur = computed(() => {
     const id = this.editeurId();
     return id ? this.editeurService.findById(id) : undefined;
   });
+
+  // Gestion des données (Liste des jeux)
+  // On crée un computed qui filtre si on est en mode "Éditeur", 
+  jeux = computed(() => {
+    const eId = this.editeurId();
+    const list = this.svc.jeux();
+
+    if (eId) {
+      return list.filter(j => j.editeur_id === eId);
+    }
+    return list;
+  });
+
+  afficherFormulaire = signal(false);
+
+  // --- INITIALISATION ---
+
+  ngOnInit(): void {
+    this.detectContextAndLoad();
+  }
+
+  private detectContextAndLoad() {
+    // Cas FESTIVAL : L'ID est dans le parent (/festivals/:id/jeux)
+    const festivalId = this.route.parent?.snapshot.paramMap.get('id');
+
+    // Cas ÉDITEUR : L'ID est dans la route courante (/editeurs/:id/jeux)
+    const currentRouteId = this.route.snapshot.paramMap.get('id');
+    const isEditeurRoute = this.router.url.includes('/editeurs/');
+
+    if (isEditeurRoute && currentRouteId) {
+      // MODE ÉDITEUR
+      const eId = Number(currentRouteId);      
+      this.editeurId.set(eId);
+      
+      // On charge l'info de l'éditeur (pour le titre)
+      if (this.editeurService.editeurs().length === 0) {
+          this.editeurService.loadEditeurs(); // Charge tout si vide
+      }
+
+      this.svc.loadJeux(); 
+
+    } else if (festivalId) {
+      this.svc.loadJeux(Number(festivalId));
+
+    } else {
+      this.svc.loadJeux();
+    }
+  }
+
+  // --- ACTIONS ---
 
   toggleFormulaire(): void {
     this.afficherFormulaire.update(v => !v);
@@ -63,29 +94,21 @@ export class JeuList {
   }
 
   onAdd(formData: any): void {
-    // Logique de récupération de l'éditeur
-    const currentEditeurId = this.editeurId();
-    const targetEditeurId = currentEditeurId || formData.editeur;
+    // Si on est sur la page d'un éditeur, on force l'ID
+    const targetEditeurId = this.editeurId() || formData.editeurId;
+
+    const newJeu: JeuDto = {
+      id: undefined, 
+      nom: formData.nom,
+      typeG: formData.type,  
+      age_min: formData.ageMin,  
+      age_max: formData.ageMax,
+      editeur_id: targetEditeurId, 
+      editeur: undefined, 
+      auteurs: [] 
+    };
     
-    // Si on est dans le contexte d'un éditeur, on l'utilise, sinon on le cherche
-    const editeur = this.editeurService.findById(Number(targetEditeurId));
-    
-    if (editeur) {
-      const newJeu: JeuDto = {
-        id: undefined,
-        nom: formData.nom,
-        typeG: formData.type,  
-        age_min: formData.ageMin,  
-        age_max: formData.ageMax,  
-        editeur_id: editeur.id!,
-        editeur: editeur, // Attention aux références circulaires selon ton DTO
-        auteurs: [] // Gestion des auteurs à prévoir plus tard
-      };
-      
-      this.svc.add(newJeu);
-      this.afficherFormulaire.set(false);
-    } else {
-        console.error("Impossible de trouver l'éditeur pour ce jeu");
-    }
+    this.svc.add(newJeu);
+    this.afficherFormulaire.set(false);
   }
 }

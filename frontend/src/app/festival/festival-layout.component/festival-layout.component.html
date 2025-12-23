@@ -1,0 +1,40 @@
+<div class="app-shell">
+  
+  @if (festival(); as f) {
+    <nav class="app-navbar festival-nav">
+      
+      <div class="nav-group context-border">
+        <a routerLink="/festivals" class="btn-action back" title="Retour à la liste">
+          <span>🏠</span> 
+          <span>Accueil</span>
+        </a>
+        
+        <span class="festival-title">{{ f.nom }}</span>
+      </div>
+
+      <div class="nav-group">
+        <a routerLink="./dashboard" routerLinkActive="active" class="nav-link">
+          Dashboard
+        </a>
+        
+        <a routerLink="./editeurs" routerLinkActive="active" class="nav-link">
+          Éditeurs
+        </a>
+        
+        <a routerLink="./jeux" routerLinkActive="active" class="nav-link">
+          Jeux
+        </a>
+        
+        <a routerLink="./reservations" routerLinkActive="active" class="nav-link" style="color: #d97706;">
+          Réservations
+        </a>
+      </div>
+
+    </nav>
+  }
+
+  <div class="container-fluid">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>

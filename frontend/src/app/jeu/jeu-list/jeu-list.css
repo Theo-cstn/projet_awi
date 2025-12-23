@@ -1,0 +1,63 @@
+/* En-tête flexible */
+.page-header {
+  display: flex;
+  justify-content: space-between; /* Ecarte le titre et le bouton */
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.title-group h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.link-back {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 5px;
+  font-size: 0.9rem;
+  text-decoration: underline;
+}
+
+/* Bouton d'action */
+.btn-action {
+  background-color: #4f46e5; /* Indigo */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-action:hover {
+  background-color: #4338ca;
+}
+
+/* Zone formulaire */
+.form-wrapper {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+/* Grille des jeux */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.empty-message, .loading {
+  text-align: center;
+  padding: 40px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  color: #6b7280;
+}

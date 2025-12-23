@@ -1,26 +1,28 @@
-<h1>Gestion des Festivals</h1>
+<div class="header-section">
+  <h1>Gestion des Festivals</h1>
+  <h4 class="count">Nombre de festivals : {{ nbFestival() }}</h4>
 
-<h4>Nombre de festivals: {{ this.nbFestival() }}</h4>
+  @if (showForm) {
+    <div class="form-container">
+      <app-festival-form (add)="onAdd($event)"></app-festival-form>
+      <button class="btn-cancel" (click)="showForm = false">Annuler</button>
+    </div>
+  } @else {
+    <button class="btn-primary" (click)="add()">+ Ajouter un Festival</button>
+  }
+</div>
 
-@if (showForm) {
-  <app-festival-form (add)="onAdd($event)"></app-festival-form>
-  <button (click)="showForm = false">Cancel</button>
-}
-@else{
-  <button (click)="add()">Add Festival</button>
-}
-
-
-<div class="festival-list-container">
-  @for (festival of festivals(); track festival.id!) {
-    <app-festival-component
-      [festival] = "festival">
+<div class="festival-grid">
+  @for (f of festivals(); track f.id) {
+    <app-festival-component 
+        [festival]="f" 
+        (click)="openWorkspace(f.id!)">
     </app-festival-component>
   }
-<div>
+</div>
 
 @if (festivals().length === 0 && !showForm) {
-  <div class="no-festivals">
+  <div class="empty-state">
     <p>Aucun festival enregistré. Cliquez sur "Ajouter un Festival" pour commencer.</p>
   </div>
 }
