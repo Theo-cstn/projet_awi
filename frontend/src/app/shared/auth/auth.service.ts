@@ -60,7 +60,8 @@ export class AuthService {
         this._error.set(null);
         return this.http.post<{ user: UserDto }>(
             `${environment.apiUrl}/auth/register`,
-            { login, password }
+            { login, password },
+            { withCredentials: true }
         ).pipe(
             tap(() => {
                this.login(login, password);
