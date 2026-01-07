@@ -11,10 +11,28 @@ const router = Router();
 // GET /editeurs - Liste tous les éditeurs (Triés par nom)
 router.get('/', requireVisiteur(), async (_req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM Editeur ORDER BY nom ASC');
+    const query = `
+      SELECT e.*, 
+             COALESCE(json_agg(
+               json_build_object(
+                 'id', p.id, 
+                 'nom', p.nom, 
+                 'prenom', p.prenom, 
+                 'email', p.email,
+                 'poste', ec.poste
+               ) ORDER BY ec.est_contact_principal DESC, p.nom ASC
+             ) FILTER (WHERE p.id IS NOT NULL), '[]') AS contacts
+      FROM Editeur e
+      LEFT JOIN Editeur_Contact ec ON e.id = ec.editeur_id
+      LEFT JOIN Personne p ON ec.contact_id = p.id
+      GROUP BY e.id
+      ORDER BY e.nom ASC
+    `;
+    
+    const result = await pool.query(query);
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error('Error fetching editors:', error);
+    console.error('Error fetching editors with contacts:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

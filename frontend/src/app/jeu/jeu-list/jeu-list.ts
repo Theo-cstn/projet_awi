@@ -28,6 +28,8 @@ export class JeuList implements OnInit {
 
   // Contexte Éditeur (Si on est sur /editeurs/:id/jeux)
   editeurId = signal<number | undefined>(undefined);
+
+  isFestivalMode = signal(false);
   
   // On récupère l'objet éditeur complet si on a un ID
   editeur = computed(() => {
@@ -73,13 +75,16 @@ export class JeuList implements OnInit {
           this.editeurService.loadEditeurs(); // Charge tout si vide
       }
 
-      this.svc.loadJeux(); 
+      this.svc.loadJeux();
+      this.isFestivalMode.set(false);
 
     } else if (festivalId) {
       this.svc.loadJeux(Number(festivalId));
+      this.isFestivalMode.set(true);
 
     } else {
       this.svc.loadJeux();
+      this.isFestivalMode.set(false);
     }
   }
 

@@ -24,6 +24,7 @@ export class EditeurList implements OnInit {
 
   // État du formulaire
   afficherFormulaire = signal(false);
+  isFestivalMode = signal(false);
 
   ngOnInit(): void {
     this.loadData();
@@ -35,8 +36,10 @@ export class EditeurList implements OnInit {
     
     if (parentId) {
        this.svc.loadEditeurs(Number(parentId));
+       this.isFestivalMode.set(true);
     } else {
        this.svc.loadEditeurs();
+       this.isFestivalMode.set(false);
     }
   }
 

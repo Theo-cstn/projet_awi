@@ -10,7 +10,7 @@
     }
   </div>
 
-  @if (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux') {
+  @if (!isFestivalMode() && (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux')) {
     <button (click)="toggleFormulaire()" class="btn-action">
       {{ afficherFormulaire() ? 'Annuler' : '+ Ajouter un jeu' }}
     </button>
@@ -45,7 +45,7 @@
     } @empty {
       <div class="empty-message">
         <p>Aucun jeu trouvé.</p>
-        @if (editeurId()) {
+        @if (editeurId() && !isFestivalMode()) {
            <p>Soyez le premier à ajouter un jeu pour cet éditeur !</p>
         }
       </div>

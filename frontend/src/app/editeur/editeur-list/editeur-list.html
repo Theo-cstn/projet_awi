@@ -1,7 +1,7 @@
 <div class="page-header">
   <h1>Liste des Éditeurs</h1>
 
-  @if (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux') {
+  @if (!isFestivalMode() && (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux')) {
     <button (click)="toggleFormulaire()" class="btn-action">
       {{ afficherFormulaire() ? 'Annuler' : '+ Nouvel Éditeur' }}
     </button>
@@ -20,7 +20,6 @@
       
       <app-editeur-component
         [editeur]="editeur"
-        [routerLink]="['./', editeur.id, 'jeux']"
         class="editor-card">
       </app-editeur-component>
 

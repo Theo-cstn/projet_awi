@@ -41,6 +41,12 @@ export const routes: Routes = [
         path: 'editeurs', 
         component: EditeurList 
       },
+
+      { 
+        path: 'editeurs/:id/jeux', 
+        component: JeuList 
+      },
+      
       // Jeux Globaux
       { 
         path: 'jeux', 

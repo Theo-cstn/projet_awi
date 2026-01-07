@@ -1,9 +1,10 @@
-/* En-tête flexible */
 .page-header {
   display: flex;
-  justify-content: space-between; /* Ecarte le titre et le bouton */
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
 }
 
 .title-group h1 {
@@ -23,41 +24,46 @@
   text-decoration: underline;
 }
 
-/* Bouton d'action */
+/* --- BOUTONS D'ACTION --- */
 .btn-action {
-  background-color: #4f46e5; /* Indigo */
+  background-color: #4f46e5;
   color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 0.95rem;
   font-weight: 500;
+  transition: background-color 0.2s;
 }
 
 .btn-action:hover {
   background-color: #4338ca;
 }
 
-/* Zone formulaire */
+/* --- FORMULAIRE --- */
 .form-wrapper {
   background-color: white;
-  padding: 20px;
+  padding: 25px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   margin-bottom: 2rem;
+  border: 1px solid #eee;
 }
 
-/* Grille des jeux */
+/* --- GRILLE --- */
 .games-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
 }
 
+/* --- ETATS VIDES --- */
 .empty-message, .loading {
   text-align: center;
   padding: 40px;
   background-color: #f9fafb;
   border-radius: 8px;
   color: #6b7280;
+  font-style: italic;
 }

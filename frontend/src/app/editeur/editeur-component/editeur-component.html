@@ -1,25 +1,29 @@
 <div class="card">
-    <h2> {{ this.editeur().nom }} </h2>
+  <h2>{{ editeur().nom }}</h2>
 
-    <div class="contacts">
-        <h3>Contacts :</h3>
-        <a [routerLink]="['/editeurs', editeur().id, 'contacts']">
-            <button>Voir les contacts</button>
-        </a>
-    </div>
+  <div class="contacts">
+    <h3>
+      Contacts
+      <button (click)="toggleContacts($event)">
+        {{ showContacts() ? '▲' : '▼' }}
+      </button>
+    </h3>
 
-    <div>
-        <h3>Jeux :</h3>
-        <a [routerLink]="['/editeurs', editeur().id, 'jeux']">
-            <button>Voir les jeux</button>
-        </a>
-    </div>
+    @if (showContacts()) {
+      @for (c of editeur().contacts; track c.id) {
+        <div class="contact">
+          {{ c.nom }} {{ c.prenom }} <br>
+          <small>{{ c.email }}</small>
+        </div>
+      } @empty {
+        <p>Aucun contact</p>
+      }
+    }
+  </div>
 
-    <div> 
-        <h3>Jeux :</h3>
-        <a [routerLink]="['/editeurs', editeur().id, 'jeux']">
-            <button>Voir les jeux</button>
-        </a>
-    </div>
-    
+  <div style="margin-top: 15px;">
+    <a [routerLink]="['/editeurs', editeur().id, 'jeux']" (click)="$event.stopPropagation()">
+      Voir les jeux
+    </a>
+  </div>
 </div>

@@ -1,9 +1,14 @@
+:host {
+  display: block; /* Nécessaire pour que le composant s'affiche dans la grille */
+}
+
+
 .card {
     background-color: #e0e0e0;
     border: 1px solid #999;
     padding: 20px;
-    width: 400px;
-    margin: 20px auto;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .contacts {
@@ -14,6 +19,9 @@
 .contacts h3 {
     margin: 0 0 10px 0;
     font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .contact {
@@ -27,4 +35,8 @@
     margin: 0;
     font-style: italic;
     color: #666;
+}
+
+.btn-toggle:hover {
+  color: #000;
 }
