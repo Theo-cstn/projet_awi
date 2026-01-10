@@ -37,7 +37,10 @@ export class ZoneTarifaireListService {
       this._zones.set(mapped); 
     }, 
     error: (err) => console.error('Erreur chargement zones tarifaires', err) 
-  }); 
-}
+   }); 
+  }
+
+
+
   
 }

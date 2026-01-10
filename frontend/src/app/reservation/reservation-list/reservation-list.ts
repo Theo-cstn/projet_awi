@@ -17,7 +17,7 @@ export class ReservationList implements OnInit {
   festivalId = signal<number | undefined>(undefined); 
   reservations = computed(() => this.svc.reservations()); 
   
-  ngOnInit(): void { 
+  ngOnInit(): void {
     this.detectContextAndLoad(); 
   } 
   private detectContextAndLoad() { 
@@ -30,8 +30,15 @@ export class ReservationList implements OnInit {
     this.router.navigate([`/festivals/${this.festivalId()}/reservations/${rId}`]); 
   }
   addReservation() {
-    this.router.navigate([`/festivals/${this.festivalId()}/reservations/new`]);
+    this.router.navigate(['new'], { 
+      relativeTo: this.route,
+      state: { festivalId: this.festivalId() } 
+    });
   }
+
+  
+  
+
 
 
 }

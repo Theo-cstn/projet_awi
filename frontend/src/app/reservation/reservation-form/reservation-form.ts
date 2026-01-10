@@ -1,6 +1,6 @@
 import { Component, inject, signal, input, computed, output, effect } from '@angular/core';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
-import { Reservation } from '../../types/reservation-dto';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ZoneTarifaireListService } from '../../zoneTarifaire/zoneTarifaire-service/zone-tarifaire-list-service';
 import { ReservationListService } from '../reservation-service/reservation-list-service';
@@ -12,6 +12,9 @@ import { ReservationListService } from '../reservation-service/reservation-list-
   styleUrl: './reservation-form.css',
 })
 export class ReservationForm {
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
   private editeurService = inject(EditeurListService); 
   private zoneService = inject(ZoneTarifaireListService); 
   private reservationService = inject(ReservationListService);
@@ -34,7 +37,13 @@ export class ReservationForm {
   });
 
   lignes = signal<{ zone_tarifaire_id: number; quantite: number; prix_unitaire_applique: number }[]>([]);
-  isEditeur = computed(() => this.form.controls.type.value === 'Editeur');
+
+  typeValue = signal<'Editeur' | 'Boutique' | 'Association' | 'Prestataire' | 'Autre'>('Autre');
+  constructor() {
+    this.form.controls.type.valueChanges.subscribe(v => this.typeValue.set(v!));
+  }
+  isEditeur = computed(() => this.typeValue() === 'Editeur');
+
   totalTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite, 0) );
   totalPrix = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite * l.prix_unitaire_applique, 0) - (this.form.controls.remise_generale.value ?? 0) );
 
@@ -83,4 +92,26 @@ export class ReservationForm {
       alert("Réservation créée"); 
     }); 
   } 
+
+  cancel() {
+    this.router.navigate([`/festivals/${this.festivalId()}/reservations`]);
+  }
+  
+  ngOnInit() {
+    let currentRoute = this.route;
+    while (currentRoute.parent) {
+      const id = currentRoute.parent.snapshot.params['id'];
+      if (id && !isNaN(+id)) {
+        this.festivalId.set(+id);
+        break;
+      }
+      currentRoute = currentRoute.parent;
+    }
+    
+    console.log('Festival ID récupéré:', this.festivalId());
+    
+    this.editeurService.loadEditeurs();
+    this.zoneService.loadZones(this.festivalId());
+  }
 }
+

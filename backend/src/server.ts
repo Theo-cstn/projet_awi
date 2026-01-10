@@ -16,6 +16,7 @@ import usersRoutes from './routes/users.js';
 import editeursRoutes from './routes/editeurs.js';
 import festivalsRoutes from './routes/festivals.js';
 import reservationsRoutes from './routes/reservations.js';
+import zoneTarifaireRoutes from './routes/zoneTarifaire.js';
 import jeuxRoutes from './routes/jeux.js';
 import suiviRoutes from './routes/suivi.js';
 import personnesRoutes from './routes/personnes.js';
@@ -56,6 +57,7 @@ app.use('/api/users', verifyToken, usersRoutes);
 app.use('/api/editeurs', verifyToken, editeursRoutes);
 app.use('/api/festivals', verifyToken, festivalsRoutes);
 app.use('/api/reservations', verifyToken, reservationsRoutes);
+app.use('/api/zone-tarifaire', verifyToken, zoneTarifaireRoutes)
 app.use('/api/jeux', verifyToken, jeuxRoutes);
 app.use('/api/suivi', verifyToken, suiviRoutes);
 app.use('/api/personnes', verifyToken, personnesRoutes);

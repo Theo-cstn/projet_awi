@@ -1,61 +1,71 @@
-<form [formGroup]="form">
+<div class="form-container">
+  <h2>Nouvelle réservation</h2>
 
-  <!-- TYPE -->
-  <label>Type de réservant</label>
-  <select formControlName="type">
-    <option value="Editeur">Éditeur</option>
-    <option value="Boutique">Boutique</option>
-    <option value="Association">Association</option>
-    <option value="Prestataire">Prestataire</option>
-    <option value="Autre">Autre</option>
-  </select>
+  <form [formGroup]="form">
 
-  <!-- EDITEUR -->
-  @if (isEditeur()) {
-    <label>Éditeur</label>
-    <select formControlName="editeur_id">
-      @for (e of editeurs(); track e.id) {
-        <option [value]="e.id">{{ e.nom }}</option>
-      }
+    <!-- TYPE -->
+    <label>Type de réservant</label>
+    <select formControlName="type">
+      <option value="Editeur">Éditeur</option>
+      <option value="Boutique">Boutique</option>
+      <option value="Association">Association</option>
+      <option value="Prestataire">Prestataire</option>
+      <option value="Autre">Autre</option>
     </select>
-  }
 
-  <!-- NOM LIBRE -->
-  @if (!isEditeur()) {
-    <label>Nom du réservant</label>
-    <input type="text" formControlName="autre_nom_reservant">
-  }
+    <!-- EDITEUR -->
+    @if (isEditeur()) {
+      <label>Éditeur</label>
+      <select formControlName="editeur_id">
+        @for (e of editeurs(); track e.id) {
+          <option [value]="e.id">{{ e.nom }}</option>
+        }
+      </select>
+    }
 
-  <h3>Lignes tarifaires</h3>
+    <!-- NOM LIBRE -->
+    @if (!isEditeur()) {
+      <label>Nom du réservant</label>
+      <input type="text" formControlName="autre_nom_reservant">
+    }
 
-  <button type="button" (click)="addLigne()">Ajouter une ligne</button>
+    <label>Nombre de prises</label>
+    <input type="number" formControlName="nombre_prises">
 
- @for (l of lignes(); track $index) {
-  <div class="ligne">
+    <h3>Lignes tarifaires</h3>
 
-    <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)">
-      <option value="0">Sélectionner une zone</option>
-      @for (z of zones(); track z.id) {
-        <option [value]="z.id">{{ z.nom }} ({{ z.nbTablesLibres }} libres)</option>
-      }
-    </select>
+    <button type="button" (click)="addLigne()">Ajouter une ligne</button>
+
+    @for (l of lignes(); track $index) {
+      <div class="ligne">
+
+        <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)"
+>
+          <option value="0">Sélectionner une zone</option>
+          @for (z of zones(); track z.id) {
+            <option [value]="z.id">{{ z.nom }} ({{ z.nbTablesLibres }} libres)</option>
+          }
+        </select>
 
         <input type="number"
-          [value]="l.quantite"
-          (input)="updateLigne($index, l.zone_tarifaire_id, +$any($event.target).value)">
+               [value]="l.quantite"
+               (input)="updateLigne($index, l.zone_tarifaire_id, +$any($event.target).value)">
 
-    <button type="button" (click)="removeLigne($index)">X</button>
+        <button type="button" (click)="removeLigne($index)">X</button>
+      </div>
+    }
 
-  </div>
- }
+    <p><strong>Total tables :</strong> {{ totalTables() }}</p>
+    <p><strong>Total prix :</strong> {{ totalPrix() }} €</p>
 
+    
+    <label>Remise générale (€)</label>
+    <input type="number" formControlName="remise_generale">
 
+    <div class="actions">
+      <button type="button" (click)="submit()">Créer</button>
+      <button type="button" class="cancel" (click)="cancel()">Annuler</button>
+    </div>
 
-  <p><strong>Total tables :</strong> {{ totalTables() }}</p>
-  <p><strong>Total prix :</strong> {{ totalPrix() }} €</p>
-
-  <label>Remise générale (€)</label>
-  <input type="number" formControlName="remise_generale">
-
-  <button type="button" (click)="submit()">Créer la réservation</button>
-</form>
+  </form>
+</div>

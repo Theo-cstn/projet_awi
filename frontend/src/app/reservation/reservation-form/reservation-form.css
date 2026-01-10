@@ -1,0 +1,58 @@
+.form-container {
+  max-width: 450px;
+  margin: 20px auto;
+  background: #f0f0f0;
+  padding: 20px;
+  border: 1px solid #999;
+  border-radius: 6px;
+}
+
+label {
+  font-weight: bold;
+  margin-top: 10px;
+  display: block;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: 1px solid #3d8b40;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.cancel {
+  background-color: #d9534f;
+  border-color: #b52b27;
+}
+
+.cancel:hover {
+  background-color: #c9302c;
+}
+
+.ligne {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.actions {
+  margin-top: 20px;
+}
