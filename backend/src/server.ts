@@ -41,7 +41,7 @@ app.use(cookieParser());
 
 // CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL ?? 'http://localhost:4200',
+  origin: [process.env.FRONTEND_URL || 'http://localhost:4200', 'https://localhost:4200'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']

@@ -1,9 +1,13 @@
+:host {
+  display: block;
+}
+
 .card {
     background-color: #e0e0e0;
     border: 1px solid #999;
     padding: 20px;
-    width: 400px;
-    margin: 20px auto;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .info {

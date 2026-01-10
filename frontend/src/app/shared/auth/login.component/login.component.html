@@ -28,4 +28,8 @@
   @if (auth.error()) {
     <div class="error">{{ auth.error() }}</div>
   }
+
+  <div class="link">
+    <p>Pas encore de compte ? <a routerLink="/register">Créer votre compte</a></p>
+  </div>
 </form>

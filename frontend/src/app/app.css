@@ -2,3 +2,48 @@
     background: #cbe6ff5e;
     min-height: 100vh;
 }
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.nav-links a {
+  margin-right: 15px;
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+}
+
+.nav-links a.active {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.admin-link {
+  color: #d32f2f !important; /* Rouge pour bien le distinguer */
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-logout {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-logout:hover {
+  background-color: #5a6268;
+}

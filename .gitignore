@@ -1,4 +1,5 @@
 backend/certs/
+frontend/certs/
 backend/node_modules/
 /node_modules/
 /dist/

@@ -1,28 +1,56 @@
-@if (editeurId()) {
-  <h1>Jeux de {{ editeur()?.nom ?? 'Éditeur inconnu' }}</h1>
-  <button (click)="retourEditeurs()">← Retour aux éditeurs</button>
-} @else {
-  <h1>Liste de Jeux</h1>
-}
+<div class="page-header">
+  <div class="title-group">
+    @if (editeurId()) {
+      <h1>Jeux de {{ editeur()?.nom ?? '...' }}</h1>
+      <button (click)="retourEditeurs()" class="link-back">
+        ← Retour aux éditeurs
+      </button>
+    } @else {
+      <h1>Liste des Jeux</h1>
+    }
+  </div>
 
-<button (click)="toggleFormulaire()">
-  {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un jeu' }}
-</button>
+  @if (!isFestivalMode() && (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux')) {
+    <button (click)="toggleFormulaire()" class="btn-action">
+      {{ afficherFormulaire() ? 'Annuler' : '+ Ajouter un jeu' }}
+    </button>
+  }
+</div>
 
 @if (afficherFormulaire()) {
-  <app-jeu-form
-    [editeurId]="editeurId()"
-    (add)="onAdd($event)">
-  </app-jeu-form>
+  <div class="form-wrapper">
+    <app-jeu-form
+      [editeurId]="editeurId()"
+      [jeuAEditer]="jeuEnEdition()"
+      (add)="onAdd($event)"
+      (update)="onUpdate($event)">
+    </app-jeu-form>
+  </div>
 }
 
-
 @if (jeux(); as jeuxList) {
-  @for (jeu of jeuxList; track jeu.id) {
-    <app-jeu-component [jeu]="jeu"></app-jeu-component>
-  } @empty {
-    <p>Aucun jeu pour cet éditeur. Ajoutez-en un !</p>
-  }
+  <div class="games-grid">
+    @for (jeu of jeuxList; track jeu.id) {
+      <div class="jeu-card">
+        <app-jeu-component [jeu]="jeu"></app-jeu-component>
+        
+        @if (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux') {
+          <div class="jeu-actions">
+            <button (click)="onEdit(jeu)" class="btn-edit">
+              Éditer
+            </button>
+          </div>
+        }
+      </div>
+    } @empty {
+      <div class="empty-message">
+        <p>Aucun jeu trouvé.</p>
+        @if (editeurId() && !isFestivalMode()) {
+           <p>Soyez le premier à ajouter un jeu pour cet éditeur !</p>
+        }
+      </div>
+    }
+  </div>
 } @else {
-  <p>Chargement des jeux...</p>
+  <p class="loading">Chargement des jeux...</p>
 }

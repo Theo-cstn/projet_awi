@@ -9,9 +9,11 @@ const router = Router();
 // ==============================================================================
 
 // LECTURE : Historique complet (Passé/Présent/Futur) -> ADMIN SEULEMENT
-router.get('/', requireAdmin(), async (req, res) => {
+router.get('/', requireVisiteur(), async (req, res) => {
   try {
-    const query = `
+    const isAdmin = req.user?.role === 'admin';
+
+    let sql = `
       SELECT 
         f.id AS festival_id, 
         f.nom AS festival_nom, 
@@ -46,23 +48,38 @@ router.get('/', requireAdmin(), async (req, res) => {
         ) AS zones_tarifaires
       FROM Festival f
       LEFT JOIN ZoneTarifaire zt ON zt.festival_id = f.id
-      GROUP BY f.id
-      ORDER BY f.date_debut DESC;
     `;
 
-    const result = await pool.query(query);
-    res.json(result.rows); // Renvoie les données brutes
+    if (!isAdmin) {
+      // Si PAS admin, on filtre les festivals passés
+      sql += ` WHERE f.date_fin >= CURRENT_DATE `;
+    }
+
+    sql += ` GROUP BY f.id `;
+
+    // ORDRE DYNAMIQUE
+    // Admin : Veut voir les derniers créés/modifiés en premier (Souvent les futurs ou récents passés)
+    // Visiteur : Veut voir le PROCHAIN festival (le plus proche dans le futur)
+    if (isAdmin) {
+        sql += ` ORDER BY f.date_debut DESC`; 
+    } else {
+        sql += ` ORDER BY f.date_debut ASC`;
+    }
+
+    const result = await pool.query(sql);
+    res.json(result.rows);
+
   } catch (error) {
-    console.error('Erreur lors de la récupération des festivals :', error);
+    console.error('Erreur récupération festivals :', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// LECTURE : Festivals "Courants" (Actifs/Futurs) -> VISITEUR+
-// Ce sont les espaces de travail pour les organisateurs.
-router.get('/current', requireVisiteur(), async (req, res) => {
+// LECTURE : Récupérer un SEUL festival pour un ID donné -> VISITEUR+
+router.get('/:id', requireVisiteur(), async (req, res) => {
+  const { id } = req.params;
   try {
-    const query = `
+    const sql = `
       SELECT 
         f.id AS festival_id, 
         f.nom AS festival_nom, 
@@ -97,19 +114,64 @@ router.get('/current', requireVisiteur(), async (req, res) => {
         ) AS zones_tarifaires
       FROM Festival f
       LEFT JOIN ZoneTarifaire zt ON zt.festival_id = f.id
-      WHERE f.date_fin >= CURRENT_DATE
+      WHERE f.id = $1
       GROUP BY f.id
-      ORDER BY f.date_debut ASC;
     `;
 
-    const result = await pool.query(query);
+    const result = await pool.query(sql, [id]);
 
-    // Appliquer le mapping
-    res.json(result.rows);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Festival non trouvé' });
+    }
+
+    res.json(result.rows[0]);
+
   } catch (error) {
-    console.error('Erreur lors de la récupération des festivals :', error);
+    console.error('Erreur récupération festival par ID :', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
+});
+
+// ==============================================================================
+// SOUS-RESSOURCES (Jeux & Editeurs filtrés par Festival)
+// ==============================================================================
+
+// Récupérer les JEUX présents dans un festival
+router.get('/:id/jeux', requireVisiteur(), async (req, res) => {
+    const { id } = req.params;
+    try {
+        //On passe par la table 'JeuReserve' pour faire le lien
+        const sql = `
+            SELECT DISTINCT j.* FROM Jeu j
+            INNER JOIN JeuReserve jr ON jr.jeu_id = j.id
+            INNER JOIN Reservation r ON jr.reservation_id = r.id
+            WHERE r.festival_id = $1
+            ORDER BY j.nom
+        `;
+        const result = await pool.query(sql, [id]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Erreur SQL récupération jeux festival :', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Récupérer les ÉDITEURS présents dans un festival
+router.get('/:id/editeurs', requireVisiteur(), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const sql = `
+            SELECT DISTINCT e.* FROM Editeur e
+            INNER JOIN Reservation r ON r.editeur_id = e.id
+            WHERE r.festival_id = $1
+            ORDER BY e.nom
+        `;
+        const result = await pool.query(sql, [id]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 

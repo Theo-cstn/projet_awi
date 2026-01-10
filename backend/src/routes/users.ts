@@ -12,11 +12,10 @@ const router = Router();
 // GET /users - Liste des utilisateurs (Admin uniquement)
 router.get('/', requireAdmin(), async (_req, res) => {
     try {
-        // Ne jamais renvoyer les mots de passe hashés !
         const result = await pool.query(`
-            SELECT id, login, role, email, created_at, last_login 
-            FROM Users 
-            ORDER BY created_at DESC
+            SELECT id, login, role
+            FROM users 
+            ORDER BY id ASC
         `);
         res.json(result.rows);
     } catch (error) {
@@ -28,10 +27,10 @@ router.get('/', requireAdmin(), async (_req, res) => {
 // GET /users/me - Profil de l'utilisateur connecté
 router.get('/me', requireVisiteur(), async (req, res) => {
     try {
-        // req.user est défini par le middleware verifyToken
-        const userId = (req as any).user.userId;
+        const userId = req.user!.id;
+        
         const result = await pool.query(
-            'SELECT id, login, role, email, created_at, last_login FROM Users WHERE id = $1',
+            'SELECT id, login, role FROM users WHERE id = $1',
             [userId]
         );
         if (result.rows.length === 0) {
@@ -46,34 +45,39 @@ router.get('/me', requireVisiteur(), async (req, res) => {
 
 // POST /users - Créer un utilisateur (Admin uniquement)
 router.post('/', requireAdmin(), async (req, res) => {
-    const { login, password, role, email } = req.body;
+    const { login, password, role } = req.body;
     
     if (!login || !password) {
         return res.status(400).json({ error: 'Login et mot de passe requis' });
     }
     
     try {
-        // Hash du mot de passe
         const hashedPassword = await bcrypt.hash(password, 10);
         
         const result = await pool.query(
-            'INSERT INTO Users (login, password, role, email) VALUES ($1, $2, $3, $4) RETURNING id, login, role, email, created_at',
-            [login, hashedPassword, role || 'visiteur', email]
+            `INSERT INTO users (login, password_hash, role) 
+             VALUES ($1, $2, $3) 
+             RETURNING id, login, role`,
+            [login, hashedPassword, role || 'visiteur']
         );
         res.status(201).json(result.rows[0]);
     } catch (error: any) {
         if (error.code === '23505') {
-            return res.status(409).json({ error: 'Login ou email déjà utilisé' });
+            return res.status(409).json({ error: 'Login déjà utilisé' });
         }
         console.error(error);
         res.status(500).json({ error: 'Erreur création utilisateur' });
     }
 });
 
-// PUT /users/:id/role - Changer le rôle d'un utilisateur (Admin uniquement)
+// PUT /users/:id/role - Changer le rôle
 router.put('/:id/role', requireAdmin(), async (req, res) => {
-    const { id } = req.params;
+    const targetUserId = parseInt(req.params.id, 10);
     const { role } = req.body;
+
+    if (req.user && req.user.id === targetUserId) {
+        return res.status(403).json({ error: 'Modification de son propre rôle interdite' });
+    }
     
     const validRoles = ['no-role', 'visiteur', 'organisateur_jeux', 'organisateur_reservations', 'admin'];
     if (!validRoles.includes(role)) {
@@ -81,9 +85,10 @@ router.put('/:id/role', requireAdmin(), async (req, res) => {
     }
     
     try {
+        // CORRECTION : Retrait de l'email du RETURNING
         const result = await pool.query(
-            'UPDATE Users SET role = $1 WHERE id = $2 RETURNING id, login, role, email',
-            [role, id]
+            'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, login, role',
+            [role, targetUserId]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
@@ -95,18 +100,16 @@ router.put('/:id/role', requireAdmin(), async (req, res) => {
     }
 });
 
-// DELETE /users/:id - Supprimer un utilisateur (Admin uniquement)
+// DELETE /users/:id - Supprimer un utilisateur
 router.delete('/:id', requireAdmin(), async (req, res) => {
-    const { id } = req.params;
+    const targetUserId = parseInt(req.params.id, 10);
     
-    // Empêcher la suppression du compte admin connecté
-    const currentUserId = (req as any).user.userId;
-    if (parseInt(id) === currentUserId) {
-        return res.status(400).json({ error: 'Impossible de supprimer votre propre compte' });
+    if (req.user && req.user.id === targetUserId) {
+        return res.status(403).json({ error: 'Impossible de supprimer votre propre compte' });
     }
     
     try {
-        const result = await pool.query('DELETE FROM Users WHERE id = $1 RETURNING login', [id]);
+        const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING login', [targetUserId]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }

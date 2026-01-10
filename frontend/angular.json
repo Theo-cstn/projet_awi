@@ -55,6 +55,11 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "ssl": true,
+            "sslKey": "./certs/localhost-key.pem",
+            "sslCert": "./certs/localhost.pem"
+          },
           "configurations": {
             "production": {
               "buildTarget": "festival:build:production"

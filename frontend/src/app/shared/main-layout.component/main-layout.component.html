@@ -1,0 +1,36 @@
+<div class="app-shell">
+  
+  @if (auth.isLoggedIn()) {
+    <nav class="app-navbar">
+      
+      <div class="nav-group">
+        <a routerLink="/festivals" routerLinkActive="active" [routerLinkActiveOptions]="{exact: false}" class="nav-link">
+          Festivals
+        </a>
+        <a routerLink="/editeurs" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
+          Éditeurs
+        </a>
+        <a routerLink="/jeux" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
+          Jeux
+        </a>
+
+        @if (auth.isAdmin()) {
+          <a routerLink="/admin/users" routerLinkActive="active" class="nav-link admin">
+            Admin
+          </a>
+        }
+      </div>
+
+      <div class="nav-group">
+        <span class="font-medium text-gray-600">{{ auth.currentUser()?.login }}</span>
+        <button (click)="logout()" class="btn-action logout">Déconnexion</button>
+      </div>
+
+    </nav>
+  }
+
+  <div class="container-fluid">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>

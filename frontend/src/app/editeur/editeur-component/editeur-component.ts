@@ -1,17 +1,24 @@
-import { Component, input, output } from '@angular/core';
-import { EditeurDto } from '../../types/editeur-dto';
+import { Component, input, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { EditeurDto } from '../../types/editeur-dto';
 
 @Component({
   selector: 'app-editeur-component',
-  imports: [RouterLink],
+  standalone: true,
+  imports: [CommonModule, RouterLink], 
   templateUrl: './editeur-component.html',
-  styleUrl: './editeur-component.css',
+  styleUrl: './editeur-component.css'
 })
 export class EditeurComponent {
-    editeur = input.required<EditeurDto>()
+  // On reçoit juste l'éditeur en entrée
+  editeur = input.required<EditeurDto>();
 
-    voirJeux = output<number>()  // Émet l'ID de l'éditeur
-    voirContacts = output<number>()  // Émet l'ID de l'éditeur
-    modifier = output<EditeurDto>()  // Émet l'éditeur complet à modifier
+  // Gestion interne de l'affichage des contacts
+  showContacts = signal(false);
+
+  toggleContacts(event: Event) {
+    event.stopPropagation();
+    this.showContacts.update(v => !v);
+  }
 }

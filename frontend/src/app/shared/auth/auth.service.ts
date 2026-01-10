@@ -3,12 +3,14 @@ import { HttpClient } from '@angular/common/http'
 import { UserDto } from '../../types/user-dto'
 import { environment } from '../../../environments/environment'
 import { catchError, finalize, map, of, tap } from 'rxjs'
+import { Router } from '@angular/router'
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
     private readonly http = inject(HttpClient)
+    private readonly router = inject(Router)
 
     // --- État interne (signaux) ---
     private readonly _currentUser = signal<UserDto | null>(null)
@@ -53,16 +55,35 @@ export class AuthService {
         ).subscribe()
     }
 
-    // --- Déconnexion ---
+    register(login: string, password: string) {
+        this._isLoading.set(true);
+        this._error.set(null);
+        return this.http.post<{ user: UserDto }>(
+            `${environment.apiUrl}/auth/register`,
+            { login, password },
+            { withCredentials: true }
+        ).pipe(
+            tap(() => {
+               this.login(login, password);
+            }),
+            finalize(() => this._isLoading.set(false))
+        );
+    }
+
     logout() {
         this._isLoading.set(true)
         this._error.set(null)
         this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
             .pipe(
-                tap(() => { this._currentUser.set(null) }),
+                tap(() => { 
+                    this._currentUser.set(null);
+                    this.router.navigate(['/login']); 
+                }),
                 catchError(err => {
                     console.error('Erreur de déconnexion', err)
                     this._error.set('Erreur de déconnexion')
+                    this._currentUser.set(null);
+                    this.router.navigate(['/login']);
                     return of(null)
                 }),
                 finalize(() => this._isLoading.set(false))

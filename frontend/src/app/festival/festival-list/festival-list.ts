@@ -4,7 +4,7 @@ import { Festival } from "../../types/festival-dto";
 import { FestivalComponent } from "../festival-component/festival-component";
 import { FestivalForm } from "../festival-form/festival-form";
 import { FestivalListService } from "../festival-service/festival-list-service";
-import { RouterLink } from "@angular/router";
+import { RouterLink, Router } from "@angular/router";
 
 @Component({
   selector: 'app-festival-list',
@@ -15,6 +15,8 @@ import { RouterLink } from "@angular/router";
 })
 export class FestivalList implements OnInit {
   readonly svc = inject(FestivalListService);
+  private router = inject(Router);
+
   readonly festivals = this.svc.festivals;
   showForm: boolean = false;
   selectedFestival = signal<Festival | null>(null);
@@ -23,6 +25,25 @@ export class FestivalList implements OnInit {
     // Charger les festivals depuis le backend au démarrage du composant
     this.svc.loadFestivals();
   }
+
+  // --- NAVIGATION ---
+  
+  // Méthode appelée lors du clic sur une carte
+  openWorkspace(id: number | undefined) {
+  if (id) {
+    this.router.navigate(['/festivals', id]);
+  } else {
+    console.error('Impossible d\'ouvrir le workspace : ID manquant');
+  }
+}
+
+  //Méthode pour gérer le clic sur le bouton d'édition
+  handleEdit(event: MouseEvent, festival: Festival) {
+    event.stopPropagation(); // Empêche le clic de monter vers la carte
+    console.log('Edition demandée pour', festival.nom);
+  }
+
+  // --- LOGIQUE EXISTANTE ---
 
   add() {
     this.showForm = true;
@@ -36,26 +57,11 @@ export class FestivalList implements OnInit {
     this.showForm = false;
     this.selectedFestival.set(null);
 
-    // Vérification :
     console.log(`onAdd festival : ${JSON.stringify(newFestival)}`);
   }
 
-  onRemove(idFestival: number) {
-    if (confirm('Etes-vous sûr de vouloir supprimer ce festival ?')) {
-      this.svc.onRemove(idFestival);
-    }
-  }
-
-  removeAll() {
-    if (confirm('Etes-vous sûr de vouloir supprimer tous les festivals ?')) {
-      this.festivals().forEach(f => {
-        this.svc.onRemove(f.id!);
-      });
-    }
-  }
-
   nbFestival = computed(() => {
-    return this.festivals.length;
+    return this.festivals().length;
   });
 
   totalTables = computed(() => {
