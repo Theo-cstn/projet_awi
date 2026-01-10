@@ -1,18 +1,18 @@
 export interface Reservation {
-    id: number|undefined
-    festival_id: number
-    editeur_id?: number // seulement si type = editeur
-    type: 'editeur' | 'prestataire' | 'boutique' | 'autre'
-    nom_reservant?: string
+    id?: number
+  festival_id: number;
+  type: 'Editeur' | 'Boutique' | 'Association' | 'Prestataire' | 'Autre';
+  editeur_id?: number ;
+  autre_nom_reservant?: string;
 
-    nombre_tables: number
-    nombre_prises: number
-    est_present: boolean
-    remise_generale: number
+  nombre_prises: number;
+  remise_generale: number;
+  est_present: boolean;
 
-    status: string
-    date_creation: Date
-    date_facturation?: Date
-    date_paiement?: Date
+  lignes: {
+    zone_tarifaire_id: number;
+    quantite: number;
+    prix_unitaire_applique: number;
+  }[];
     
 }

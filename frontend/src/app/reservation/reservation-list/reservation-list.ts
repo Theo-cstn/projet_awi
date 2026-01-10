@@ -1,10 +1,11 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { ReservationListService } from '../reservation-service/reservation-list-service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ReservationComponent } from '../reservation-component/reservation-component';
 
 @Component({
   selector: 'app-reservation-list',
-  imports: [],
+  imports: [ReservationComponent],
   templateUrl: './reservation-list.html',
   styleUrl: './reservation-list.css',
 })
@@ -28,5 +29,9 @@ export class ReservationList implements OnInit {
   openReservation(rId: number) { 
     this.router.navigate([`/festivals/${this.festivalId()}/reservations/${rId}`]); 
   }
+  addReservation() {
+    this.router.navigate([`/festivals/${this.festivalId()}/reservations/new`]);
+  }
+
 
 }

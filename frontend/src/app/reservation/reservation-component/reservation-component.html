@@ -1,31 +1,29 @@
-<div class="card">
+<div class="reservation-card">
 
-  <h2>{{ reservation().nom_reservant }}</h2>
+  <h3>{{ nomReservant() }}</h3>
 
-  <div class="info">
-    <p>
-      <strong>Type :</strong> {{ reservation().type }}<br>
+  <p><strong>Type :</strong> {{ reservation().type }}</p>
 
-      <strong>Tables :</strong> {{ reservation().nombre_tables }}<br>
+  <p><strong>Nombre total de tables :</strong> {{ totalTables() }}</p>
 
-      <strong>Prises :</strong> {{ reservation().nombre_prises }}<br>
+  @if (reservation().lignes.length > 0) {
+    <div class="zone-details">
+      <strong>Répartition par zone :</strong>
+      <ul>
+        @for (ligne of reservation().lignes; track ligne.zone_tarifaire_id) {
+          <li>
+            Zone #{{ ligne.zone_tarifaire_id }}
+            — {{ ligne.quantite }} table(s)
+            × {{ ligne.prix_unitaire_applique }} €
+            = {{ ligne.quantite * ligne.prix_unitaire_applique }} €
+          </li>
+        }
+      </ul>
+    </div>
+  }
 
-      <strong>Remise :</strong> {{ reservation().remise_generale }} €<br>
+  <p><strong>Remise :</strong> {{ reservation().remise_generale }} €</p>
 
-      <strong>Présent :</strong> {{ reservation().est_present ? 'Oui' : 'Non' }}<br>
-
-      <strong>Statut :</strong> {{ reservation().status }}<br>
-
-      <strong>Date création :</strong> {{ reservation().date_creation | date:'short' }}<br>
-
-      @if (reservation().date_facturation) {
-        <strong>Facturée :</strong> {{ reservation().date_facturation | date:'short' }}<br>
-      }
-
-      @if (reservation().date_paiement) {
-        <strong>Payée :</strong> {{ reservation().date_paiement | date:'short' }}<br>
-      }
-    </p>
-  </div>
+  <p><strong>Total :</strong> {{ totalPrix() }} €</p>
 
 </div>

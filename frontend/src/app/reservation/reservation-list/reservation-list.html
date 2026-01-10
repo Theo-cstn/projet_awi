@@ -2,21 +2,20 @@
 
   <h2>Réservations du festival</h2>
 
+  <button class="add-btn" (click)="addReservation()">
+     Ajouter une réservation
+  </button>
+
   @if (reservations().length === 0) {
     <p>Aucune réservation pour le moment.</p>
   }
 
   <div class="cards">
     @for (r of reservations(); track r.id) {
-      <div class="card" (click)="openReservation(r.id!)">
-        <h3>{{ r.nom_reservant }}</h3>
-        <p><strong>Type :</strong> {{ r.type }}</p>
-        <p><strong>Tables :</strong> {{ r.nombre_tables }}</p>
-        <p><strong>Prises :</strong> {{ r.nombre_prises }}</p>
-        <p><strong>Statut :</strong> {{ r.status }}</p>
-        <p><strong>Total :</strong> {{ r.total_a_payer }} €</p>
-        <p><strong>Jeux :</strong> {{ r.nb_jeux }}</p>
-      </div>
+      <app-reservation-component
+        [reservation]="r"
+        (click)="openReservation(r.id!)">
+      </app-reservation-component>
     }
   </div>
 

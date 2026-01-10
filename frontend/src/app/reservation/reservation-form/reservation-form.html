@@ -3,41 +3,59 @@
   <!-- TYPE -->
   <label>Type de réservant</label>
   <select formControlName="type">
-    <option value="editeur">Éditeur</option>
-    <option value="boutique">Boutique</option>
-    <option value="association">Association</option>
-    <option value="prestataire">Prestataire</option>
-    <option value="autre">Autre</option>
+    <option value="Editeur">Éditeur</option>
+    <option value="Boutique">Boutique</option>
+    <option value="Association">Association</option>
+    <option value="Prestataire">Prestataire</option>
+    <option value="Autre">Autre</option>
   </select>
 
-  <!-- SI TYPE = EDITEUR -->
+  <!-- EDITEUR -->
   @if (isEditeur()) {
     <label>Éditeur</label>
     <select formControlName="editeur_id">
-      <option [value]="undefined">Sélectionner un éditeur</option>
       @for (e of editeurs(); track e.id) {
         <option [value]="e.id">{{ e.nom }}</option>
       }
     </select>
   }
 
-  <!-- SINON NOM LIBRE -->
+  <!-- NOM LIBRE -->
   @if (!isEditeur()) {
     <label>Nom du réservant</label>
-    <input type="text" formControlName="nom_reservant" />
+    <input type="text" formControlName="autre_nom_reservant">
   }
 
-  <label>Nombre de tables</label>
-  <input type="number" formControlName="nombre_tables" />
+  <h3>Lignes tarifaires</h3>
 
-  <label>Nombre de prises</label>
-  <input type="number" formControlName="nombre_prises" />
+  <button type="button" (click)="addLigne()">Ajouter une ligne</button>
+
+ @for (l of lignes(); track $index) {
+  <div class="ligne">
+
+    <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)">
+      <option value="0">Sélectionner une zone</option>
+      @for (z of zones(); track z.id) {
+        <option [value]="z.id">{{ z.nom }} ({{ z.nbTablesLibres }} libres)</option>
+      }
+    </select>
+
+        <input type="number"
+          [value]="l.quantite"
+          (input)="updateLigne($index, l.zone_tarifaire_id, +$any($event.target).value)">
+
+    <button type="button" (click)="removeLigne($index)">X</button>
+
+  </div>
+ }
+
+
+
+  <p><strong>Total tables :</strong> {{ totalTables() }}</p>
+  <p><strong>Total prix :</strong> {{ totalPrix() }} €</p>
 
   <label>Remise générale (€)</label>
-  <input type="number" formControlName="remise_generale" />
+  <input type="number" formControlName="remise_generale">
 
-  <label>Présent ?</label>
-  <input type="checkbox" formControlName="est_present" />
-
-  <button type="button" (click)="onSubmit()">Enregistrer</button>
+  <button type="button" (click)="submit()">Créer la réservation</button>
 </form>

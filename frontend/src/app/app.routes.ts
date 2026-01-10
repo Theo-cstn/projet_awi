@@ -12,6 +12,7 @@ import { PendingComponent } from './shared/pending.component/pending.component';
 import { FestivalList } from './festival/festival-list/festival-list';
 import { EditeurList } from './editeur/editeur-list/editeur-list';
 import { JeuList } from './jeu/jeu-list/jeu-list';
+import { ReservationList } from './reservation/reservation-list/reservation-list';
 import { AdminUsersComponent } from './admin/list-users.component/list-users.component';
 
 
@@ -61,6 +62,28 @@ export const routes: Routes = [
     ]
   },
 
+  {
+    path: 'festivals/:id/reservations',
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./reservation/reservation-list/reservation-list').then(m => m.ReservationList)
+      },
+      {
+        path: 'new',
+        loadComponent: () =>
+          import('./reservation/reservation-form/reservation-form').then(m => m.ReservationForm)
+      },
+      {
+        path: ':reservationId',
+        loadComponent: () =>
+          import('./reservation/reservation-component/reservation-component').then(m => m.ReservationComponent)
+      }
+    ]
+  },
+
+
   // --- WORKSPACE FESTIVAL (Avec FestivalLayout) ---
   {
     path: 'festivals/:id',
@@ -83,10 +106,11 @@ export const routes: Routes = [
       { path: 'jeux', component: JeuList },
       
       // Placeholder Reservations
-      { 
+      /*{ 
         path: 'reservations', 
         loadComponent: () => import('./reservation/reservation-list/reservation-list').then(m => m.ReservationList)
       }
+        */
     ]
   },
 

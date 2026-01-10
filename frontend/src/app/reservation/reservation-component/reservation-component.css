@@ -1,10 +1,16 @@
-.card {
+.reservation-card {
   padding: 20px;
   border-radius: 10px;
-  background: white;
+  background: #fff;
   border: 1px solid #ddd;
+  margin-bottom: 20px;
 }
 
-.info p {
-  line-height: 1.6;
+.zone-details ul {
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.zone-details li {
+  margin-bottom: 5px;
 }
