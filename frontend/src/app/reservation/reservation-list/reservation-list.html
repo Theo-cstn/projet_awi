@@ -1,1 +1,23 @@
-<p>reservation-list works!</p>
+<div class="reservation-list">
+
+  <h2>Réservations du festival</h2>
+
+  @if (reservations().length === 0) {
+    <p>Aucune réservation pour le moment.</p>
+  }
+
+  <div class="cards">
+    @for (r of reservations(); track r.id) {
+      <div class="card" (click)="openReservation(r.id!)">
+        <h3>{{ r.nom_reservant }}</h3>
+        <p><strong>Type :</strong> {{ r.type }}</p>
+        <p><strong>Tables :</strong> {{ r.nombre_tables }}</p>
+        <p><strong>Prises :</strong> {{ r.nombre_prises }}</p>
+        <p><strong>Statut :</strong> {{ r.status }}</p>
+        <p><strong>Total :</strong> {{ r.total_a_payer }} €</p>
+        <p><strong>Jeux :</strong> {{ r.nb_jeux }}</p>
+      </div>
+    }
+  </div>
+
+</div>

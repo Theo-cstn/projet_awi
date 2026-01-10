@@ -1,1 +1,43 @@
-<p>reservation-form works!</p>
+<form [formGroup]="form">
+
+  <!-- TYPE -->
+  <label>Type de réservant</label>
+  <select formControlName="type">
+    <option value="editeur">Éditeur</option>
+    <option value="boutique">Boutique</option>
+    <option value="association">Association</option>
+    <option value="prestataire">Prestataire</option>
+    <option value="autre">Autre</option>
+  </select>
+
+  <!-- SI TYPE = EDITEUR -->
+  @if (isEditeur()) {
+    <label>Éditeur</label>
+    <select formControlName="editeur_id">
+      <option [value]="undefined">Sélectionner un éditeur</option>
+      @for (e of editeurs(); track e.id) {
+        <option [value]="e.id">{{ e.nom }}</option>
+      }
+    </select>
+  }
+
+  <!-- SINON NOM LIBRE -->
+  @if (!isEditeur()) {
+    <label>Nom du réservant</label>
+    <input type="text" formControlName="nom_reservant" />
+  }
+
+  <label>Nombre de tables</label>
+  <input type="number" formControlName="nombre_tables" />
+
+  <label>Nombre de prises</label>
+  <input type="number" formControlName="nombre_prises" />
+
+  <label>Remise générale (€)</label>
+  <input type="number" formControlName="remise_generale" />
+
+  <label>Présent ?</label>
+  <input type="checkbox" formControlName="est_present" />
+
+  <button type="button" (click)="onSubmit()">Enregistrer</button>
+</form>

@@ -1,1 +1,31 @@
-<p>reservation-component works!</p>
+<div class="card">
+
+  <h2>{{ reservation().nom_reservant }}</h2>
+
+  <div class="info">
+    <p>
+      <strong>Type :</strong> {{ reservation().type }}<br>
+
+      <strong>Tables :</strong> {{ reservation().nombre_tables }}<br>
+
+      <strong>Prises :</strong> {{ reservation().nombre_prises }}<br>
+
+      <strong>Remise :</strong> {{ reservation().remise_generale }} €<br>
+
+      <strong>Présent :</strong> {{ reservation().est_present ? 'Oui' : 'Non' }}<br>
+
+      <strong>Statut :</strong> {{ reservation().status }}<br>
+
+      <strong>Date création :</strong> {{ reservation().date_creation | date:'short' }}<br>
+
+      @if (reservation().date_facturation) {
+        <strong>Facturée :</strong> {{ reservation().date_facturation | date:'short' }}<br>
+      }
+
+      @if (reservation().date_paiement) {
+        <strong>Payée :</strong> {{ reservation().date_paiement | date:'short' }}<br>
+      }
+    </p>
+  </div>
+
+</div>
