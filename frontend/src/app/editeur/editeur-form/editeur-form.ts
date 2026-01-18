@@ -1,5 +1,6 @@
-import { Component, output } from '@angular/core';
+import { Component, effect, input, output } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { EditeurDto } from '../../types/editeur-dto';
 
 
 @Component({
@@ -16,15 +17,44 @@ export class EditeurForm {
     
   });
 
-  add = output<any>()
-  submitted = false
+  editeurAEditer = input<EditeurDto | undefined>(undefined);
+
+  add = output<any>();
+  update = output<EditeurDto>();
+  submitted = false;
+
+  constructor() {
+    // Effet pour remplir le formulaire quand on édite
+    effect(() => {
+      const editeur = this.editeurAEditer();
+      if (editeur) {
+        this.form.patchValue({
+          nom: editeur.nom
+        });
+      } else {
+        this.form.reset();
+      }
+    });
+  }
 
   onSubmit(): void {
     this.submitted= true
     if (this.form.valid) {
-      this.add.emit(this.form.value)
-      this.form.reset()
-      this.submitted = false
+      const editeur = this.editeurAEditer();
+      
+      if (editeur) {
+        // Mode édition
+        this.update.emit({
+          ...editeur,
+          nom: this.form.value.nom!
+        });
+      } else {
+        // Mode ajout
+        this.add.emit(this.form.value);
+      }
+      
+      this.form.reset();
+      this.submitted = false;
     }
   }
 

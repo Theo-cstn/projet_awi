@@ -1,5 +1,9 @@
 <div class="card">
   <h2>{{ editeur().nom }}</h2>
+  
+  @if (canEdit()) {
+    <button class="btn-edit" (click)="onEdit()">Éditer</button>
+  }
 
   <div class="contacts">
     <h3>

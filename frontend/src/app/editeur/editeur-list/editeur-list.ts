@@ -24,6 +24,7 @@ export class EditeurList implements OnInit {
 
   // État du formulaire
   afficherFormulaire = signal(false);
+  editeurEnEdition = signal<EditeurDto | undefined>(undefined);
   isFestivalMode = signal(false);
 
   ngOnInit(): void {
@@ -59,7 +60,20 @@ export class EditeurList implements OnInit {
     this.afficherFormulaire.set(false);
   }
 
-  edit(editeur: EditeurDto): void {
-    // TODO
+  onEdit(editeur: EditeurDto): void {
+    this.editeurEnEdition.set(editeur);
+    this.afficherFormulaire.set(true);
+  }
+
+  onUpdate(updatedEditeur: EditeurDto): void {
+    console.log('✏️ Modification de l\'editeur:', updatedEditeur);
+
+    this.svc.update({
+      id: updatedEditeur.id!,
+      nom: updatedEditeur.nom
+    });
+
+    this.afficherFormulaire.set(false);
+    this.editeurEnEdition.set(undefined);
   }
 }

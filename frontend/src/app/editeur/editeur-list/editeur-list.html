@@ -10,7 +10,11 @@
 
 @if (afficherFormulaire()) {
   <div class="form-wrapper">
-    <app-editeur-form (add)="onAdd($event)"></app-editeur-form>
+    <app-editeur-form 
+      [editeurAEditer]="editeurEnEdition()"
+      (add)="onAdd($event)"
+      (update)="onUpdate($event)">
+    </app-editeur-form>
   </div>
 }
 
@@ -20,6 +24,8 @@
       
       <app-editeur-component
         [editeur]="editeur"
+        [canEdit]="auth.isAdmin()"
+        (edit)="onEdit($event)"
         class="editor-card">
       </app-editeur-component>
 
