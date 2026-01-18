@@ -1,7 +1,17 @@
-backend/certs/
-frontend/certs/
+# Dépendances
+node_modules/
 backend/node_modules/
-/node_modules/
-/dist/
+frontend/node_modules/
+
+# Builds et sorties
+dist/
+.angular/
+
+# Secrets et Certificats
+.env
 backend/.env
+certs/
+**/certs/
+
+# Système
 .DS_Store
