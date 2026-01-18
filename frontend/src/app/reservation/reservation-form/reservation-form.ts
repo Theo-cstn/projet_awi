@@ -39,13 +39,28 @@ export class ReservationForm {
   lignes = signal<{ zone_tarifaire_id: number; quantite: number; prix_unitaire_applique: number }[]>([]);
 
   typeValue = signal<'Editeur' | 'Boutique' | 'Association' | 'Prestataire' | 'Autre'>('Autre');
+  
   constructor() {
     this.form.controls.type.valueChanges.subscribe(v => this.typeValue.set(v!));
   }
-  isEditeur = computed(() => this.typeValue() === 'Editeur');
 
+  isEditeur = computed(() => this.typeValue() === 'Editeur');
   totalTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite, 0) );
-  totalPrix = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite * l.prix_unitaire_applique, 0) - (this.form.controls.remise_generale.value ?? 0) );
+  totalPrixTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite * l.prix_unitaire_applique, 0) );
+  totalPrixBeforeRed = computed(() => this.totalPrixTables() + (250 * (this.form.controls.nombre_prises.value ?? 0)));
+  totalPrixAfterRed = computed(() => this.totalPrixBeforeRed() - (this.form.controls.remise_generale.value ?? 0) );
+
+  // Calcule les tables libres restantes pour chaque zone en tenant compte des lignes actuelles
+  getTablesLibresRestantes = (zoneId: number): number => {
+    const zone = this.zones().find(z => z.id === zoneId);
+    if (!zone) return 0;
+    
+    const tablesReservees = this.lignes()
+      .filter(l => l.zone_tarifaire_id === zoneId)
+      .reduce((sum, l) => sum + l.quantite, 0);
+    
+    return (zone.nbTablesLibres ?? zone.nbTotalTables ?? 0) - tablesReservees;
+  };
 
   addLigne() { 
     this.lignes.update(list => [ ...list, { zone_tarifaire_id: 0, quantite: 0, prix_unitaire_applique: 0 } ]); 
@@ -55,9 +70,11 @@ export class ReservationForm {
     const zone = this.zones().find(z => z.id === zoneId); 
     if (!zone) return; 
     
-    // Vérification du stock restant 
-    if (quantite > (zone.nbTablesLibres ?? zone.nbTotalTables)) { 
-      alert("Pas assez de tables disponibles dans cette zone"); 
+    // Récupère les tables libres RESTANTES (après les autres lignes)
+    const tablesLibresRestantes = this.getTablesLibresRestantes(zoneId);
+    
+    // Rejette les quantités invalides silencieusement
+    if (quantite < 0 || quantite > tablesLibresRestantes) { 
       return; 
     } 
     

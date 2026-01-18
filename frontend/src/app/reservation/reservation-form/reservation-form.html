@@ -39,16 +39,17 @@
     @for (l of lignes(); track $index) {
       <div class="ligne">
 
-        <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)"
->
+        <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)">
           <option value="0">Sélectionner une zone</option>
           @for (z of zones(); track z.id) {
-            <option [value]="z.id">{{ z.nom }} ({{ z.nbTablesLibres }} libres)</option>
+            <option [value]="z.id">{{ z.nom }} ({{ getTablesLibresRestantes(z.id) }} libres)</option>
           }
         </select>
 
         <input type="number"
                [value]="l.quantite"
+               [max]="getTablesLibresRestantes(l.zone_tarifaire_id)"
+               min="0"
                (input)="updateLigne($index, l.zone_tarifaire_id, +$any($event.target).value)">
 
         <button type="button" (click)="removeLigne($index)">X</button>
@@ -56,11 +57,24 @@
     }
 
     <p><strong>Total tables :</strong> {{ totalTables() }}</p>
-    <p><strong>Total prix :</strong> {{ totalPrix() }} €</p>
+    <p><strong>Montant des tables :</strong> {{ totalPrixTables() }} €</p>
+    <p><strong>Montant de la réservation avant remise :</strong> {{ totalPrixBeforeRed() }} €</p>
+
+    @if (isEditeur()){
+      <label>Remise générale (€)</label>
+      <input type="number" formControlName="remise_generale">
+
+      <p><strong>Montant de la réservation après remise :</strong> {{ totalPrixAfterRed() }} €</p>
+    }
+    
+    @if (!isEditeur()){
+      <p><strong>Montant de la réservation après remise :</strong> 0 €</p>
+    }
 
     
-    <label>Remise générale (€)</label>
-    <input type="number" formControlName="remise_generale">
+
+    
+    
 
     <div class="actions">
       <button type="button" (click)="submit()">Créer</button>

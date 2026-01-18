@@ -30,7 +30,7 @@
             nombre_prises: r.nombre_prises, 
             remise_generale: r.remise_generale, 
             est_present: r.est_present, 
-            lignes: [] 
+            lignes: r.lignes || []
           })); 
           this._reservations.set(mapped); 
         }, 
