@@ -13,7 +13,6 @@
       <option value="Autre">Autre</option>
     </select>
 
-    <!-- EDITEUR -->
     @if (isEditeur()) {
       <label>Éditeur</label>
       <select formControlName="editeur_id">
@@ -21,9 +20,13 @@
           <option [value]="e.id">{{ e.nom }}</option>
         }
       </select>
+
+      <label>
+        <input type="checkbox" formControlName="est_present">
+        Présent physiquement au festival
+      </label>
     }
 
-    <!-- NOM LIBRE -->
     @if (!isEditeur()) {
       <label>Nom du réservant</label>
       <input type="text" formControlName="autre_nom_reservant">
@@ -71,14 +74,75 @@
       <p><strong>Montant de la réservation après remise :</strong> 0 €</p>
     }
 
+    <label>Commentaire - Préférence des tables</label>
+      <textarea formControlName="preferences_tables"  placeholder="Entrez vos commentaires, préférences ou demandes spéciales..." rows="4">
+      </textarea>
+
+
+    <!-- PHASE 2 : SÉLECTION DES JEUX -->
+    @if (currentPhase() === 2) {
+      <h3>Phase 2 - Sélection des jeux à présenter</h3>
+
+      @if (isEditeur()) {
+        <p><strong>Jeux de l'éditeur sélectionné :</strong></p>
+      } @else {
+        <p><strong>Tous les jeux disponibles :</strong></p>
+      }
+
+      <button type="button" (click)="addGameLigne()">Ajouter un jeu</button>
+
+      @for (l of lignesJeux(); track $index) {
+        <div class="ligneJeu">
+          <select (change)="updateGameLigne($index, +$any($event.target).value, l.nb_exemplaires, l.tables_occupees)">
+            <option value="0">Sélectionner un jeu</option>
+            @for (j of jeuxFiltres(); track j.id) {
+              <option [value]="j.id">{{ j.nom }}</option>
+            }
+          </select>
+
+          <label>Nombre d'exemplaires :</label>
+          <input type="number"
+                 [value]="l.nb_exemplaires"
+                 min="1"
+                 (input)="updateGameLigne($index, l.jeu_id, +$any($event.target).value, l.tables_occupees)">
+
+          <label>Nombre de table(s) allouée(s): </label>
+          <label><input type="radio"
+                  name="tables_{{ $index }}"
+                  [value]="0.5"
+                  [checked]="l.tables_occupees === 0.5"
+                  (change)="updateGameLigne($index, l.jeu_id, l.nb_exemplaires, 0.5)">0.5 table</label>
+          
+            <label><input type="radio"
+                  name="tables_{{ $index }}"
+                  [value]="1"
+                  [checked]="l.tables_occupees === 1"
+                  (change)="updateGameLigne($index, l.jeu_id, l.nb_exemplaires, 1)">1 table</label> 
+
+          <button type="button" (click)="removeGameLigne($index)">Supprimer</button>
+        </div>
+      }
+    }
     
 
-    
-    
+    <!-- PHASE 3 : DISPOSITION -->
+    @if (currentPhase() === 3) {
+      <h3>Phase 3 - Disposition des jeux</h3>
+      <div class="summary">
+        
+      </div>
+    }
 
     <div class="actions">
-      <button type="button" (click)="submit()">Créer</button>
-      <button type="button" class="cancel" (click)="cancel()">Annuler</button>
+      @if (currentPhase() > 1) {
+        <button type="button" (click)="goToPhase(currentPhase() - 1)" class="secondary">Retour</button>
+      }
+      @if (currentPhase() < 3) {
+        <button type="button" (click)="goToPhase(currentPhase() + 1)" class="primary">Continuer</button>
+      }
+      @if (currentPhase() === 3) {
+        <button type="button" (click)="submit()" class="primary">Créer la réservation</button>
+      }
     </div>
 
   </form>

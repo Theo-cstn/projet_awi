@@ -11,6 +11,7 @@ export class JeuListService {
   // URLs de l'API
   private readonly apiUrl = 'https://localhost:4000/api/jeux'; 
   private readonly festivalApiUrl = 'https://localhost:4000/api/festivals';
+  private readonly editeurApiUrl = 'https://localhost:4000/api/editeurs';
 
   // Signal pour stocker les jeux
   private readonly _jeux = signal<JeuDto[]>([]); 
@@ -45,7 +46,10 @@ export class JeuListService {
           editeur: jeu.editeur ? {
             id: jeu.editeur.id,
             nom: jeu.editeur.nom,
-          } : undefined,
+          } : (jeu.nom_editeur ? {
+            id: jeu.editeur_id,
+            nom: jeu.nom_editeur,
+          } : undefined),
           auteurs: jeu.auteurs ? jeu.auteurs.map((auteur: any) => ({
             id: auteur.id,
             nom: auteur.nom,
@@ -55,6 +59,44 @@ export class JeuListService {
         this._jeux.set(jeux);
       },
       error: (err) => console.error('❌ Erreur chargement jeux', err)
+    });
+  }
+
+  /**
+   * Charge les jeux d'un éditeur spécifique.
+   */
+  loadJeuxByEditeur(editeurId: number): void {
+    const url = `${this.editeurApiUrl}/${editeurId}/jeux`;
+
+    this.http.get<any[]>(url, { withCredentials: true }).subscribe({
+      next: (data) => {
+        console.log(`📥 Données brutes reçues pour éditeur ${editeurId}:`, data);
+        
+        // Mapping des données (Backend -> Frontend DTO)
+        const jeux: JeuDto[] = data.map(jeu => ({
+          id: jeu.id,
+          nom: jeu.nom,
+          typeG: jeu.typeg,
+          age_min: jeu.age_min,
+          age_max: jeu.age_max,
+          editeur_id: jeu.editeur_id,
+          editeur: jeu.editeur ? {
+            id: jeu.editeur.id,
+            nom: jeu.editeur.nom,
+          } : undefined,
+          auteurs: jeu.auteurs ? jeu.auteurs.map((auteur: any) => ({
+            id: auteur.id,
+            nom: auteur.nom,
+            prenom: auteur.prenom,
+          })) : [],
+        }));
+        console.log(`✅ Jeux de l'éditeur ${editeurId} chargés et mappés:`, jeux);
+        this._jeux.set(jeux);
+      },
+      error: (err) =>  {
+        console.error('❌ Erreur chargement jeux éditeur', err);
+        this.loadJeux();
+      }
     });
   }
 

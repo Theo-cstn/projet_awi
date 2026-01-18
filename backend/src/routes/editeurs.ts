@@ -8,6 +8,40 @@ const router = Router();
 // 1. LECTURE PUBLIQUE (Visiteurs+)
 // ==============================================================================
 
+
+// GET /editeurs/:id/jeux - Récupère tous les jeux d'un éditeur spécifique
+router.get('/:id/jeux', requireVisiteur(), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const query = `
+      SELECT j.id, j.nom, j.typeg, j.age_min, j.age_max, j.editeur_id,
+             json_build_object(
+               'id', e.id,
+               'nom', e.nom
+             ) AS editeur,
+             COALESCE(json_agg(
+               json_build_object(
+                 'id', p.id,
+                 'nom', p.nom,
+                 'prenom', p.prenom
+               ) ORDER BY p.nom ASC
+             ) FILTER (WHERE p.id IS NOT NULL), '[]') AS auteurs
+      FROM Jeu j
+      LEFT JOIN Editeur e ON j.editeur_id = e.id
+      LEFT JOIN Auteurs_Jeux aj ON j.id = aj.jeu_id
+      LEFT JOIN Personne p ON aj.auteur_id = p.id
+      WHERE j.editeur_id = $1
+      GROUP BY j.id, e.id, e.nom
+      ORDER BY j.nom ASC
+    `;
+    const result = await pool.query(query, [id]);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error fetching editor games:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // GET /editeurs - Liste tous les éditeurs (Triés par nom)
 router.get('/', requireVisiteur(), async (_req, res) => {
   try {
@@ -69,6 +103,8 @@ router.get('/:id/contacts', requireVisiteur(), async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+
 
 // ==============================================================================
 // 2. ÉCRITURE ÉDITEUR (Admin Uniquement)
