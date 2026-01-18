@@ -1,4 +1,6 @@
 <form [formGroup]="form">
+    <h2>{{ contactAEditer() ? 'Modifier le contact' : 'Ajouter un contact' }}</h2>
+
     <input type="text" formControlName="nom" placeholder="Nom du contact" />
     @if (form.controls.nom.invalid && submitted) {
         <div class="error">{{ getErrorMessage(form.controls.nom) }}</div>
@@ -9,12 +11,10 @@
         <div class="error">{{ getErrorMessage(form.controls.prenom) }}</div>
     }
 
-    <input type="text" formControlName="fonction" placeholder="Fonction du contact" />
-    @if (form.controls.fonction.invalid && submitted) {
-        <div class="error">{{ getErrorMessage(form.controls.fonction) }}</div>
+    <input type="email" formControlName="email" placeholder="Email du contact" />
+    @if (form.controls.email.invalid && submitted) {
+        <div class="error">{{ getErrorMessage(form.controls.email) }}</div>
     }
 
-    <input type="text" formControlName="mail" placeholder="Email du contact" />
-
-    <button type="button" (click)="onSubmit()">Ajouter contact</button>
+    <button type="button" (click)="onSubmit()">{{ contactAEditer() ? 'Modifier' : 'Ajouter contact' }}</button>
 </form>

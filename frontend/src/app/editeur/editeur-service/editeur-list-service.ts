@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { EditeurDto } from '../../types/editeur-dto';
-import { PersonneDto } from '../../types/personne-dto'; // Garde tes imports
+import { PersonneDto } from '../../types/personne-dto'; 
 
 @Injectable({
   providedIn: 'root',
@@ -20,9 +20,7 @@ export class EditeurListService {
   readonly editeurs = this._editeurs.asReadonly();
 
 
-  /**
-   * Charge les éditeurs (Global ou Filtré par Festival)
-   */
+  //Charge les éditeurs (Global ou Filtré par Festival)  
   loadEditeurs(festivalId?: number): void {
     let url = this.apiUrl;
 
@@ -87,39 +85,48 @@ export class EditeurListService {
   // --- Gestion des Contacts (Ta logique existante) ---
   
   addContact(editeurId: number, contact: PersonneDto): void {
-    if (contact.id === undefined) {
-      contact.id = this.lastContactID + 1;
-      this.lastContactID += 1;
-    }
-    
-    // TODO: Ajouter l'appel API réel ici (POST)
-    
-    this._editeurs.update((list) =>
-      list.map(e => {
-        if (e.id === editeurId) {
-          return {
-            ...e,
-            contacts: [...(e.contacts || []), contact]
-          };
-        }
-        return e;
-      })
-    );
+    const payload = {
+      nom: contact.nom,
+      prenom: contact.prenom,
+      email: contact.email,
+      fonction: '', // Optionnel
+      est_contact_principal: false
+    };
+
+    this.http.post(`${this.apiUrl}/${editeurId}/contacts`, payload, { withCredentials: true }).subscribe({
+      next: () => {
+        // Recharger les éditeurs pour avoir les données à jour
+        this.loadEditeurs();
+      },
+      error: (err) => console.error('Erreur ajout contact:', err)
+    });
+  }
+
+  updateContact(editeurId: number, contact: PersonneDto): void {
+    const payload = {
+      nom: contact.nom,
+      prenom: contact.prenom,
+      email: contact.email,
+      fonction: '', // Optionnel
+      est_contact_principal: false
+    };
+
+    this.http.post(`${this.apiUrl}/${editeurId}/contacts`, payload, { withCredentials: true }).subscribe({
+      next: () => {
+        // Recharger les éditeurs pour avoir les données à jour
+        this.loadEditeurs();
+      },
+      error: (err) => console.error('Erreur update contact:', err)
+    });
   }
 
   deleteContact(editeurId: number, contactId: number): void {
-    // TODO: Ajouter l'appel API réel ici (DELETE)
-    
-    this._editeurs.update((list) =>
-      list.map(e => {
-        if (e.id === editeurId) {
-          return {
-            ...e,
-            contacts: (e.contacts || []).filter(c => c.id !== contactId)
-          };
-        }
-        return e;
-      })
-    );
+    this.http.delete(`${this.apiUrl}/${editeurId}/contacts/${contactId}`, { withCredentials: true }).subscribe({
+      next: () => {
+        // Recharger les éditeurs pour avoir les données à jour
+        this.loadEditeurs();
+      },
+      error: (err) => console.error('Erreur suppression contact:', err)
+    });
   }
 }

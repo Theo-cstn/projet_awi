@@ -25,9 +25,12 @@
     }
   </div>
 
-  <div style="margin-top: 15px;">
+  <div class="links">
     <a [routerLink]="['/editeurs', editeur().id, 'jeux']" (click)="$event.stopPropagation()">
       Voir les jeux
+    </a>
+    <a [routerLink]="['/editeurs', editeur().id, 'contacts']" (click)="$event.stopPropagation()">
+      Gérer les contacts
     </a>
   </div>
 </div>

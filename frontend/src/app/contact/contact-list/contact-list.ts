@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
 import { PersonneDto } from '../../types/personne-dto';
@@ -13,7 +13,7 @@ import { map } from 'rxjs';
   templateUrl: './contact-list.html',
   styleUrl: './contact-list.css',
 })
-export class ContactList {
+export class ContactList implements OnInit {
   readonly editeurService = inject(EditeurListService)
   readonly route = inject(ActivatedRoute)
   readonly router = inject(Router)
@@ -31,14 +31,28 @@ export class ContactList {
     return id ? this.editeurService.findById(id) : undefined
   })
 
-  // AJOUT : computed pour les contacts
   contacts = computed(() => {
     const editeur = this.editeur()
     return editeur?.contacts || []
   })
 
+  // Signal pour gérer l'édition
+  contactEnEdition = signal<PersonneDto | undefined>(undefined);
+
+  ngOnInit(): void {
+    // Charger les éditeurs si la liste est vide
+    if (this.editeurService.editeurs().length === 0) {
+      this.editeurService.loadEditeurs();
+    }
+  }
+
+  onEdit(contact: PersonneDto): void {
+    this.contactEnEdition.set(contact);
+    this.afficherFormulaire.set(true);
+  }
+
   onAdd(formData: any): void {
-    const editeurId = this.editeurId() // CORRECTION : appel de la fonction
+    const editeurId = this.editeurId() 
     
     if (editeurId) {
       const newContact: PersonneDto = {
@@ -49,6 +63,17 @@ export class ContactList {
       }
       this.editeurService.addContact(editeurId, newContact)
       this.afficherFormulaire.set(false)
+      this.contactEnEdition.set(undefined)
+    }
+  }
+
+  onUpdate(updatedContact: PersonneDto): void {
+    const editeurId = this.editeurId();
+    
+    if (editeurId && updatedContact.id) {
+      this.editeurService.updateContact(editeurId, updatedContact);
+      this.afficherFormulaire.set(false);
+      this.contactEnEdition.set(undefined);
     }
   }
 

@@ -13,7 +13,9 @@
 @if (afficherFormulaire()) {
     <app-contact-form
         [editeurId]="editeurId()"
-        (add)="onAdd($event)">
+        [contactAEditer]="contactEnEdition()"
+        (add)="onAdd($event)"
+        (update)="onUpdate($event)">
     </app-contact-form>
 }
 
@@ -21,7 +23,9 @@
 @if (contacts(); as contactList) {
     @for (contact of contactList; track contact.id) {
         <app-contact-component
-            [contact]="contact">
+            [contact]="contact"
+            [canEdit]="true"
+            (edit)="onEdit($event)">
         </app-contact-component>
     }
 }

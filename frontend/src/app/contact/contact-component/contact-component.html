@@ -5,4 +5,8 @@
             <strong>Email :</strong> {{ this.contact().email }}
         </p>
     </div>
+
+    @if (canEdit()) {
+        <button class="btn-edit" (click)="onEdit()">Éditer</button>
+    }
 </div>

@@ -1,5 +1,6 @@
-import { Component, output, input } from '@angular/core';
+import { Component, output, input, computed, effect } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PersonneDto } from '../../types/personne-dto';
 
 @Component({
   selector: 'app-contact-form',
@@ -8,8 +9,12 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validator
   styleUrl: './contact-form.css',
 })
 export class ContactForm {
-  // ✅ Gardez seulement editeurId
-  editeurId = input<number|undefined>(undefined)
+  editeurId = input<number|undefined>(undefined);
+  
+  // Input du contact à éditer
+  contactAEditer = input<PersonneDto | undefined>(undefined);
+
+  modeEdition = computed(() => this.contactAEditer() !== undefined);
 
   readonly form = new FormGroup({
     nom: new FormControl('', {
@@ -22,31 +27,61 @@ export class ContactForm {
       validators: [Validators.required, Validators.minLength(2)]
     }),
 
-    fonction: new FormControl('', {
-      nonNullable: true
-    }),
-
-    mail: new FormControl('', {
-      nonNullable: true
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email]
     }),
   });
 
-  add = output<any>()
-  submitted = false
+  add = output<any>();
+  update = output<PersonneDto>();
+  submitted = false;
+
+  constructor() {
+    // Pré-remplir le formulaire quand contactAEditer change
+    effect(() => {
+      const contact = this.contactAEditer();
+      
+      if (contact) {
+        // Mode édition : pré-remplir le formulaire
+        this.form.patchValue({
+          nom: contact.nom,
+          prenom: contact.prenom,
+          email: contact.email
+        });
+      } else {
+        // Mode ajout : réinitialiser le formulaire
+        this.form.reset();
+      }
+    });
+  }
 
   onSubmit(): void {
-    this.submitted = true
+    this.submitted = true;
     
     if (this.form.valid) {
-      this.add.emit({
-        nom:  this.form.value.nom,
-        prenom: this.form.value.prenom,
-        fonction: this.form.value.fonction,
-        mail: this.form.value.mail,
-        editeur: this.editeurId()
-      })
-      this.form.reset()
-      this.submitted = false
+      const contactEdit = this.contactAEditer();
+
+      if (contactEdit) {
+        // Mode édition - émet via update
+        this.update.emit({
+          id: contactEdit.id!,
+          nom: this.form.value.nom!,
+          prenom: this.form.value.prenom!,
+          email: this.form.value.email!
+        });
+      } else {
+        // Mode création - émet via add
+        this.add.emit({
+          nom: this.form.value.nom!,
+          prenom: this.form.value.prenom!,
+          email: this.form.value.email!,
+          editeur: this.editeurId()
+        });
+      }
+      
+      this.form.reset();
+      this.submitted = false;
     }
   }
 

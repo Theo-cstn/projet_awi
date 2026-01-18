@@ -58,3 +58,22 @@
 .btn-toggle:hover {
   color: #000;
 }
+
+.links {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.links a {
+    color: #007bff;
+    text-decoration: none;
+    padding: 6px 0;
+    font-weight: 500;
+}
+
+.links a:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
