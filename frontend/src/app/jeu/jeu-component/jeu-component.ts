@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { JeuDto } from '../../types/jeu-dto';
 
 @Component({
@@ -8,5 +8,13 @@ import { JeuDto } from '../../types/jeu-dto';
   styleUrl: './jeu-component.css',
 })
 export class JeuComponent {
-  jeu = input.required<JeuDto>()
+  jeu = input.required<JeuDto>();
+
+  // Pour l'édition
+  canEdit = input<boolean>(false);
+  edit = output<JeuDto>();
+
+  onEdit() {
+    this.edit.emit(this.jeu());
+  }
 }

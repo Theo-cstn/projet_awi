@@ -36,4 +36,8 @@
             
         </p>
     </div>
+
+    @if (canEdit()) {
+        <button class="btn-edit" (click)="onEdit()">Éditer</button>
+    }
 </div>
