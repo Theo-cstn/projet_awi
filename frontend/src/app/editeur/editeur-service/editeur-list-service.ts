@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { EditeurDto } from '../../types/editeur-dto';
-import { PersonneDto } from '../../types/personne-dto'; // Garde tes imports
+import { PersonneDto } from '../../types/personne-dto';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -9,8 +10,8 @@ import { PersonneDto } from '../../types/personne-dto'; // Garde tes imports
 export class EditeurListService {
   private readonly http = inject(HttpClient);
   
-  private readonly apiUrl = 'https://localhost:4000/api/editeurs';
-  private readonly festivalApiUrl = 'https://localhost:4000/api/festivals';
+  private readonly apiUrl = `${environment.apiUrl}/editeurs`;
+  private readonly festivalApiUrl = `${environment.apiUrl}/festivals`;
   
   private readonly _editeurs = signal<EditeurDto[]>([]);
   

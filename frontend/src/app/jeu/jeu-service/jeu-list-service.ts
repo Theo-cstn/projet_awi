@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { JeuDto } from '../../types/jeu-dto';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -9,8 +10,8 @@ export class JeuListService {
   private readonly http = inject(HttpClient);
   
   // URLs de l'API
-  private readonly apiUrl = 'https://localhost:4000/api/jeux'; 
-  private readonly festivalApiUrl = 'https://localhost:4000/api/festivals';
+  private readonly apiUrl = `${environment.apiUrl}/jeux`;
+  private readonly festivalApiUrl = `${environment.apiUrl}/festivals`;
 
   // Signal pour stocker les jeux
   private readonly _jeux = signal<JeuDto[]>([]); 
