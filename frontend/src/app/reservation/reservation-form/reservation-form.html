@@ -78,14 +78,31 @@
       <textarea formControlName="preferences_tables"  placeholder="Entrez vos commentaires, préférences ou demandes spéciales..." rows="4">
       </textarea>
 
+    <!-- BOUTON CONTINUER PHASE 1 -->
+    <div class="phase-buttons" style="margin: 20px 0; text-align: right;">
+      @if (currentPhase() === 1) {
+        <button type="button" (click)="goToPhase(2)" class="primary">Continuer vers Phase 2 →</button>
+      }
+    </div>
+
 
     <!-- PHASE 2 : SÉLECTION DES JEUX -->
-    @if (currentPhase() === 2) {
+    @if (currentPhase() >= 2) {
+      <hr style="margin: 30px 0; border: 2px solid #2196F3;">
       <h3>Phase 2 - Sélection des jeux à présenter</h3>
+
+      <!-- ✅ MESSAGE D'AVERTISSEMENT -->
+      <div style="padding: 12px; margin-bottom: 16px; border-radius: 4px; font-weight: bold;"
+          [style.background-color]="hasTablesExceeded() ? '#ffe6e6' : '#e6f3ff'"
+          [style.color]="hasTablesExceeded() ? '#d32f2f' : '#0066cc'"
+          [style.border]="hasTablesExceeded() ? '2px solid #d32f2f' : '2px solid #0066cc'">
+        {{ getTablesWarningMessage() }}
+      </div>
 
       @if (isEditeur()) {
         <p><strong>Jeux de l'éditeur sélectionné :</strong></p>
-      } @else {
+      } 
+      @else {
         <p><strong>Tous les jeux disponibles :</strong></p>
       }
 
@@ -122,26 +139,99 @@
           <button type="button" (click)="removeGameLigne($index)">Supprimer</button>
         </div>
       }
+
+      <!-- BOUTON CONTINUER PHASE 2 -->
+      <div class="phase-buttons" style="margin: 20px 0; text-align: right;">
+        @if (currentPhase() === 2) {
+          <button type="button" (click)="goToPhase(3)" class="primary">Continuer vers Phase 3 →</button>
+        }
+      </div>
     }
     
 
     <!-- PHASE 3 : DISPOSITION -->
-    @if (currentPhase() === 3) {
-      <h3>Phase 3 - Disposition des jeux</h3>
-      <div class="summary">
-        
+    @if (currentPhase() >= 3) {
+      <hr style="margin: 30px 0; border: 2px solid #4CAF50;">
+      <h3>Phase 3 - Disposition des jeux dans les zones</h3>
+      
+      <p><strong>Positionnez chaque jeu dans les zones plan de vos zones tarifaires réservées :</strong></p>
+
+      @if (getSelectedZones().length === 0) {
+        <div style="color: red; padding: 15px; background-color: #ffe6e6; border-radius: 5px; margin: 15px 0;">
+          <strong>❌ Erreur:</strong> Aucune zone tarifaire réservée. Veuillez revenir à la phase 1 et réserver au moins une zone.
+        </div>
+      } @else {
+        @for (l of lignesJeux(); track $index) {
+          <div class="ligneDisposition" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+            
+            <!-- Affichage du jeu sélectionné -->
+            <div style="margin-bottom: 15px; background-color: #f0f8ff; padding: 10px; border-radius: 3px;">
+              <strong style="font-size: 16px;">🎮 Jeu {{ $index + 1 }}: {{ getJeuName(l.jeu_id) }}</strong>
+              <br>
+              <small style="color: #666;">Exemplaires: {{ l.nb_exemplaires }}, {{ l.tables_occupees }} table par exemplaire</small>
+            </div>
+
+            <!-- Sélection de la zone plan -->
+            <label><strong>Sélectionner la zone plan :</strong></label>
+            <select 
+              (change)="updateLignePlacement($index, +$any($event.target).value)" 
+              [value]="l.zone_plan_id || 0"
+              style="width: 100%; padding: 8px; margin-bottom: 10px; border: 2px solid #ddd; border-radius: 3px;">
+              <option value="0">-- Sélectionner une zone plan --</option>
+              
+              @for (zp of getAllZonesPlansForSelectedZones(); track zp.id) {
+                @if (canPlaceGameInZonePlan(zp.id, l.nb_exemplaires, l.tables_occupees, $index)) {
+                  <option [value]="zp.id">
+                    {{ zp.zone_tarifaire_nom }} • {{ zp.nom }} 
+                    ({{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces libres)
+                  </option>
+                } @else {
+                  <option [value]="zp.id" disabled style="color: #999;">
+                    {{ zp.zone_tarifaire_nom }} • {{ zp.nom }} 
+                    (❌ Pas assez d'espace: {{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces, {{ l.nb_exemplaires * l.tables_occupees }} nécessaires)
+                  </option>
+                }
+              }
+            </select>
+
+            <!-- Affichage du statut -->
+            @if (l.zone_plan_id) {
+              @if (canPlaceGameInZonePlan(l.zone_plan_id, l.nb_exemplaires, l.tables_occupees, $index)) {
+                <p style="color: #00aa00; font-weight: bold; margin: 10px 0;">
+                  ✅ Placé dans: <strong>{{ getZonePlanName(l.zone_plan_id) }}</strong>
+                  <br>
+                  <small style="color: #666;">
+                    Espaces utilisés: {{ l.nb_exemplaires * l.tables_occupees }}/{{ getZonePlanNbTables(l.zone_plan_id) }}
+                  </small>
+                </p>
+              } @else {
+                <p style="color: #d32f2f; font-weight: bold; margin: 10px 0;">
+                  ❌ Erreur: Pas assez d'espace dans cette zone plan!
+                  <br>
+                  <small style="color: #666;">
+                    Espaces nécessaires: {{ l.nb_exemplaires * l.tables_occupees }}, 
+                    Espaces libres: {{ getTablesLibresInZonePlan(l.zone_plan_id, $index) }}/{{ getZonePlanNbTables(l.zone_plan_id) }}
+                  </small>
+                </p>
+              }
+            } @else {
+              <p style="color: #ff9900; margin: 10px 0;">
+                ⚠️ Zone plan non définie - le placement sera aléatoire
+              </p>
+            }
+          </div>
+        }
+      }
+
+      <!-- BOUTON SOUMETTRE PHASE 3 -->
+      <div class="phase-buttons" style="margin: 20px 0; text-align: right;">
+        <button type="button" (click)="submit()" class="primary">Créer la réservation</button>
       </div>
     }
 
-    <div class="actions">
+    <div class="actions" style="margin-top: 30px; text-align: left;">
       @if (currentPhase() > 1) {
-        <button type="button" (click)="goToPhase(currentPhase() - 1)" class="secondary">Retour</button>
-      }
-      @if (currentPhase() < 3) {
-        <button type="button" (click)="goToPhase(currentPhase() + 1)" class="primary">Continuer</button>
-      }
-      @if (currentPhase() === 3) {
-        <button type="button" (click)="submit()" class="primary">Créer la réservation</button>
+        <button type="button" (click)="goToPhase(currentPhase() - 1)" class="secondary">← Retour à la phase {{ currentPhase() - 1 }}</button>
       }
     </div>
 

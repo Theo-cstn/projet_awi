@@ -9,8 +9,8 @@
 
     private readonly http = inject(HttpClient); 
 
-    private readonly apiUrl = 'https://localhost:4000/api/reservation'; 
-    private readonly festivalApiUrl = 'https://localhost:4000/api/reservation/festival'; 
+    private readonly apiUrl = 'https://localhost:4000/api/reservations'; 
+    private readonly festivalApiUrl = 'https://localhost:4000/api/reservations/festival'; 
     
     private readonly _reservations = signal<Reservation[]>([]); 
     readonly reservations = this._reservations.asReadonly();
