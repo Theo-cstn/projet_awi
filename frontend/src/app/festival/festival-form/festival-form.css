@@ -2,49 +2,203 @@
   background: white;
   border-radius: 8px;
   padding: 2rem;
-  box-shadow: black;
-  max-width: 1000px;
+  max-width: 900px;
   margin: 20px auto;
-  text-align: center;
 }
 
-h2, h3, h4 {
+h2, h3 {
   color: #1976d2;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+h3 {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+}
+
+h3:first-of-type {
+  border-top: none;
+  padding-top: 0;
   margin-top: 0;
 }
 
-strong {
+label {
   display: block;
-  margin: 1rem 0;
-  color: #1976d2;
-}
-
-.zones-section {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #1a2227;
-}
-
-.zones-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
+  margin-top: 1rem;
   margin-bottom: 0.5rem;
-  background: #e3f2fd;
+  font-weight: 600;
+  color: #333;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.5rem;
   border-radius: 4px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  font-size: 1rem;
 }
 
-.empty-message {
-  display: block;
-  color: #90a4ae;
-  font-style: italic;
-  margin-top: 0.5rem;
+textarea {
+  resize: vertical;
+  min-height: 100px;
 }
 
-.btn-submit {
-  background: #64b5f6;
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  margin: 0 0.5rem 0 0;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  margin-top: 0.75rem;
+  font-weight: normal;
+}
+
+.checkbox label {
+  margin: 0;
+  font-weight: normal;
+}
+
+.ligne, .ligneJeu, .ligneDisposition {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0.75rem 0;
+  flex-wrap: wrap;
+}
+
+.ligne input,
+.ligne select,
+.ligneJeu input,
+.ligneJeu select {
+  flex: 1;
+  min-width: 120px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.radio-group label {
+  margin: 0;
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+}
+
+.recap {
+  background: #e3f2fd;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1.5rem;
+}
+
+.recap p {
+  margin: 0.5rem 0;
+  color: #333;
+}
+
+.recap-error {
+  background: #ffe6e6 !important;
+  color: #d32f2f;
+  border: 1px solid #d32f2f;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.primary {
+  background: #1976d2;
   color: white;
   width: 100%;
   margin-top: 1.5rem;
+}
+
+.primary:hover {
+  background: #1565c0;
+}
+
+.secondary {
+  background: #e0e0e0;
+  color: #333;
+  margin-top: 1rem;
+}
+
+.secondary:hover {
+  background: #d0d0d0;
+}
+
+.danger {
+  background: #d32f2f;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.danger:hover {
+  background: #b71c1c;
+}
+
+.phase-buttons,
+.actions {
+  margin-top: 2rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.game-info {
+  background: #e3f2fd;
+  padding: 0.75rem;
+  border-radius: 4px;
+  width: 100%;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.game-info strong {
+  color: #1976d2;
+}
+
+.placement-success {
+  color: #2e7d32;
+  font-weight: bold;
+  margin: 0.75rem 0;
+}
+
+.placement-error {
+  color: #d32f2f;
+  font-weight: bold;
+  margin: 0.75rem 0;
+}
+
+.placement-warning {
+  color: #f57f17;
+  margin: 0.75rem 0;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 2rem 0;
 }

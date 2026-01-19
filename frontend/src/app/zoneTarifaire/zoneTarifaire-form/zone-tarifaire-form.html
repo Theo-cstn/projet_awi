@@ -1,10 +1,23 @@
 <div style="margin:.5rem 0;">
 
     <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
-        <input type="text" formControlName="nom" placeholder="nom">
-        <input type="number" formControlName="nbTotalTables" placeholder="nombre total de tables">
-        <input type="number" formControlName="prixTable" placeholder="Prix d'une table">
-        <input type="number" formControlName="prixM" placeholder="Prix au m^2">
+        <div>
+            <input type="text" formControlName="nom" placeholder="nom">
+        </div>
+        <div>
+            <label>Nombre de tables totales: </label>
+            <input type="number" formControlName="nbTotalTables" placeholder="nombre total de tables">
+        </div>
+
+        <div>
+            <label>Prix d'une table: </label>
+            <input type="number" formControlName="prixTable" placeholder="Prix d'une table">
+        </div>
+        
+        <div>
+            <label>Prix d'un m^2:</label>
+            <input type="number" formControlName="prixM" placeholder="Prix au m^2">
+        </div>
 
         <div class="zone-selection">
             <h3>Zones Plans</h3>
@@ -24,6 +37,6 @@
             }
         </div>
 
-        <button type="submit" [disabled]="form.invalid || zonesPlan().length === 0">Add</button>
+        <button type="submit" [disabled]="form.invalid || zonesPlan().length === 0">Ajouter une zone tarifaire</button>
     </form>
 </div>

@@ -2,8 +2,11 @@
     <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
 
     <input type="text" formControlName="nom" placeholder="nom">
-    <input type="number" formControlName="nbTables" placeholder="nombre de tables">
+    <div>
+        <label>Nombre de tables (unité d'espace): </label>
+        <input type="number" formControlName="nbTables" placeholder="nombre de tables">
+    </div>
 
-    <button type="submit" [disabled]="form.invalid">Add</button>
+    <button type="submit" [disabled]="form.invalid">Ajouter une zone plan</button>
     </form>
 </div>
