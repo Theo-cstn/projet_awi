@@ -1,16 +1,23 @@
 .reservation-card {
+  max-width: 900px;
+  margin: 15px auto;
   padding: 20px;
-  border-radius: 10px;
   background: #fff;
+  border-radius: 8px;
   border: 1px solid #ddd;
-  margin-bottom: 20px;
 }
 
-.zone-details ul {
-  padding-left: 20px;
-  margin-top: 10px;
+.reservation-card h3 {
+  margin-top: 0;
+  color: #333;
 }
 
-.zone-details li {
-  margin-bottom: 5px;
+.reservation-card p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.reservation-card strong {
+  color: #333;
 }

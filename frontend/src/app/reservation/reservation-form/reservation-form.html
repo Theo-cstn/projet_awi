@@ -3,233 +3,252 @@
 
   <form [formGroup]="form">
 
-    <!-- TYPE -->
-    <label>Type de réservant</label>
-    <select formControlName="type">
-      <option value="Editeur">Éditeur</option>
-      <option value="Boutique">Boutique</option>
-      <option value="Association">Association</option>
-      <option value="Prestataire">Prestataire</option>
-      <option value="Autre">Autre</option>
-    </select>
+    <!-- ========== PHASE 1 : INFORMATIONS RÉSERVANT ========== -->
+    <section>
+      <h3>Phase 1 - Informations du réservant</h3>
 
-    @if (isEditeur()) {
-      <label>Éditeur</label>
-      <select formControlName="editeur_id">
-        @for (e of editeurs(); track e.id) {
-          <option [value]="e.id">{{ e.nom }}</option>
-        }
+      <!-- TYPE DE RÉSERVANT -->
+      <label>Type de réservant</label>
+      <select formControlName="type">
+        <option value="Editeur">Éditeur</option>
+        <option value="Boutique">Boutique</option>
+        <option value="Association">Association</option>
+        <option value="Prestataire">Prestataire</option>
+        <option value="Autre">Autre</option>
       </select>
 
-      <label>
-        <input type="checkbox" formControlName="est_present">
-        Présent physiquement au festival
-      </label>
-    }
-
-    @if (!isEditeur()) {
-      <label>Nom du réservant</label>
-      <input type="text" formControlName="autre_nom_reservant">
-    }
-
-    <label>Nombre de prises</label>
-    <input type="number" formControlName="nombre_prises">
-
-    <h3>Lignes tarifaires</h3>
-
-    <button type="button" (click)="addLigne()">Ajouter une ligne</button>
-
-    @for (l of lignes(); track $index) {
-      <div class="ligne">
-
-        <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)">
-          <option value="0">Sélectionner une zone</option>
-          @for (z of zones(); track z.id) {
-            <option [value]="z.id">{{ z.nom }} ({{ getTablesLibresRestantes(z.id) }} libres)</option>
+      <!-- SÉLECTION ÉDITEUR (si type = Éditeur) -->
+      @if (isEditeur()) {
+        <label>Éditeur</label>
+        <select formControlName="editeur_id">
+          @for (e of editeurs(); track e.id) {
+            <option [value]="e.id">{{ e.nom }}</option>
           }
         </select>
 
-        <input type="number"
-               [value]="l.quantite"
-               [max]="getTablesLibresRestantes(l.zone_tarifaire_id)"
-               min="0"
-               (input)="updateLigne($index, l.zone_tarifaire_id, +$any($event.target).value)">
-
-        <button type="button" (click)="removeLigne($index)">X</button>
-      </div>
-    }
-
-    <p><strong>Total tables :</strong> {{ totalTables() }}</p>
-    <p><strong>Montant des tables :</strong> {{ totalPrixTables() }} €</p>
-    <p><strong>Montant de la réservation avant remise :</strong> {{ totalPrixBeforeRed() }} €</p>
-
-    @if (isEditeur()){
-      <label>Remise générale (€)</label>
-      <input type="number" formControlName="remise_generale">
-
-      <p><strong>Montant de la réservation après remise :</strong> {{ totalPrixAfterRed() }} €</p>
-    }
-    
-    @if (!isEditeur()){
-      <p><strong>Montant de la réservation après remise :</strong> 0 €</p>
-    }
-
-    <label>Commentaire - Préférence des tables</label>
-      <textarea formControlName="preferences_tables"  placeholder="Entrez vos commentaires, préférences ou demandes spéciales..." rows="4">
-      </textarea>
-
-    <!-- BOUTON CONTINUER PHASE 1 -->
-    <div class="phase-buttons" style="margin: 20px 0; text-align: right;">
-      @if (currentPhase() === 1) {
-        <button type="button" (click)="goToPhase(2)" class="primary">Continuer vers Phase 2 →</button>
-      }
-    </div>
-
-
-    <!-- PHASE 2 : SÉLECTION DES JEUX -->
-    @if (currentPhase() >= 2) {
-      <hr style="margin: 30px 0; border: 2px solid #2196F3;">
-      <h3>Phase 2 - Sélection des jeux à présenter</h3>
-
-      <!-- ✅ MESSAGE D'AVERTISSEMENT -->
-      <div style="padding: 12px; margin-bottom: 16px; border-radius: 4px; font-weight: bold;"
-          [style.background-color]="hasTablesExceeded() ? '#ffe6e6' : '#e6f3ff'"
-          [style.color]="hasTablesExceeded() ? '#d32f2f' : '#0066cc'"
-          [style.border]="hasTablesExceeded() ? '2px solid #d32f2f' : '2px solid #0066cc'">
-        {{ getTablesWarningMessage() }}
-      </div>
-
-      @if (isEditeur()) {
-        <p><strong>Jeux de l'éditeur sélectionné :</strong></p>
-      } 
-      @else {
-        <p><strong>Tous les jeux disponibles :</strong></p>
+        <label class="checkbox">
+          <input type="checkbox" formControlName="est_present">
+          Présent physiquement au festival
+        </label>
       }
 
-      <button type="button" (click)="addGameLigne()">Ajouter un jeu</button>
+      <!-- NOM DU RÉSERVANT (si type ≠ Éditeur) -->
+      @if (!isEditeur()) {
+        <label>Nom du réservant</label>
+        <input type="text" formControlName="autre_nom_reservant">
+      }
 
-      @for (l of lignesJeux(); track $index) {
-        <div class="ligneJeu">
-          <select (change)="updateGameLigne($index, +$any($event.target).value, l.nb_exemplaires, l.tables_occupees)">
-            <option value="0">Sélectionner un jeu</option>
-            @for (j of jeuxFiltres(); track j.id) {
-              <option [value]="j.id">{{ j.nom }}</option>
+      <!-- NOMBRE DE PRISES -->
+      <label>Nombre de prises</label>
+      <input type="number" formControlName="nombre_prises">
+
+      <!-- LIGNES TARIFAIRES -->
+      <h3>Lignes tarifaires</h3>
+      <button type="button" (click)="addLigne()">Ajouter une ligne</button>
+
+      @for (l of lignes(); track $index) {
+        <div class="ligne">
+          <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)">
+            <option value="0">Sélectionner une zone</option>
+            @for (z of zones(); track z.id) {
+              <option [value]="z.id">{{ z.nom }} ({{ getTablesLibresRestantes(z.id) }} libres)</option>
             }
           </select>
 
-          <label>Nombre d'exemplaires :</label>
           <input type="number"
-                 [value]="l.nb_exemplaires"
-                 min="1"
-                 (input)="updateGameLigne($index, l.jeu_id, +$any($event.target).value, l.tables_occupees)">
+                 [value]="l.quantite"
+                 [max]="getTablesLibresRestantes(l.zone_tarifaire_id)"
+                 min="0"
+                 (input)="updateLigne($index, l.zone_tarifaire_id, +$any($event.target).value)">
 
-          <label>Nombre de table(s) allouée(s): </label>
-          <label><input type="radio"
-                  name="tables_{{ $index }}"
-                  [value]="0.5"
-                  [checked]="l.tables_occupees === 0.5"
-                  (change)="updateGameLigne($index, l.jeu_id, l.nb_exemplaires, 0.5)">0.5 table</label>
-          
-            <label><input type="radio"
-                  name="tables_{{ $index }}"
-                  [value]="1"
-                  [checked]="l.tables_occupees === 1"
-                  (change)="updateGameLigne($index, l.jeu_id, l.nb_exemplaires, 1)">1 table</label> 
-
-          <button type="button" (click)="removeGameLigne($index)">Supprimer</button>
+          <button type="button" (click)="removeLigne($index)" class="danger">X</button>
         </div>
       }
 
-      <!-- BOUTON CONTINUER PHASE 2 -->
-      <div class="phase-buttons" style="margin: 20px 0; text-align: right;">
-        @if (currentPhase() === 2) {
-          <button type="button" (click)="goToPhase(3)" class="primary">Continuer vers Phase 3 →</button>
+      <!-- RÉSUMÉ TARIFICATION -->
+      <div class="recap">
+        <p><strong>Total tables :</strong> {{ totalTables() }}</p>
+        <p><strong>Montant des tables :</strong> {{ totalPrixTables() }} €</p>
+        <p><strong>Montant de la réservation avant remise :</strong> {{ totalPrixBeforeRed() }} €</p>
+
+        @if (isEditeur()) {
+          <label>Remise générale (€)</label>
+          <input type="number" formControlName="remise_generale">
+          <p><strong>Montant de la réservation après remise :</strong> {{ totalPrixAfterRed() }} €</p>
+        } @else {
+          <p><strong>Montant de la réservation après remise :</strong> 0 €</p>
         }
       </div>
-    }
-    
 
-    <!-- PHASE 3 : DISPOSITION -->
-    @if (currentPhase() >= 3) {
-      <hr style="margin: 30px 0; border: 2px solid #4CAF50;">
-      <h3>Phase 3 - Disposition des jeux dans les zones</h3>
-      
-      <p><strong>Positionnez chaque jeu dans les zones plan de vos zones tarifaires réservées :</strong></p>
+      <!-- PRÉFÉRENCES -->
+      <label>Commentaire - Préférence des tables</label>
+      <textarea formControlName="preferences_tables"
+                placeholder="Entrez vos commentaires, préférences ou demandes spéciales..."
+                rows="4">
+      </textarea>
 
-      @if (getSelectedZones().length === 0) {
-        <div style="color: red; padding: 15px; background-color: #ffe6e6; border-radius: 5px; margin: 15px 0;">
-          <strong>❌ Erreur:</strong> Aucune zone tarifaire réservée. Veuillez revenir à la phase 1 et réserver au moins une zone.
+      <!-- BOUTON CONTINUER PHASE 1 -->
+      @if (currentPhase() === 1) {
+        <div class="phase-buttons">
+          <button type="button" (click)="goToPhase(2)" class="primary">Continuer vers Phase 2 →</button>
         </div>
-      } @else {
-        @for (l of lignesJeux(); track $index) {
-          <div class="ligneDisposition" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
-            
-            <!-- Affichage du jeu sélectionné -->
-            <div style="margin-bottom: 15px; background-color: #f0f8ff; padding: 10px; border-radius: 3px;">
-              <strong style="font-size: 16px;">🎮 Jeu {{ $index + 1 }}: {{ getJeuName(l.jeu_id) }}</strong>
-              <br>
-              <small style="color: #666;">Exemplaires: {{ l.nb_exemplaires }}, {{ l.tables_occupees }} table par exemplaire</small>
-            </div>
+      }
+    </section>
 
-            <!-- Sélection de la zone plan -->
-            <label><strong>Sélectionner la zone plan :</strong></label>
-            <select 
-              (change)="updateLignePlacement($index, +$any($event.target).value)" 
-              [value]="l.zone_plan_id || 0"
-              style="width: 100%; padding: 8px; margin-bottom: 10px; border: 2px solid #ddd; border-radius: 3px;">
-              <option value="0">-- Sélectionner une zone plan --</option>
-              
-              @for (zp of getAllZonesPlansForSelectedZones(); track zp.id) {
-                @if (canPlaceGameInZonePlan(zp.id, l.nb_exemplaires, l.tables_occupees, $index)) {
-                  <option [value]="zp.id">
-                    {{ zp.zone_tarifaire_nom }} • {{ zp.nom }} 
-                    ({{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces libres)
-                  </option>
-                } @else {
-                  <option [value]="zp.id" disabled style="color: #999;">
-                    {{ zp.zone_tarifaire_nom }} • {{ zp.nom }} 
-                    (❌ Pas assez d'espace: {{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces, {{ l.nb_exemplaires * l.tables_occupees }} nécessaires)
-                  </option>
-                }
+    <!-- ========== PHASE 2 : SÉLECTION DES JEUX ========== -->
+    @if (currentPhase() >= 2) {
+      <hr>
+      <section>
+        <h3>Phase 2 - Sélection des jeux à présenter</h3>
+
+        <!-- MESSAGE D'AVERTISSEMENT -->
+        <div class="recap" [class.recap-error]="hasTablesExceeded()">
+          {{ getTablesWarningMessage() }}
+        </div>
+
+        @if (isEditeur()) {
+          <p><strong>Jeux de l'éditeur sélectionné :</strong></p>
+        } @else {
+          <p><strong>Tous les jeux disponibles :</strong></p>
+        }
+
+        <button type="button" (click)="addGameLigne()">Ajouter un jeu</button>
+
+        <!-- LIGNES DE JEUX -->
+        @for (l of lignesJeux(); track $index) {
+          <div class="ligneJeu">
+            <select (change)="updateGameLigne($index, +$any($event.target).value, l.nb_exemplaires, l.tables_occupees)">
+              <option value="0">Sélectionner un jeu</option>
+              @for (j of jeuxFiltres(); track j.id) {
+                <option [value]="j.id">{{ j.nom }}</option>
               }
             </select>
 
-            <!-- Affichage du statut -->
-            @if (l.zone_plan_id) {
-              @if (canPlaceGameInZonePlan(l.zone_plan_id, l.nb_exemplaires, l.tables_occupees, $index)) {
-                <p style="color: #00aa00; font-weight: bold; margin: 10px 0;">
-                  ✅ Placé dans: <strong>{{ getZonePlanName(l.zone_plan_id) }}</strong>
-                  <br>
-                  <small style="color: #666;">
-                    Espaces utilisés: {{ l.nb_exemplaires * l.tables_occupees }}/{{ getZonePlanNbTables(l.zone_plan_id) }}
-                  </small>
-                </p>
-              } @else {
-                <p style="color: #d32f2f; font-weight: bold; margin: 10px 0;">
-                  ❌ Erreur: Pas assez d'espace dans cette zone plan!
-                  <br>
-                  <small style="color: #666;">
-                    Espaces nécessaires: {{ l.nb_exemplaires * l.tables_occupees }}, 
-                    Espaces libres: {{ getTablesLibresInZonePlan(l.zone_plan_id, $index) }}/{{ getZonePlanNbTables(l.zone_plan_id) }}
-                  </small>
-                </p>
-              }
-            } @else {
-              <p style="color: #ff9900; margin: 10px 0;">
-                ⚠️ Zone plan non définie - le placement sera aléatoire
-              </p>
-            }
+            <div style="flex: 0 1 auto;">
+              <label>Nombre d'exemplaires :</label>
+              <input type="number"
+                     [value]="l.nb_exemplaires"
+                     min="1"
+                     style="width: 100px;"
+                     (input)="updateGameLigne($index, l.jeu_id, +$any($event.target).value, l.tables_occupees)">
+            </div>
+
+            <div class="radio-group">
+              <label>Nombre de table(s) :</label>
+              <label>
+                <input type="radio"
+                       [name]="'tables_' + $index"
+                       [value]="0.5"
+                       [checked]="l.tables_occupees === 0.5"
+                       (change)="updateGameLigne($index, l.jeu_id, l.nb_exemplaires, 0.5)">
+                0.5 table
+              </label>
+
+              <label>
+                <input type="radio"
+                       [name]="'tables_' + $index"
+                       [value]="1"
+                       [checked]="l.tables_occupees === 1"
+                       (change)="updateGameLigne($index, l.jeu_id, l.nb_exemplaires, 1)">
+                1 table
+              </label>
+            </div>
+
+            <button type="button" (click)="removeGameLigne($index)" class="danger">X</button>
           </div>
         }
-      }
 
-      <!-- BOUTON SOUMETTRE PHASE 3 -->
-      <div class="phase-buttons" style="margin: 20px 0; text-align: right;">
-        <button type="button" (click)="submit()" class="primary">Créer la réservation</button>
-      </div>
+        <!-- BOUTON CONTINUER PHASE 2 -->
+        @if (currentPhase() === 2) {
+          <div class="phase-buttons">
+            <button type="button" (click)="goToPhase(3)" class="primary">Continuer vers Phase 3 →</button>
+          </div>
+        }
+      </section>
     }
 
-    <div class="actions" style="margin-top: 30px; text-align: left;">
+    <!-- ========== PHASE 3 : DISPOSITION DES JEUX ========== -->
+    @if (currentPhase() >= 3) {
+      <hr>
+      <section>
+        <h3>Phase 3 - Disposition des jeux dans les zones</h3>
+
+        <p><strong>Positionnez chaque jeu dans les zones plan de vos zones tarifaires réservées :</strong></p>
+
+        <!-- ERREUR : AUCUNE ZONE -->
+        @if (getSelectedZones().length === 0) {
+          <div class="recap recap-error">
+            <strong>❌ Erreur:</strong> Aucune zone tarifaire réservée. Veuillez revenir à la phase 1 et réserver au moins une zone.
+          </div>
+        } @else {
+          <!-- PLACEMENT DE CHAQUE JEU -->
+          @for (l of lignesJeux(); track $index) {
+            <div class="ligneDisposition">
+
+              <!-- INFO JEU -->
+              <div class="game-info">
+                <strong>🎮 Jeu {{ $index + 1 }}: {{ getJeuName(l.jeu_id) }}</strong>
+                <br>
+                <small>Exemplaires: {{ l.nb_exemplaires }}, {{ l.tables_occupees }} table par exemplaire</small>
+              </div>
+
+              <!-- SÉLECTION ZONE PLAN -->
+              <label><strong>Sélectionner la zone plan :</strong></label>
+              <select [value]="l.zone_plan_id || 0"
+                      (change)="updateLignePlacement($index, +$any($event.target).value)">
+                <option value="0">-- Sélectionner une zone plan --</option>
+
+                @for (zp of getAllZonesPlansForSelectedZones(); track zp.id) {
+                  @if (canPlaceGameInZonePlan(zp.id, l.nb_exemplaires, l.tables_occupees, $index)) {
+                    <option [value]="zp.id">
+                      {{ zp.zone_tarifaire_nom }} • {{ zp.nom }}
+                      ({{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces libres)
+                    </option>
+                  } @else {
+                    <option [value]="zp.id" disabled>
+                      {{ zp.zone_tarifaire_nom }} • {{ zp.nom }}
+                      (❌ Pas assez d'espace: {{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces, {{ l.nb_exemplaires * l.tables_occupees }} nécessaires)
+                    </option>
+                  }
+                }
+              </select>
+
+              <!-- STATUT PLACEMENT -->
+              @if (l.zone_plan_id) {
+                @if (canPlaceGameInZonePlan(l.zone_plan_id, l.nb_exemplaires, l.tables_occupees, $index)) {
+                  <div class="placement-success">
+                    <strong>✅ Placé dans: {{ getZonePlanName(l.zone_plan_id) }}</strong>
+                    <br>
+                    <small>Espaces utilisés: {{ l.nb_exemplaires * l.tables_occupees }}/{{ getZonePlanNbTables(l.zone_plan_id) }}</small>
+                  </div>
+                } @else {
+                  <div class="placement-error">
+                    <strong>❌ Erreur: Pas assez d'espace dans cette zone plan!</strong>
+                    <br>
+                    <small>
+                      Espaces nécessaires: {{ l.nb_exemplaires * l.tables_occupees }},
+                      Espaces libres: {{ getTablesLibresInZonePlan(l.zone_plan_id, $index) }}/{{ getZonePlanNbTables(l.zone_plan_id) }}
+                    </small>
+                  </div>
+                }
+              } @else {
+                <div class="placement-warning">
+                  ⚠️ Zone plan non définie - le placement sera aléatoire
+                </div>
+              }
+            </div>
+          }
+        }
+
+        <!-- BOUTON SOUMETTRE PHASE 3 -->
+        <div class="phase-buttons">
+          <button type="button" (click)="submit()" class="primary">Créer la réservation</button>
+        </div>
+      </section>
+    }
+
+    <!-- BOUTON RETOUR -->
+    <div class="actions">
       @if (currentPhase() > 1) {
         <button type="button" (click)="goToPhase(currentPhase() - 1)" class="secondary">← Retour à la phase {{ currentPhase() - 1 }}</button>
       }

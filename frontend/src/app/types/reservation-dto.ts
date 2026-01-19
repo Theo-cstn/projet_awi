@@ -14,5 +14,11 @@ export interface Reservation {
     quantite: number;
     prix_unitaire_applique: number;
   }[];
+
+  lignesJeux: {
+    jeu_id: number;
+    nb_exemplaires: number;
+    tables_occupees: number;
+  }[];
     
 }

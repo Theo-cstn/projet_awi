@@ -16,11 +16,12 @@
     readonly reservations = this._reservations.asReadonly();
 
     loadReservations(festivalId: number): void { 
-      this.http.get<any[]>(`${this.festivalApiUrl}/${festivalId}`, { withCredentials: true })
+      const url = `${this.festivalApiUrl}/${festivalId}`;
+      
+      this.http.get<any[]>(url, { withCredentials: true })
       .subscribe({ 
         next: (data) => { 
-          // Le backend renvoie probablement plus d'infos que ton interface 
-          // On mappe uniquement ce qui correspond à Reservation 
+          
           const mapped: Reservation[] = data.map(r => ({ 
             id: r.id, 
             festival_id: r.festival_id, 
@@ -30,11 +31,11 @@
             nombre_prises: r.nombre_prises, 
             remise_generale: r.remise_generale, 
             est_present: r.est_present, 
-            lignes: r.lignes || []
+            lignes: r.lignes || [],
+            lignesJeux: r.lignesJeux || []
           })); 
           this._reservations.set(mapped); 
-        }, 
-        error: (err) => console.error('Erreur chargement réservations', err) 
+        }
       }); 
     }
 

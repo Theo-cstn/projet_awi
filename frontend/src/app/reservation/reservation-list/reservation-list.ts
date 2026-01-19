@@ -15,16 +15,27 @@ export class ReservationList implements OnInit {
   private router = inject(Router); 
   
   festivalId = signal<number | undefined>(undefined); 
-  reservations = computed(() => this.svc.reservations()); 
+  // Filtre les réservations pour afficher seulement celles du festival courant
+  reservations = computed(() => {
+    const fId = this.festivalId();
+    const allReservations = this.svc.reservations();
+    if (!fId) {
+      return [];
+    }
+    const filtered = allReservations.filter(r => r.festival_id === fId);
+    return filtered;
+  });
   
   ngOnInit(): void {
     this.detectContextAndLoad(); 
   } 
   private detectContextAndLoad() { 
-    const id = this.route.parent?.snapshot.paramMap.get('id'); 
+    const id = this.route.parent?.parent?.snapshot.paramMap.get('id'); 
     if (id) { 
-      this.festivalId.set(Number(id)); this.svc.loadReservations(Number(id)); 
-    } 
+      const numId = Number(id);
+      this.festivalId.set(numId); 
+      this.svc.loadReservations(numId);
+    }
   } 
   openReservation(rId: number) { 
     this.router.navigate([`/festivals/${this.festivalId()}/reservations/${rId}`]); 
@@ -35,10 +46,4 @@ export class ReservationList implements OnInit {
       state: { festivalId: this.festivalId() } 
     });
   }
-
-  
-  
-
-
-
 }
