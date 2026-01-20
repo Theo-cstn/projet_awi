@@ -1,0 +1,62 @@
+div[style] form {
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  margin: 1rem 0;
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+  box-sizing: border-box;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
+  margin-bottom: 1rem;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  background: #f9fafb;
+}
+
+button[type="submit"] {
+  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  color: white;
+  width: 100%;
+  font-weight: 600;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+button[type="submit"]:not(:disabled):hover {
+  background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

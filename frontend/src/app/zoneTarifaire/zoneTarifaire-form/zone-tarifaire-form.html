@@ -2,21 +2,23 @@
 
     <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
         <div>
-            <input type="text" formControlName="nom" placeholder="nom">
-        </div>
-        <div>
-            <label>Nombre de tables totales: </label>
-            <input type="number" formControlName="nbTotalTables" placeholder="nombre total de tables">
+            <label for="nom">Nom de la zone tarifaire</label>
+            <input type="text" id="nom" formControlName="nom" placeholder="nom de la zone tarifaire">
         </div>
 
         <div>
-            <label>Prix d'une table: </label>
-            <input type="number" formControlName="prixTable" placeholder="Prix d'une table">
+            <label for="nbTotalTables">Nombre de tables totales</label>
+            <input type="number" id="nbTotalTables" formControlName="nbTotalTables" placeholder="Nombre total de tables">
+        </div>
+
+        <div>
+            <label for="prixTable">Prix d'une table</label>
+            <input type="number" id="prixTable" formControlName="prixTable" placeholder="Prix d'une table en €">
         </div>
         
         <div>
-            <label>Prix d'un m^2:</label>
-            <input type="number" formControlName="prixM" placeholder="Prix au m^2">
+            <label for="prixM">Prix d'un m²</label>
+            <input type="number" id="prixM" formControlName="prixM" placeholder="Prix au m² en €">
         </div>
 
         <div class="zone-selection">
@@ -24,11 +26,15 @@
             <app-zone-plan-form (add)="onAddZone($event)"></app-zone-plan-form>
 
             @if (zonesPlan().length > 0){
-                <h4>Zones ajoutées :</h4>
+                <h4>Zones plans ajoutées</h4>
                 @for (zone of zonesPlan(); track zone.id!){
                     <div class="zone-item">
-                        <span>{{ zone.nom }} - {{ zone.nbTables }} tables</span>
-                        <button type="button" (click)="onRemoveZone(zone.id!)">Supprimer</button>
+                        <div>
+                          <strong>{{ zone.nom }}</strong>
+                          <br>
+                          <small>{{ zone.nbTables }} table(s)</small>
+                        </div>
+                        <button type="button" class="danger" (click)="onRemoveZone(zone.id!)">Supprimer</button>
                     </div>
                 }
             }
@@ -37,6 +43,6 @@
             }
         </div>
 
-        <button type="submit" [disabled]="form.invalid || zonesPlan().length === 0">Ajouter une zone tarifaire</button>
+        <button type="submit" [disabled]="form.invalid || zonesPlan().length === 0">➕ Ajouter une zone tarifaire</button>
     </form>
 </div>
