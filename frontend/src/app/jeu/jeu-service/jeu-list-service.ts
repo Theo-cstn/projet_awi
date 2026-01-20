@@ -104,8 +104,26 @@ export class JeuListService {
    * Ajoute un nouveau jeu (Global).
    */
   add(jeu: JeuDto): void {
-    this.http.post<JeuDto>(this.apiUrl, jeu, { withCredentials: true }).subscribe({
-      next: (newJeu) => {
+    this.http.post<any>(this.apiUrl, jeu, { withCredentials: true }).subscribe({
+      next: (data) => {
+        // Mapper la réponse du backend
+        const newJeu: JeuDto = {
+          id: data.id,
+          nom: data.nom,
+          typeG: data.typeG,
+          age_min: data.age_min,
+          age_max: data.age_max,
+          editeur_id: data.editeur_id,
+          editeur: data.nom_editeur ? {
+            id: data.editeur_id,
+            nom: data.nom_editeur,
+          } : undefined,
+          auteurs: data.auteurs?.map((auteur: any) => ({
+            id: auteur.id,
+            nom: auteur.nom,
+            prenom: auteur.prenom,
+          })) || [],
+        };
         this._jeux.update((list) => [...list, newJeu]);
       },
       error: (err) => console.error('Erreur ajout jeu:', err),

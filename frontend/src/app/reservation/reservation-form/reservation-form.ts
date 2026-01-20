@@ -59,13 +59,6 @@ export class ReservationForm {
   isEditeur = computed(() => this.typeValue() === 'Editeur');
   isBoutique = computed(() => this.typeValue() === 'Boutique')
   
-  // Récupère le nom de l'éditeur sélectionné
-  selectedEditeurName = computed(() => {
-    const editeurId = this.form.controls.editeur_id.value;
-    if (!editeurId) return '';
-    return this.editeurs().find(e => e.id === editeurId)?.nom ?? '';
-  });
-  
   // Filtre les jeux selon le type de réservant
   jeuxFiltres = computed(() => {
     if (this.isEditeur()) {
@@ -94,7 +87,7 @@ export class ReservationForm {
       .filter(l => l.zone_tarifaire_id === zoneId)
       .reduce((sum, l) => sum + l.quantite, 0);
     
-    return (zone.nbTablesLibres ?? zone.nbTotalTables ?? 0) - tablesReservees;
+    return zone.nbTablesLibres! - tablesReservees;
   };
 
   // ----------------ligne de reservation zone tarifaire --------------------------
@@ -109,7 +102,7 @@ export class ReservationForm {
     const tablesLibresRestantes = this.getTablesLibresRestantes(zoneId);
     
     // Rejette les quantités invalides silencieusement
-    if (quantite < 0 || quantite > tablesLibresRestantes) { 
+    if (quantite < 0 || quantite > tablesLibresRestantes) {
       return; 
     } 
     this.lignes.update(list => {
@@ -128,7 +121,7 @@ export class ReservationForm {
 
   // ----------------ligne de reservation jeu --------------------------
   addGameLigne() { 
-    this.lignesJeux.update(list => [ ...list, { jeu_id: 0, nb_exemplaires: 1, tables_occupees: 1 } ]); 
+    this.lignesJeux.update(list => [ ...list, { jeu_id: 0, nb_exemplaires: 1, tables_occupees: 1 } ]);
   }
   updateGameLigne(index: number, jeuId: number, nb_exemplaires: number, tables_occupees: number = 1) { 
     const jeu = this.jeux().find(j => j.id === jeuId); 
@@ -163,24 +156,12 @@ export class ReservationForm {
     const zoneIds = new Set(this.lignes().map(l => l.zone_tarifaire_id));
     return this.zones().filter(z => zoneIds.has(z.id));
   };
-
-  // Récupère les zones plan pour une zone tarifaire
-  getZonePlansByZone = (zoneTarifaireId: number | undefined): Array<any> => {
-    if (!zoneTarifaireId) return [];
-    const zone = this.zones().find(z => z.id === zoneTarifaireId);
-    return zone?.zonesPlan || [];
-  };
   getZonePlanById = (id: number): any => {
     for (const zone of this.zones()) {
       const plan = zone.zonesPlan?.find(zp => zp.id === id);
       if (plan) return { ...plan, zone_tarifaire_id: zone.id };
     }
     return null;
-  };
-  getZonePlanName = (id: number | undefined): string => {
-    if (!id) return '';
-    const plan = this.getZonePlanById(id);
-    return plan?.nom || 'Non défini';
   };
 
   // Met à jour le placement d'un jeu
@@ -204,14 +185,11 @@ export class ReservationForm {
     });
   }
 
-  // Récupère la zone tarifaire d'un placement
-  getLigneZoneTarifaireId = (index: number): number | undefined => {
-    const zonePlanId = this.lignesJeux()[index]?.zone_plan_id;
-    if (!zonePlanId) return undefined;
-    return this.getZonePlanById(zonePlanId)?.zone_tarifaire_id;
+  getZonePlanName = (id: number | undefined): string => {
+    if (!id) return '';
+    const plan = this.getZonePlanById(id);
+    return plan?.nom || 'Non défini';
   };
-
-  // Récupère le nom d'un jeu par son ID
   getJeuName = (jeuId: number | undefined): string => {
     if (!jeuId) return '';
     const jeu = this.jeux().find(j => j.id === jeuId);
@@ -356,11 +334,8 @@ export class ReservationForm {
       currentRoute = currentRoute.parent;
     }
     
-    console.log('Festival ID récupéré:', this.festivalId());
-    
     this.editeurService.loadEditeurs();
     this.zoneService.loadZones(this.festivalId());
-    
     this.jeuService.loadJeux();
     
     this.form.controls.type.valueChanges.subscribe((type) => {
@@ -381,6 +356,4 @@ export class ReservationForm {
       }
     });
   }
-
 }
-

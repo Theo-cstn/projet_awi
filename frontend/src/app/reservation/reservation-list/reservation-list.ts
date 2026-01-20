@@ -29,6 +29,7 @@ export class ReservationList implements OnInit {
   ngOnInit(): void {
     this.detectContextAndLoad(); 
   } 
+  
   private detectContextAndLoad() { 
     const id = this.route.parent?.parent?.snapshot.paramMap.get('id'); 
     if (id) { 

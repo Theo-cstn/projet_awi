@@ -24,6 +24,11 @@ router.get('/festival/:festivalId', requireOrganisateurReservations(), async (re
                         FROM JeuReserve jr
                         JOIN ZonePlan zp2 ON zp2.id = jr.zone_plan_id
                         WHERE zp2.zone_tarifaire_id = zt.id
+                    ), 0) -
+                    COALESCE((
+                        SELECT CAST(SUM(lr.quantite) AS INTEGER)
+                        FROM LigneReservation lr
+                        WHERE lr.zone_tarifaire_id = zt.id
                     ), 0)
                 )::INT as "nbTablesLibres",
                 json_agg(json_build_object(
