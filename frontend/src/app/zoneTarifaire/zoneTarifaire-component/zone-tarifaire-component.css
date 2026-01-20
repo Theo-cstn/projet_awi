@@ -7,7 +7,53 @@
     background-color: #f9f9f9;
     /* légère ombre */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
+}
+
+.zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+}
+
+.zone-header h3 {
+    color: #333;
+    margin: 0;
+}
+
+.zone-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit-zone, .btn-delete-zone {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.btn-edit-zone {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-edit-zone:hover {
+    background-color: #0056b3;
+}
+
+.btn-delete-zone {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-delete-zone:hover {
+    background-color: #c82333;
+}
 
 .zone-card h3 {
     color: #333;
@@ -16,13 +62,13 @@
      /* Séparateur visuel */
     border-bottom: 1px solid #eee;
     margin-bottom: 15px;
-    }
+}
 
 .zone-detail p {
     margin: 8px 0;
     display: flex;
     justify-content: space-between;
-    }
+}
 
 /* Mise en évidence du nombre */
 .zone-detail strong {

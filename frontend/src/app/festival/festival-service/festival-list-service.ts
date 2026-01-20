@@ -63,12 +63,21 @@ export class FestivalListService {
     });
   }
 
-    update(partial: Partial<Festival> & { id: number }): void {
-    this.http.patch(`${this.apiUrl}/${partial.id}`, partial, { withCredentials: true }).subscribe({
+  update(festival: Partial<Festival> & { id: number }): void {
+    const payload = {
+      nom: festival.nom,
+      date_debut: festival.date_debut,
+      date_fin: festival.date_fin,
+      stock_tables_petites: festival.nbTablesPetites,
+      stock_tables_grandes: festival.nbTablesGrandes,
+      stock_tables_mairie: festival.nbTablesMairie,
+      zonesTarifaires: festival.zonesTarifaires
+    };
+
+    this.http.put(`${this.apiUrl}/${festival.id}`, payload, { withCredentials: true }).subscribe({
       next: () => {
-        this._festivals.update((festivalList) =>
-          festivalList.map((f) => (f.id === partial.id ? { ...f, ...partial } : f))
-        );
+        // Recharger les festivals pour avoir les données à jour
+        this.loadFestivals();
       },
       error: (err) => console.error('Erreur update :', err)
     });

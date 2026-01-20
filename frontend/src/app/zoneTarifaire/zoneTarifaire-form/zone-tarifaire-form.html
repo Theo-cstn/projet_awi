@@ -1,4 +1,5 @@
 <div style="margin:.5rem 0;">
+    <h3>{{ modeEdition() ? 'Modifier la Zone Tarifaire' : 'Ajouter une Zone Tarifaire' }}</h3>
 
     <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
         <input type="text" formControlName="nom" placeholder="nom">
@@ -24,6 +25,16 @@
             }
         </div>
 
-        <button type="submit" [disabled]="form.invalid || zonesPlan().length === 0">Add</button>
+        <div class="form-actions">
+          <button type="submit" [disabled]="form.invalid || zonesPlan().length === 0">
+            {{ modeEdition() ? '✅ Valider la modification' : '➕ Ajouter la Zone' }}
+          </button>
+          
+          @if (modeEdition()) {
+            <button type="button" class="btn-cancel" (click)="onCancel()">
+              ❌ Annuler
+            </button>
+          }
+        </div>
     </form>
 </div>

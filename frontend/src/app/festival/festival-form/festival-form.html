@@ -1,5 +1,5 @@
 <div class="form-container">
-  <h2>Ajouter un Festival</h2>
+  <h2>{{ festivalAEditer() ? 'Modifier le festival' : 'Ajouter un Festival' }}</h2>
   
   <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
       <input type="text" id="nom" formControlName="nom" placeholder="Nom du festival">
@@ -15,15 +15,23 @@
 
     <div class="zones-section">
       <h3>Zones Tarifaires</h3>
-      <app-zone-tarifaire-form (add)="onAddZone($event)"></app-zone-tarifaire-form>
+      <app-zone-tarifaire-form 
+        [zoneAEditer]="zoneEnEdition()"
+        (add)="onAddZone($event)"
+        (update)="onUpdateZone($event)"
+        (cancel)="zoneEnEdition.set(undefined)">
+      </app-zone-tarifaire-form>
 
       @if (zonesTarifaires().length > 0){
         <h4>Zones ajoutées :</h4>
         @for (zone of zonesTarifaires(); track zone.id!){
-          <div class="zones-item">
-            <span>{{ zone.nom }} - {{ zone.nbTotalTables }} tables - {{ zone.prixTable }}€/table - {{ zone.prixM }}€/m²</span>
-            <button type="button" (click)="onRemoveZone(zone.id!)">Supprimer</button>
-          </div>
+          <app-zone-tarifaire-component
+            [zoneT]="zone"
+            [canEdit]="true"
+            [canDelete]="true"
+            (edit)="onEditZone($event)"
+            (remove)="onRemoveZone($event)">
+          </app-zone-tarifaire-component>
         }
       }
       @else if (zonesTarifaires().length === 0){
@@ -31,7 +39,7 @@
       }
 
     <button type="submit" [disabled]="form.invalid || zonesTarifaires().length === 0" class="btn-submit">
-      Ajouter le Festival
+      {{ festivalAEditer() ? 'Modifier le Festival' : 'Ajouter le Festival' }}
     </button>
     </div>
   </form>

@@ -1,4 +1,4 @@
-import { Component, signal, output } from '@angular/core';
+import { Component, signal, output, input, computed, effect } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
 import { ReactiveFormsModule } from '@angular/forms';
 
@@ -14,11 +14,20 @@ import { ZonePlanForm } from '../../zonePlan/zonePlan-form/zone-plan-form';
   styleUrl: './zone-tarifaire-form.css',
 })
 export class ZoneTarifaireForm {
-    add = output< Omit<ZoneTarifaire, 'id'> >();
+    add = output<Omit<ZoneTarifaire, 'id'>>();
+    update = output<ZoneTarifaire>();
+    cancel = output<void>();
+    
+    // Input pour la zone à éditer
+    zoneAEditer = input<ZoneTarifaire | undefined>(undefined);
+    
+    modeEdition = computed(() => this.zoneAEditer() !== undefined);
+    
     zonesPlan = signal<ZonePlan[]>([]);
     nextZoneId = signal<number>(0);
-
-  //readonly newZoneTarifaire = signal<Omit<ZoneTarifaire, 'id'>>({ nom: '', nbTotalTables: 0, prixTable: 0, prixM: 0 })
+    
+    // Pour éviter de recharger les zones plan à chaque fois
+    private lastLoadedZoneId = signal<number | undefined>(undefined);
 
   readonly form = new FormGroup({
     nom: new FormControl('', { nonNullable: true }),
@@ -26,34 +35,87 @@ export class ZoneTarifaireForm {
     prixTable: new FormControl(0),
     prixM: new FormControl(0)
   })
+  
+  constructor() {
+    // Pré-remplir le formulaire quand zoneAEditer change
+    effect(() => {
+      const zone = this.zoneAEditer();
+      
+      if (zone) {
+        // Mode édition : pré-remplir le formulaire
+        this.form.patchValue({
+          nom: zone.nom,
+          nbTotalTables: zone.nbTotalTables,
+          prixTable: zone.prixTable,
+          prixM: zone.prixM
+        });
+        
+        // Charger les zones plan SEULEMENT si c'est une nouvelle zone à éditer
+        if (this.lastLoadedZoneId() !== zone.id) {
+          this.zonesPlan.set(zone.zonesPlan || []);
+          
+          const maxId = zone.zonesPlan && zone.zonesPlan.length > 0
+            ? Math.max(...zone.zonesPlan.map(z => z.id || 0))
+            : 0;
+          this.nextZoneId.set(maxId + 1);
+          
+          this.lastLoadedZoneId.set(zone.id);
+        }
+      } else {
+        // Mode ajout : réinitialiser
+        this.form.reset();
+        this.zonesPlan.set([]);
+        this.nextZoneId.set(0);
+        this.lastLoadedZoneId.set(undefined);
+      }
+    });
+  }
 
   onSubmitForm(): void {
-
     const formValue = this.form.getRawValue();
+    const zoneEdit = this.zoneAEditer();
 
     let prixM = formValue.prixM;
     if (prixM === null || prixM === undefined){
       prixM = formValue.prixTable!/4.5;
     }
 
-    const zoneTarifaire : Omit<ZoneTarifaire, 'id'> = {
-      nom: this.form.value.nom!,
-      nbTotalTables: this.form.value.nbTotalTables!,
-      prixTable: this.form.value.prixTable!,
-      prixM: this.form.value.prixM!,
-      zonesPlan: this.zonesPlan()
+    if (zoneEdit) {
+      // Mode édition
+      const updatedZone: ZoneTarifaire = {
+        id: zoneEdit.id!,
+        nom: formValue.nom,
+        nbTotalTables: formValue.nbTotalTables || 0,
+        nbTablesLibres: zoneEdit.nbTablesLibres, // Préserver la valeur existante
+        prixTable: formValue.prixTable || 0,
+        prixM: prixM,
+        zonesPlan: this.zonesPlan()
+      };
+      
+      this.update.emit(updatedZone);
+    } else {
+      // Mode création
+      const zoneTarifaire: Omit<ZoneTarifaire, 'id'> = {
+        nom: formValue.nom,
+        nbTotalTables: formValue.nbTotalTables || 0,
+        prixTable: formValue.prixTable || 0,
+        prixM: prixM,
+        zonesPlan: this.zonesPlan()
+      };
+
+      this.add.emit(zoneTarifaire);
     }
 
-    this.add.emit(zoneTarifaire);
-
+    // Réinitialiser le formulaire
     this.form.reset({
       nom: '',
-      nbTotalTables:null,
+      nbTotalTables: null,
       prixTable: null,
       prixM: null,
     });
     this.zonesPlan.set([]);
     this.nextZoneId.set(0);
+    this.lastLoadedZoneId.set(undefined);
   }
 
   onAddZone(newZone: Omit<ZonePlan, 'id'>): void {
@@ -66,5 +128,21 @@ export class ZoneTarifaireForm {
     this.zonesPlan.update(zones =>
       zones.filter(zone => zone.id !== idZone)
     );
+  }
+  
+  onCancel(): void {
+    // Réinitialiser le formulaire
+    this.form.reset({
+      nom: '',
+      nbTotalTables: null,
+      prixTable: null,
+      prixM: null,
+    });
+    this.zonesPlan.set([]);
+    this.nextZoneId.set(0);
+    this.lastLoadedZoneId.set(undefined);
+    
+    // Émettre l'événement d'annulation
+    this.cancel.emit();
   }
 }
