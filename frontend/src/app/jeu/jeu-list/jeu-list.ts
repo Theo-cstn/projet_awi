@@ -93,16 +93,13 @@ export class JeuList implements OnInit {
   toggleFormulaire(): void {
     this.afficherFormulaire.update(v => !v);
   }
-
   retourEditeurs(): void {
     this.router.navigate(['/editeurs']);
   }
-  
   onEdit(jeu: JeuDto): void {
     this.jeuEnEdition.set(jeu); 
     this.afficherFormulaire.set(true);
   }
-
   onDelete(id: number): void {
     if (confirm('Voulez-vous vraiment supprimer ce jeu ?')) {
       this.svc.delete(id);
@@ -129,9 +126,9 @@ export class JeuList implements OnInit {
   }
 
   onUpdate(updatedJeu: JeuDto): void {
-    console.log('✏️ Modification du jeu:', updatedJeu);
+    console.log('Modification du jeu:', updatedJeu);
     
-    // ✨ Envoyer uniquement les champs que le backend attend
+    // Envoyer uniquement les champs que le backend attend
     this.svc.update({
       id: updatedJeu.id!,
       nom: updatedJeu.nom,
@@ -144,4 +141,12 @@ export class JeuList implements OnInit {
     this.afficherFormulaire.set(false);
     this.jeuEnEdition.set(undefined);
   }
+
+  // barre de recherche
+  searchTerm = signal('');
+
+  filteredJeux = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    return this.jeux()?.filter(j => j.nom.toLowerCase().includes(term)) || [];
+  });
 }
