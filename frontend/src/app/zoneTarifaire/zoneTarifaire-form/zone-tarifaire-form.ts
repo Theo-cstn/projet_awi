@@ -1,4 +1,4 @@
-import { Component, signal, output } from '@angular/core';
+import { Component, signal, output, computed } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
 import { ReactiveFormsModule } from '@angular/forms';
 
@@ -22,9 +22,12 @@ export class ZoneTarifaireForm {
 
   readonly form = new FormGroup({
     nom: new FormControl('', { nonNullable: true }),
-    nbTotalTables: new FormControl(0),
     prixTable: new FormControl(0),
     prixM: new FormControl(0)
+  })
+
+  nbTotalTables = computed(() => {
+    return this.zonesPlan().reduce((total, zone) => total + zone.nbTables, 0);
   })
 
   onSubmitForm(): void {
@@ -38,7 +41,7 @@ export class ZoneTarifaireForm {
 
     const zoneTarifaire : Omit<ZoneTarifaire, 'id'> = {
       nom: this.form.value.nom!,
-      nbTotalTables: this.form.value.nbTotalTables!,
+      nbTotalTables: this.nbTotalTables(),
       prixTable: this.form.value.prixTable!,
       prixM: this.form.value.prixM!,
       zonesPlan: this.zonesPlan()
@@ -48,7 +51,6 @@ export class ZoneTarifaireForm {
 
     this.form.reset({
       nom: '',
-      nbTotalTables:null,
       prixTable: null,
       prixM: null,
     });
