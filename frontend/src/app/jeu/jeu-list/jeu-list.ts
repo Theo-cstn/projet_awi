@@ -144,7 +144,6 @@ export class JeuList implements OnInit {
 
   // barre de recherche
   searchTerm = signal('');
-
   filteredJeux = computed(() => {
     const term = this.searchTerm().toLowerCase();
     return this.jeux()?.filter(j => j.nom.toLowerCase().includes(term)) || [];

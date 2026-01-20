@@ -83,43 +83,4 @@ export class EditeurListService {
   findById(id: number): EditeurDto | undefined {
     return this._editeurs().find((e) => e.id === id);
   }
-
-  // --- Gestion des Contacts (Ta logique existante) ---
-  
-  addContact(editeurId: number, contact: PersonneDto): void {
-    if (contact.id === undefined) {
-      contact.id = this.lastContactID + 1;
-      this.lastContactID += 1;
-    }
-    
-    // TODO: Ajouter l'appel API réel ici (POST)
-    
-    this._editeurs.update((list) =>
-      list.map(e => {
-        if (e.id === editeurId) {
-          return {
-            ...e,
-            contacts: [...(e.contacts || []), contact]
-          };
-        }
-        return e;
-      })
-    );
-  }
-
-  deleteContact(editeurId: number, contactId: number): void {
-    // TODO: Ajouter l'appel API réel ici (DELETE)
-    
-    this._editeurs.update((list) =>
-      list.map(e => {
-        if (e.id === editeurId) {
-          return {
-            ...e,
-            contacts: (e.contacts || []).filter(c => c.id !== contactId)
-          };
-        }
-        return e;
-      })
-    );
-  }
 }

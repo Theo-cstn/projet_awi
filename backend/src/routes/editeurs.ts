@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireVisiteur, requireAdmin } from '../middleware/roles.js';
+import { requireVisiteur, requireAdmin, requireOrganisateurReservations } from '../middleware/roles.js';
 import pool from '../db/database.js';
 
 const router = Router();
@@ -167,11 +167,11 @@ router.delete('/:id', requireAdmin(), async (req, res) => {
 });
 
 // ==============================================================================
-// 3. GESTION DES CONTACTS (Admin Uniquement - Modification de l'éditeur)
+// 3. GESTION DES CONTACTS (Organisateurs Réservations + Admin)
 // ==============================================================================
 
 // POST /editeurs/:id/contacts - AJOUTER UN CONTACT (Upsert Intelligent)
-router.post('/:id/contacts', requireAdmin(), async (req, res) => {
+router.post('/:id/contacts', requireOrganisateurReservations(), async (req, res) => {
   const editeurId = req.params.id;
   const { nom, prenom, email, fonction, est_contact_principal } = req.body;
 
@@ -223,7 +223,7 @@ router.post('/:id/contacts', requireAdmin(), async (req, res) => {
 });
 
 // DELETE /editeurs/:id/contacts/:contactId - Supprimer un contact (Smart Delete)
-router.delete('/:id/contacts/:contactId', requireAdmin(), async (req, res) => {
+router.delete('/:id/contacts/:contactId', requireOrganisateurReservations(), async (req, res) => {
   const { id, contactId } = req.params;
   const client = await pool.connect();
 

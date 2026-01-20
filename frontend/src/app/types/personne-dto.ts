@@ -3,4 +3,5 @@ export interface PersonneDto {
     nom : string
     prenom : string
     email : string
+    poste?: string
 }

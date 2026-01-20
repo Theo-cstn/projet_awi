@@ -8,7 +8,6 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validator
   styleUrl: './contact-form.css',
 })
 export class ContactForm {
-  // ✅ Gardez seulement editeurId
   editeurId = input<number|undefined>(undefined)
 
   readonly form = new FormGroup({
@@ -26,8 +25,9 @@ export class ContactForm {
       nonNullable: true
     }),
 
-    mail: new FormControl('', {
-      nonNullable: true
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email]
     }),
   });
 
@@ -42,7 +42,8 @@ export class ContactForm {
         nom:  this.form.value.nom,
         prenom: this.form.value.prenom,
         fonction: this.form.value.fonction,
-        mail: this.form.value.mail,
+        email: this.form.value.email,
+        poste: this.form.value.fonction,
         editeur: this.editeurId()
       })
       this.form.reset()
