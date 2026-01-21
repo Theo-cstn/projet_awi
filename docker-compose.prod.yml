@@ -2,15 +2,15 @@ services:
   # ------------------------ DB ------------------------
   db:
     image: postgres:16-alpine
-    container_name: festival_app_db_prod
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    container_name: festival_prod_db
+    restart: always
+    env_file:
+      - ./backend/.env
     volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data_prod:/var/lib/postgresql/data
+      - ./backend/db/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./backend/db/02_import_reference.sql:/docker-entrypoint-initdb.d/02_import_reference.sql
+      - ./backend/db/03_data_demo.sql:/docker-entrypoint-initdb.d/03_data_demo.sql
     networks:
       - app_net
 
@@ -19,21 +19,17 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: festival_app_backend_prod
-    restart: unless-stopped
+    container_name: festival_prod_backend
+    restart: always
     depends_on:
       - db
+    env_file:
+      - ./backend/.env
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION: ${JWT_EXPIRATION:-15m}
-      REFRESH_EXPIRATION: ${REFRESH_EXPIRATION:-7d}
-      FRONTEND_URL: ${FRONTEND_URL:-https://localhost:8080}
     volumes:
-      - ./backend/certs:/app/certs:ro
-    ports:
-      - "4000:4000"
+      - ./certs:/app/certs:ro
+    # Pas de "ports" ici : le backend n'est accessible QUE via Nginx (sécurité)
     networks:
       - app_net
 
@@ -42,26 +38,27 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: festival_app_frontend_prod
-    restart: unless-stopped
+    container_name: festival_prod_frontend
+    restart: always
     depends_on:
       - backend
     ports:
-      - "8080:80"
+      - "80:80"    # HTTP (Redirige vers HTTPS)
+      - "443:443"  # HTTPS
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     networks:
       - app_net
-    volumes:
-      - ./backend/certs:/etc/nginx/certs:ro
 
   # --------------------- Adminer ----------------------
   adminer:
     image: adminer:latest
-    container_name: festival_app_adminer_prod
-    restart: unless-stopped
+    container_name: festival_prod_adminer
+    restart: always
     depends_on:
       - db
     ports:
-      - "8081:8080"
+      - "8080:8080" # Accessible sur http://162.38.111.43:8080
     environment:
       - ADMINER_DEFAULT_SERVER=db
     networks:
@@ -69,7 +66,7 @@ services:
 
 # --------------------- Volumes/Network ----------------
 volumes:
-  db_data:
+  db_data_prod:
 
 networks:
   app_net:

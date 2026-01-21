@@ -8,6 +8,15 @@
   }
 </div>
 
+<div class="search-bar">
+  <input 
+    type="text" 
+    placeholder="Rechercher un éditeur par nom..." 
+    [value]="searchTerm()"
+    (input)="searchTerm.set($any($event.target).value)"
+  >
+</div>
+
 @if (afficherFormulaire()) {
   <div class="form-wrapper">
     <app-editeur-form 
@@ -18,17 +27,15 @@
   </div>
 }
 
-@if (editeurs(); as liste) {
+@if (filteredEditeurs().length > 0) {
   <div class="editors-grid">
-    @for (editeur of liste; track editeur.id) {
-      
+    @for (editeur of filteredEditeurs(); track editeur.id) {
       <app-editeur-component
         [editeur]="editeur"
         [canEdit]="auth.isAdmin()"
         (edit)="onEdit($event)"
         class="editor-card">
       </app-editeur-component>
-
     } @empty {
       <div class="empty-message">
         <p>Aucun éditeur trouvé.</p>

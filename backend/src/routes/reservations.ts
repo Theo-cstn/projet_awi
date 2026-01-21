@@ -121,7 +121,8 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
         const { 
             festival_id, type, editeur_id, autre_nom_reservant,
             nombre_prises, est_present, remise_generale, preferences_tables,
-            lignes // Tableau de { zone_tarifaire_id, type_emplacement, quantite, prix_unitaire }
+            lignes, // Tableau de { zone_tarifaire_id, type_emplacement, quantite, prix_unitaire }
+            jeux // Tableau de { jeu_id, nb_exemplaires, type_table, tables_occupees, zone_plan_id }
         } = req.body;
 
         await client.query('BEGIN');
@@ -136,7 +137,7 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
         );
         const reservationId = resInsert.rows[0].id;
 
-        // B. Insérer les lignes de facture
+        // B. Insérer les lignes de facture (Argent)
         if (lignes && lignes.length > 0) {
             for (const l of lignes) {
                 await client.query(
@@ -147,7 +148,27 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
             }
         }
 
-        // C. Mettre à jour le CRM (Si c'est un éditeur, on le passe en CONFIRME)
+        // C. Insérer les jeux (Contenu)
+        if (jeux && Array.isArray(jeux) && jeux.length > 0) {
+            for (const j of jeux) {
+                // On insère le jeu. Note : zone_plan_id est souvent NULL à la création (car pas encore placé)
+                await client.query(
+                    `INSERT INTO JeuReserve 
+                    (reservation_id, jeu_id, nb_exemplaires, type_table, tables_occupees, zone_plan_id)
+                     VALUES ($1, $2, $3, $4, $5, $6)`,
+                    [
+                        reservationId, 
+                        j.jeu_id, 
+                        j.nb_exemplaires || 1, 
+                        j.type_table || 'PETITE', 
+                        j.tables_occupees || 1,
+                        j.zone_plan_id || null // Optionnel à la création
+                    ]
+                );
+            }
+        }
+
+        // D. Mettre à jour le CRM (Si c'est un éditeur, on le passe en CONFIRME)
         if (type === 'Editeur' && editeur_id) {
             await client.query(
                 `INSERT INTO SuiviEditeur (festival_id, editeur_id, etat) VALUES ($1, $2, 'CONFIRME')
@@ -157,11 +178,11 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
         }
 
         await client.query('COMMIT');
-        res.status(201).json({ message: 'Réservation créée', id: reservationId });
+        res.status(201).json({ message: 'Réservation créée avec succès', id: reservationId });
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error(error);
+        console.error("Erreur création réservation:", error);
         res.status(500).json({ error: 'Erreur création réservation' });
     } finally {
         client.release();

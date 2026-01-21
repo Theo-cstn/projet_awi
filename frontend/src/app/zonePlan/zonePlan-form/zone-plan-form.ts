@@ -20,7 +20,7 @@ export class ZonePlanForm {
   
   readonly form = new FormGroup({
     nom: new FormControl('', {nonNullable: true}),
-    nbTables: new FormControl(0, {nonNullable: true})
+    nbTables: new FormControl(1, {nonNullable: true})
   })
 
   constructor() {

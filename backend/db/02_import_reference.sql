@@ -291,7 +291,7 @@ INSERT INTO Editeur (id, nom) VALUES
 (379, 'Spielwiese'),
 (380, 'Blue Table - Neoludis'),
 (381, 'Pok''In Games'),
-(382, 'Achète ma merde !'),
+(382, 'Achète une carotte !'),
 (383, 'Ludogamie'),
 (384, 'Platypus Game'),
 (385, 'Je suis d''ailleurs'),

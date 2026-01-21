@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { EditeurListService } from '../editeur-service/editeur-list-service';
@@ -44,8 +44,6 @@ export class EditeurList implements OnInit {
     }
   }
 
-  // --- INTERFACE ---
-
   toggleFormulaire(): void {
     this.afficherFormulaire.update(v => !v);
   }
@@ -75,5 +73,16 @@ export class EditeurList implements OnInit {
 
     this.afficherFormulaire.set(false);
     this.editeurEnEdition.set(undefined);
+  }
+
+  searchTerm = signal('');
+
+  filteredEditeurs = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    return this.editeurs()?.filter(e => e.nom.toLowerCase().includes(term)) || [];
+  });
+
+  edit(editeur: EditeurDto): void {
+    // TODO
   }
 }

@@ -11,6 +11,8 @@
         <div class="error">{{ getErrorMessage(form.controls.prenom) }}</div>
     }
 
+    <input type="text" formControlName="fonction" placeholder="Fonction (optionnel)" />
+
     <input type="email" formControlName="email" placeholder="Email du contact" />
     @if (form.controls.email.invalid && submitted) {
         <div class="error">{{ getErrorMessage(form.controls.email) }}</div>

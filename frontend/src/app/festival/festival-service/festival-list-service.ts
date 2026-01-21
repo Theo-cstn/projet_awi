@@ -2,12 +2,13 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Festival } from '../../types/festival-dto';
 import { map, Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 
 @Injectable({ providedIn: 'root' })
 export class FestivalListService {
   private http = inject(HttpClient);
-  private readonly apiUrl = 'https://localhost:4000/api/festivals';
+  private readonly apiUrl = `${environment.apiUrl}/festivals`;
 
   private readonly _festivals = signal<Festival[]>([]); 
   readonly festivals = this._festivals.asReadonly();

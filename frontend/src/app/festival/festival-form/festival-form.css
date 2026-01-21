@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 .form-container {
   background: white;
   border-radius: 8px;
@@ -13,6 +17,8 @@ h2 {
   margin-bottom: 1rem;
   font-size: 1.5rem;
   text-align: center;
+  border-bottom: 3px solid #1976d2;
+  padding-bottom: 1rem;
 }
 
 h3 {
@@ -60,7 +66,7 @@ input[type="number"]:focus {
 
 .empty-message {
   display: block;
-  color: #90a4ae;
+  color: #999;
   font-style: italic;
   margin: 0.75rem 0;
   text-align: center;

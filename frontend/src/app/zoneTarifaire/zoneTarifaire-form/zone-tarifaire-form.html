@@ -17,7 +17,7 @@
             </app-zone-plan-form>
 
             @if (zonesPlan().length > 0){
-                <h4>Zones ajoutées :</h4>
+                <h4>Zones plans ajoutées</h4>
                 @for (zone of zonesPlan(); track zone.id!){
                     <app-zone-plan 
                       [zonePlan]="zone"

@@ -14,14 +14,9 @@
     </h3>
 
     @if (showContacts()) {
-      @for (c of editeur().contacts; track c.id) {
-        <div class="contact">
-          {{ c.nom }} {{ c.prenom }} <br>
-          <small>{{ c.email }}</small>
-        </div>
-      } @empty {
-        <p>Aucun contact</p>
-      }
+      <app-contact-list 
+        [editeurId]="editeur().id">
+      </app-contact-list>
     }
   </div>
 

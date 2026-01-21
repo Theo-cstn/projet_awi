@@ -1,0 +1,23 @@
+.reservation-card {
+  max-width: 900px;
+  margin: 15px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.reservation-card h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.reservation-card p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.reservation-card strong {
+  color: #333;
+}

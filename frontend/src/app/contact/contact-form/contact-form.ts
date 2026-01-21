@@ -27,6 +27,10 @@ export class ContactForm {
       validators: [Validators.required, Validators.minLength(2)]
     }),
 
+    fonction: new FormControl('', {
+      nonNullable: true
+    }),
+
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email]

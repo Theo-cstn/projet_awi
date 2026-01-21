@@ -35,7 +35,6 @@ export class ZoneTarifaireForm {
 
   readonly form = new FormGroup({
     nom: new FormControl('', { nonNullable: true }),
-    nbTotalTables: new FormControl(0),
     prixTable: new FormControl(0),
     prixM: new FormControl(0)
   })
@@ -49,7 +48,6 @@ export class ZoneTarifaireForm {
         // Mode édition : pré-remplir le formulaire
         this.form.patchValue({
           nom: zone.nom,
-          nbTotalTables: zone.nbTotalTables,
           prixTable: zone.prixTable,
           prixM: zone.prixM
         });
@@ -75,6 +73,10 @@ export class ZoneTarifaireForm {
     });
   }
 
+  nbTotalTables = computed(() => {
+    return this.zonesPlan().reduce((total, zone) => total + zone.nbTables, 0);
+  })
+
   onSubmitForm(): void {
     const formValue = this.form.getRawValue();
     const zoneEdit = this.zoneAEditer();
@@ -89,7 +91,7 @@ export class ZoneTarifaireForm {
       const updatedZone: ZoneTarifaire = {
         id: zoneEdit.id!,
         nom: formValue.nom,
-        nbTotalTables: formValue.nbTotalTables || 0,
+        nbTotalTables: this.nbTotalTables(),
         nbTablesLibres: zoneEdit.nbTablesLibres, // Préserver la valeur existante
         prixTable: formValue.prixTable || 0,
         prixM: prixM,
@@ -101,7 +103,7 @@ export class ZoneTarifaireForm {
       // Mode création
       const zoneTarifaire: Omit<ZoneTarifaire, 'id'> = {
         nom: formValue.nom,
-        nbTotalTables: formValue.nbTotalTables || 0,
+        nbTotalTables: this.nbTotalTables(),
         prixTable: formValue.prixTable || 0,
         prixM: prixM,
         zonesPlan: this.zonesPlan()
@@ -113,7 +115,6 @@ export class ZoneTarifaireForm {
     // Réinitialiser le formulaire
     this.form.reset({
       nom: '',
-      nbTotalTables: null,
       prixTable: null,
       prixM: null,
     });
@@ -153,7 +154,6 @@ export class ZoneTarifaireForm {
     // Réinitialiser le formulaire
     this.form.reset({
       nom: '',
-      nbTotalTables: null,
       prixTable: null,
       prixM: null,
     });
