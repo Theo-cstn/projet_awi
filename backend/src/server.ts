@@ -73,23 +73,27 @@ app.use((req, res) => {
 // --- Démarrage Asynchrone ---
 const startServer = async () => {
   try {
-    // 1. On initialise la BDD (Création admin si nécessaire)
-    console.log('Initialisation de la base de données...');
     await ensureDefaultUsers();
-    console.log('Base de données prête.');
 
-    // 2. On lance le serveur HTTPS
+    const isProd = process.env.NODE_ENV === 'production';
+    
+    let key, cert;
     try {
-      const key = fs.readFileSync('./certs/localhost-key.pem');
-      const cert = fs.readFileSync('./certs/localhost.pem');
-      
+      key = fs.readFileSync('./certs/localhost-key.pem');
+      cert = fs.readFileSync('./certs/localhost.pem');
+    } catch (e) {
+      // Certs non trouvés
+    }
+
+    if (!isProd && key && cert) {
+      // MODE LOCAL AVEC HTTPS
       https.createServer({ key, cert }, app).listen(PORT, () => {
-        console.log(`👍 Serveur API démarré sur https://localhost:${PORT}`);
+        console.log(`👍 Serveur API (HTTPS LOCAL) sur https://localhost:${PORT}`);
       });
-    } catch (error) {
-      console.log('⚠️ Certificats HTTPS non trouvés, démarrage en HTTP');
+    } else {
+      // MODE PROD (DOCKER) OU HTTP SIMPLE
       app.listen(PORT, () => {
-        console.log(`👍 Server running on http://localhost:${PORT}`);
+        console.log(`👍 Serveur API (HTTP) démarré sur port ${PORT}`);
       });
     }
 
