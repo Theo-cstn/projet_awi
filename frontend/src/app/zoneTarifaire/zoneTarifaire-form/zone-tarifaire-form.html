@@ -1,1 +1,48 @@
-<p>zone-tarifaire-form works!</p>
+<div style="margin:.5rem 0;">
+    <h3>{{ modeEdition() ? 'Modifier la Zone Tarifaire' : 'Ajouter une Zone Tarifaire' }}</h3>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
+        <input type="text" formControlName="nom" placeholder="Nom de la zone">
+        <input type="number" formControlName="nbTotalTables" placeholder="Nombre total de tables">
+        <input type="number" formControlName="prixTable" placeholder="Prix d'une table (€)">
+        <input type="number" formControlName="prixM" placeholder="Prix au m² (€)">
+
+        <div class="zone-selection">
+            <h3>Zones Plans</h3>
+            <app-zone-plan-form 
+              (add)="onAddZone($event)"
+              (update)="onUpdateZonePlan($event)"
+              (cancel)="onCancelEditZonePlan()"
+              [zonePlanAEditer]="zonePlanEnEdition()">
+            </app-zone-plan-form>
+
+            @if (zonesPlan().length > 0){
+                <h4>Zones plans ajoutées</h4>
+                @for (zone of zonesPlan(); track zone.id!){
+                    <app-zone-plan 
+                      [zonePlan]="zone"
+                      [canEdit]="true"
+                      [canDelete]="true"
+                      (edit)="onEditZonePlan($event)"
+                      (remove)="onRemoveZone($event)">
+                    </app-zone-plan>
+                }
+            }
+            @else if (zonesPlan().length === 0){
+                <em class="empty-message">Aucune zone plan ajoutée</em>
+            }
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit" [disabled]="form.invalid || zonesPlan().length === 0">
+            {{ modeEdition() ? 'Valider la modification' : 'Ajouter la Zone' }}
+          </button>
+          
+          @if (modeEdition()) {
+            <button type="button" class="btn-cancel" (click)="onCancel()">
+              Annuler
+            </button>
+          }
+        </div>
+    </form>
+</div>

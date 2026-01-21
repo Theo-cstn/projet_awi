@@ -1,1 +1,31 @@
-<p>editeur-component works!</p>
+<div class="card">
+  <h2>{{ editeur().nom }}</h2>
+  
+  @if (canEdit()) {
+    <button class="btn-edit" (click)="onEdit()">Éditer</button>
+  }
+
+  <div class="contacts">
+    <h3>
+      Contacts
+      <button (click)="toggleContacts($event)">
+        {{ showContacts() ? '▲' : '▼' }}
+      </button>
+    </h3>
+
+    @if (showContacts()) {
+      <app-contact-list 
+        [editeurId]="editeur().id">
+      </app-contact-list>
+    }
+  </div>
+
+  <div class="links">
+    <a [routerLink]="['/editeurs', editeur().id, 'jeux']" (click)="$event.stopPropagation()">
+      Voir les jeux
+    </a>
+    <a [routerLink]="['/editeurs', editeur().id, 'contacts']" (click)="$event.stopPropagation()">
+      Gérer les contacts
+    </a>
+  </div>
+</div>

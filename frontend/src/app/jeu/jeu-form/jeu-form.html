@@ -1,1 +1,53 @@
-<p>jeu-form works!</p>
+<form [formGroup]="form">
+  <h2>{{ jeuAEditer() ? 'Modifier le jeu' : 'Ajouter un jeu' }}</h2>
+
+  <input type="text" formControlName="nom" placeholder="Nom du jeu" />
+  @if (form.controls.nom.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.nom) }}</div>
+  }
+
+  <input type="number" formControlName="ageMin" placeholder="Âge minimum" />
+  @if (form.controls.ageMin.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.ageMin) }}</div>
+  }
+
+  <input type="number" formControlName="ageMax" placeholder="Âge maximum" />
+  @if (form.controls.ageMax.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.ageMax) }}</div>
+  }
+
+  <!-- Traitement automatique ou non du champs editeur -->
+  @if (editeurPreSelected()) {
+    <label>Editeur: </label>
+    <input type="text" [value]="getNomEditeur()" readonly />
+  }
+  @else {
+    <select formControlName="editeur">
+      <option [value]="undefined">Selectionner un editeur</option>
+      @for (editeur of editeurs(); track editeur.id){
+        <option [value]="editeur.id">{{ editeur.nom }}</option>
+      }
+    </select>
+  }
+  @if (form.controls.editeur.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.editeur) }}</div>
+  }
+
+  <select formControlName="type">
+  <option value="">Sélectionner un type</option>
+  @for (type of typesJeu; track type) {
+    <option [value]="type">{{ type }}</option>
+  }
+</select>
+  @if (form.controls.type.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.type) }}</div>
+  }
+
+  <select formControlName="taille">
+    <option value="">Taille du jeu</option>
+    <option value="petit">Petit</option>
+    <option value="grand">Grand</option>
+  </select>
+
+  <button type="button" (click)="onSubmit()">{{ jeuAEditer() ? 'Modifier' : 'Enregistrer' }}</button>
+</form>

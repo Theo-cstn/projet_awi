@@ -1,0 +1,79 @@
+<div class="container">
+  <h2>Administration des Utilisateurs</h2>
+
+  @if (pendingUsers().length > 0) {
+    <div class="pending-section">
+      <div class="pending-header">
+        <h3>⚠️ En attente de validation ({{ pendingUsers().length }})</h3>
+        <p>Ces utilisateurs ont créé un compte mais n'ont pas encore de rôle assigné.</p>
+      </div>
+      
+      <table class="table-pending">
+        <thead>
+          <tr>
+            <th>Login</th>
+            <th>Action requise</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of pendingUsers(); track user.id) {
+            <tr>
+              <td><strong>{{ user.login }}</strong></td>
+              <td class="actions-cell">
+                <select #roleSelect (change)="updateRole(user, roleSelect.value, roleSelect)" class="role-select">
+                  <option value="" disabled selected>Choisir un rôle...</option>
+                  @for (r of roles; track r) {
+                    <option [value]="r">{{ r }}</option>
+                  }
+                </select>
+                <button class="btn-refuse" (click)="deleteUser(user)">Refuser</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <div class="active-section">
+    <h3>Utilisateurs Actifs ({{ activeUsers().length }})</h3>
+    <table class="table-active">
+      <thead>
+        <tr>
+          <th>Login</th>
+          <th>Rôle actuel</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of activeUsers(); track user.id) {
+          <tr>
+            <td>{{ user.login }}</td>
+            <td>
+              <select 
+                #activeSelect
+                [value]="user.role" 
+                (change)="updateRole(user, activeSelect.value, activeSelect)" 
+                class="role-select-active"
+                [disabled]="user.id === auth.currentUser()?.id">
+                @for (r of roles; track r) {
+                    <option [value]="r" [selected]="r === user.role">{{ r }}</option>
+                }
+              </select>
+            </td>
+            <td>
+              <button 
+                class="btn-delete-icon" 
+                (click)="deleteUser(user)" 
+                title="Supprimer le compte"
+                [disabled]="user.id === auth.currentUser()?.id"
+                [style.opacity]="user.id === auth.currentUser()?.id ? '0.3' : '1'">
+                🗑️
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

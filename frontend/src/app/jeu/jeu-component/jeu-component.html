@@ -1,1 +1,43 @@
-<p>jeu-component works!</p>
+<div class="card">
+    <h2>{{ this.jeu().nom }}</h2>
+
+    <div class="info">
+        <p>
+            <strong>Type :</strong> {{ this.jeu().typeG }}<br>
+            
+            <strong>Âge minimum :</strong> 
+            @if (jeu().age_min !== undefined) {
+                {{ jeu().age_min }} ans
+            } @else {
+                À compléter
+            }
+            <br>
+            
+            <strong>Âge maximum :</strong> 
+            @if (jeu().age_max !== undefined) {
+                {{ jeu().age_max }} ans
+            } @else {
+                À compléter
+            }
+            <br>
+            
+            @if (jeu().editeur) {
+                <strong>Éditeur :</strong> {{ jeu().editeur!.nom }}<br>
+            }    
+                    
+            @if (jeu().auteurs && jeu().auteurs!.length > 0) {
+                <strong>Auteurs :</strong>
+                @for (auteur of jeu().auteurs; track auteur.id) {
+                    {{ auteur.prenom }} {{ auteur.nom }}
+                    @if (!$last) { , }
+                }
+                <br>
+            }
+            
+        </p>
+    </div>
+
+    @if (canEdit()) {
+        <button class="btn-edit" (click)="onEdit()">Éditer</button>
+    }
+</div>

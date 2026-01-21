@@ -1,1 +1,13 @@
-<p>editeur-form works!</p>
+<form [formGroup]="form">
+  <h3>{{ editeurAEditer() ? 'Modifier l\'éditeur' : 'Ajouter un éditeur' }}</h3>
+
+  <input type="text" formControlName="nom" placeholder="Nom" />
+
+  @if (form.controls.nom.invalid && submitted) {
+    <div class="error">{{ getErrorMessage(form.controls.nom) }}</div>
+  }
+
+  <button type="button" (click)="onSubmit()">
+    {{ editeurAEditer() ? 'Modifier' : 'Enregistrer' }}
+  </button>
+</form>

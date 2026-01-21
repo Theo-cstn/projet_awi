@@ -1,0 +1,24 @@
+<button (click)="toggleFormulaire()">
+    {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un contact' }}
+</button>
+
+@if (afficherFormulaire()) {
+    <app-contact-form
+        [editeurId]="editeurId()"
+        [contactAEditer]="contactEnEdition()"
+        (add)="onAdd($event)"
+        (update)="onUpdate($event)">
+    </app-contact-form>
+}
+
+@if (contacts().length > 0) {
+    @for (contact of contacts(); track contact.id) {
+        <app-contact-component
+            [contact]="contact"
+            [canEdit]="true"
+            (edit)="onEdit($event)">
+        </app-contact-component>
+    }
+} @else {
+    <p>Aucun contact</p>
+}

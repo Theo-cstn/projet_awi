@@ -1,1 +1,68 @@
-<p>festival-form works!</p>
+<div class="form-container">
+  <h2>{{ festivalAEditer() ? 'Modifier le festival' : 'Ajouter un Festival' }}</h2>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
+
+    <!-- SECTION 1: INFOS GÉNÉRALE -->
+    <section>
+      <h3>Informations Générales</h3>
+
+      <label for="nom">Nom du festival</label>
+      <input type="text" id="nom" formControlName="nom" placeholder="nom du festival">
+
+      <label>Dates du festival</label>
+      <div class="date-group">
+        <label for="date_debut">Du :</label>
+        <input type="date" id="date_debut" formControlName="date_debut">
+        <label for="date_fin">Au :</label>
+        <input type="date" id="date_fin" formControlName="date_fin">
+      </div>
+    </section>
+
+    <br>
+    <!-- SECTION 2: TABLES DISPONIBLES -->
+    <section>
+      <h3>Tables Disponibles</h3>
+
+      <label for="nbTablesPetites">Nombre de petites tables</label>
+      <input type="number" id="nbTablesPetites" formControlName="nbTablesPetites" min="0">
+
+      <label for="nbTablesGrandes">Nombre de grandes tables</label>
+      <input type="number" id="nbTablesGrandes" formControlName="nbTablesGrandes" min="0">
+
+      <label for="nbTablesMairie">Nombre de tables mairie</label>
+      <input type="number" id="nbTablesMairie" formControlName="nbTablesMairie" min="0">
+    </section>
+
+    <!-- SECTION 3: ZONES TARIFAIRES -->
+    <div class="zones-section">
+      <h3>Zones Tarifaires</h3>
+      <app-zone-tarifaire-form
+        [zoneAEditer]="zoneEnEdition()"
+        (add)="onAddZone($event)"
+        (update)="onUpdateZone($event)"
+        (cancel)="zoneEnEdition.set(undefined)">
+      </app-zone-tarifaire-form>
+
+      @if (zonesTarifaires().length > 0){
+        <h4>✅ Zones ajoutées</h4>
+        @for (zone of zonesTarifaires(); track zone.id!){
+          <app-zone-tarifaire-component
+            [zoneT]="zone"
+            [canEdit]="true"
+            [canDelete]="true"
+            (edit)="onEditZone($event)"
+            (remove)="onRemoveZone($event)">
+          </app-zone-tarifaire-component>
+        }
+      }
+      @else if (zonesTarifaires().length === 0){
+        <em class="empty-message">❌ Aucune zone tarifaire ajoutée pour le moment</em>
+      }
+    </div>
+
+    <button type="submit" [disabled]="form.invalid || zonesTarifaires().length === 0" class="btn-submit">
+      {{ festivalAEditer() ? 'Modifier le Festival' : 'Ajouter le Festival' }}
+    </button>
+  </form>
+</div>

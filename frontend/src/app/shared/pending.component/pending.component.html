@@ -1,0 +1,17 @@
+<div class="pending-container">
+  <div class="card">
+    <h1>⏳ Compte en attente</h1>
+    
+    <p>Bonjour <strong>{{ auth.currentUser()?.login }}</strong>,</p>
+    
+    <p>
+      Votre inscription a bien été prise en compte. <br>
+      Un administrateur doit valider votre compte avant que vous puissiez accéder à l'application.
+    </p>
+
+    <div class="actions">
+      <button class="btn-refresh" (click)="refresh()">Je suis validé ! (Rafraîchir)</button>
+      <button class="btn-logout" (click)="logout()">Se déconnecter</button>
+    </div>
+  </div>
+</div>

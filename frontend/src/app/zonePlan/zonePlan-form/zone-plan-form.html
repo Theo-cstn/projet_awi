@@ -1,0 +1,16 @@
+<div style="margin:.5rem 0;">
+    <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
+        <input type="text" formControlName="nom" placeholder="Nom de la zone">
+        <input type="number" formControlName="nbTables" placeholder="Nombre de tables">
+
+        <button type="submit" [disabled]="form.invalid">
+          {{ modeEdition() ? 'Valider' : 'Ajouter' }}
+        </button>
+
+        @if (modeEdition()) {
+          <button type="button" class="btn-cancel" (click)="onCancel()">
+            Annuler
+          </button>
+        }
+    </form>
+</div>

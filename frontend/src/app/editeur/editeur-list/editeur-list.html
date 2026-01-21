@@ -1,1 +1,47 @@
-<p>editeur-list works!</p>
+<div class="page-header">
+  <h1>Liste des Éditeurs</h1>
+
+  @if (!isFestivalMode() && (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux')) {
+    <button (click)="toggleFormulaire()" class="btn-action">
+      {{ afficherFormulaire() ? 'Annuler' : '+ Nouvel Éditeur' }}
+    </button>
+  }
+</div>
+
+<div class="search-bar">
+  <input 
+    type="text" 
+    placeholder="Rechercher un éditeur par nom..." 
+    [value]="searchTerm()"
+    (input)="searchTerm.set($any($event.target).value)"
+  >
+</div>
+
+@if (afficherFormulaire()) {
+  <div class="form-wrapper">
+    <app-editeur-form 
+      [editeurAEditer]="editeurEnEdition()"
+      (add)="onAdd($event)"
+      (update)="onUpdate($event)">
+    </app-editeur-form>
+  </div>
+}
+
+@if (filteredEditeurs().length > 0) {
+  <div class="editors-grid">
+    @for (editeur of filteredEditeurs(); track editeur.id) {
+      <app-editeur-component
+        [editeur]="editeur"
+        [canEdit]="auth.isAdmin()"
+        (edit)="onEdit($event)"
+        class="editor-card">
+      </app-editeur-component>
+    } @empty {
+      <div class="empty-message">
+        <p>Aucun éditeur trouvé.</p>
+      </div>
+    }
+  </div>
+} @else {
+  <p class="loading">Chargement des éditeurs...</p>
+}

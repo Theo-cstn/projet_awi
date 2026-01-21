@@ -1,0 +1,57 @@
+.pending-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 500px;
+  width: 100%; /* Pour éviter d'être trop petit sur mobile */
+}
+
+h1 {
+  color: #d97706; /* Amber-600 */
+  margin-bottom: 1rem;
+}
+
+p {
+  margin-bottom: 1.5rem;
+  color: #4b5563; /* Gray-600 */
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.btn-refresh {
+  background-color: #2563eb; /* Blue-600 */
+  color: white;
+}
+
+.btn-logout {
+  background-color: #dc2626; /* Red-600 */
+  color: white;
+}

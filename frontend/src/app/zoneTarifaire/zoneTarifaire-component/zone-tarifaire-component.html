@@ -1,1 +1,41 @@
-<p>zone-tarifaire-component works!</p>
+<div class="zone-card">
+  <div class="zone-header">
+    <h3>{{ zoneT()!.nom }}</h3>
+    
+    @if (canEdit() || canDelete()) {
+      <div class="zone-actions">
+        @if (canEdit()) {
+          <button type="button" class="btn-edit-zone" (click)="onEdit()">✏️</button>
+        }
+        @if (canDelete()) {
+          <button type="button" class="btn-delete-zone" (click)="onRemove()">🗑️</button>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="zone-detail">
+    <p><strong>Nombre total de tables :</strong> {{ zoneT()!.nbTotalTables }}</p>
+  </div>
+
+  <div class="zone-detail">
+    <p><strong>Nombre de tables restantes libres :</strong> {{ zoneT()!.nbTablesLibres }}</p>
+  </div>
+
+  <div class="zone-detail">
+    <p><strong>Prix d'une table :</strong> {{ zoneT()!.prixTable | currency:'EUR' }}</p>
+  </div>
+
+  <div class="zone-detail">
+    <p><strong>Prix au m² :</strong> {{ zoneT()!.prixM | currency:'EUR' }}</p>
+  </div>
+
+  <div class="zones-plan">
+    <h4>Zones plan :</h4>
+    @for (zone of zoneT()!.zonesPlan; track zone.id!) {
+      <app-zone-plan
+        [zonePlan]="zone">
+      </app-zone-plan>
+    }
+  </div>
+</div>

@@ -1,0 +1,83 @@
+import { Router } from 'express'
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
+import pool from '../db/database.js'
+import { verifyToken, createAccessToken, createRefreshToken } from '../middleware/token-management.js'
+import { JWT_SECRET } from '../config/env.js'
+import type { TokenPayload } from '../types/token-payload.js'
+
+const router = Router()
+
+router.post('/login', async (req, res) => {
+  const { login, password } = req.body
+  if (!login || !password)
+    return res.status(400).json({ error: 'Identifiants manquants' })
+  const { rows } = await pool.query('SELECT * FROM users WHERE login=$1', [login])
+  const user = rows[0]
+  if (!user) return res.status(401).json({ error: 'Utilisateur inconnu' })
+  const match = await bcrypt.compare(password, user.password_hash)
+  if (!match) return res.status(401).json({ error: 'Mot de passe incorrect' })
+  const accessToken = createAccessToken({ id: user.id, role: user.role })
+  const refreshToken = createRefreshToken({ id: user.id, role: user.role })
+  res.cookie('access_token', accessToken, {
+    httpOnly: true, secure: true, sameSite: 'strict', maxAge: 15 * 60 * 1000,
+  })
+  res.cookie('refresh_token', refreshToken, {
+    httpOnly: true, secure: true, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000,
+  })
+  res.json({ message: 'Authentification réussie', user: { id: user.id, login: user.login, role: user.role } })
+})
+
+router.post('/logout', (_req, res) => {
+  res.clearCookie('access_token')
+  res.clearCookie('refresh_token')
+  res.json({ message: 'Déconnexion réussie' })
+})
+
+router.post('/register', async (req, res) => {
+  const { login, password } = req.body
+  if (!login || !password)
+    return res.status(400).json({ error: 'Champs manquants' })
+  const hashed = await bcrypt.hash(password, 10)
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO users (login, password_hash, role)
+       VALUES ($1, $2, 'no-role')
+       RETURNING id, login, role`,
+      [login, hashed]
+    )
+    res.status(201).json({ message: 'Utilisateur créé', user: rows[0] })
+  } catch (err: any) {
+    if (err.code === '23505')
+      return res.status(409).json({ error: 'Login déjà utilisé' })
+    console.error(err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+router.post('/refresh', (req, res) => {
+  const refresh = req.cookies?.refresh_token
+  if (!refresh) return res.status(401).json({ error: 'Refresh token manquant' })
+  try {
+    const decoded = jwt.verify(refresh, JWT_SECRET) as TokenPayload
+    const newAccess = createAccessToken({ id: decoded.id, role: decoded.role })
+    res.cookie('access_token', newAccess, {
+      httpOnly: true, secure: true, sameSite: 'strict', maxAge: 15 * 60 * 1000,
+    })
+    return res.json({ message: 'Token renouvelé' })
+  } catch {
+    return res.status(403).json({ error: 'Refresh token invalide ou expiré' })
+  }
+})
+
+router.get('/whoami', verifyToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id, login, role FROM users WHERE id = $1', [req.user!.id])
+    const user = rows[0] ?? null
+    res.json({ user })
+  } catch (e) {
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+export default router
