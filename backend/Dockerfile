@@ -30,14 +30,15 @@ COPY --from=build /usr/src/app/dist ./dist
 # Copy package.json (for meta)
 COPY package*.json ./
 
+RUN rm -f .env
+
 # Copy certs volume
 VOLUME ["/app/certs"]
-
-RUN rm -f .env
 
 # Use non-root
 USER appuser
 
 ENV NODE_ENV=production
+ENV DOTENV_CONFIG_QUIET=true
 EXPOSE 4000
 CMD ["node", "dist/server.js"]
