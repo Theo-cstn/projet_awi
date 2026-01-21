@@ -10,12 +10,12 @@ import { ZonePlan } from '../../types/zone-plan-dto';
   styleUrl: './zone-plan-form.css',
 })
 export class ZonePlanForm {
-  readonly newZonePlan = signal<Omit<ZonePlan, 'id'>>({nom: '', nbTables: 0})
+  readonly newZonePlan = signal<Omit<ZonePlan, 'id'>>({nom: '', nbTables: 1})
 
   add = output< Omit<ZonePlan, 'id'> >();
   readonly form = new FormGroup({
     nom: new FormControl('', {nonNullable: true}),
-    nbTables: new FormControl(0, {nonNullable: true})
+    nbTables: new FormControl(1, {nonNullable: true})
   })
 
   onSubmitForm(): void {

@@ -2,37 +2,64 @@
   <h2>Ajouter un Festival</h2>
   
   <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
-      <input type="text" id="nom" formControlName="nom" placeholder="Nom du festival">
+    
+    <!-- SECTION 1: INFOS GÉNÉRALE -->
+    <section>
+      <h3>Informations Générales</h3>
+      
+      <label for="nom">Nom du festival</label>
+      <input type="text" id="nom" formControlName="nom" placeholder="nom du festival">
+      
+      <label>Dates du festival</label>
       <div class="date-group">
-          <label>Du :</label>
-          <input type="date" id="date_debut" formControlName="date_debut">
-          <label>Au :</label>
-          <input type="date" id="date_fin" formControlName="date_fin">
+        <label for="date_debut">Du :</label>
+        <input type="date" id="date_debut" formControlName="date_debut">
+        <label for="date_fin">Au :</label>
+        <input type="date" id="date_fin" formControlName="date_fin">
       </div>
-      <input type="number" id="nbTablesPetites" formControlName="nbTablesPetites" min="0">
-      <input type="number" id="nbTablesGrandes" formControlName="nbTablesGrandes" min="0">
-      <input type="number" id="nbTablesMairie" formControlName="nbTablesMairie" min="0">
+    </section>
 
+    <br>
+    <!-- SECTION 2: TABLES DISPONIBLES -->
+    <section>
+      <h3>Tables Disponibles</h3>
+      
+      <label for="nbTablesPetites">Nombre de petites tables</label>
+      <input type="number" id="nbTablesPetites" formControlName="nbTablesPetites" min="0">
+      
+      <label for="nbTablesGrandes">Nombre de grandes tables</label>
+      <input type="number" id="nbTablesGrandes" formControlName="nbTablesGrandes" min="0">
+      
+      <label for="nbTablesMairie">Nombre de tables mairie</label>
+      <input type="number" id="nbTablesMairie" formControlName="nbTablesMairie" min="0">
+    </section>
+
+    <!-- SECTION 3: ZONES TARIFAIRES -->
     <div class="zones-section">
-      <h3>Zones Tarifaires</h3>
+      <h3> Zones Tarifaires</h3>
+      
       <app-zone-tarifaire-form (add)="onAddZone($event)"></app-zone-tarifaire-form>
 
       @if (zonesTarifaires().length > 0){
-        <h4>Zones ajoutées :</h4>
+        <h4>✅ Zones ajoutées</h4>
         @for (zone of zonesTarifaires(); track zone.id!){
           <div class="zones-item">
-            <span>{{ zone.nom }} - {{ zone.nbTotalTables }} tables - {{ zone.prixTable }}€/table - {{ zone.prixM }}€/m²</span>
-            <button type="button" (click)="onRemoveZone(zone.id!)">Supprimer</button>
+            <div>
+              <strong>{{ zone.nom }}</strong>
+              <br>
+              <small>{{ zone.nbTotalTables }} tables • {{ zone.prixTable }}€/table • {{ zone.prixM }}€/m²</small>
+            </div>
+            <button type="button" class="danger" (click)="onRemoveZone(zone.id!)">🗑️ Supprimer</button>
           </div>
         }
       }
       @else if (zonesTarifaires().length === 0){
-        <em class="empty-message">Aucune zone tarifaire ajoutée</em>
+        <em class="empty-message">❌ Aucune zone tarifaire ajoutée pour le moment</em>
       }
+    </div>
 
-    <button type="submit" [disabled]="form.invalid || zonesTarifaires().length === 0" class="btn-submit">
+    <button type="submit" [disabled]="form.invalid || zonesTarifaires().length === 0" class="btn-submit primary">
       Ajouter le Festival
     </button>
-    </div>
   </form>
 </div>

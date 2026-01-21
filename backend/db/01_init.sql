@@ -155,7 +155,7 @@ CREATE TABLE LigneReservation (
     quantite INT NOT NULL, 
     
     -- Prix figé (permet de faire des remises ligne par ligne si besoin en mettant 0)
-    prix_unitaire_applique DECIMAL(10, 2) NOT NULL 
+    prix_unitaire_applique DECIMAL(10, 2) 
 );
 
 -- TABLE D : JeuReserve (Step 2 & 3 - L'INSTALLATION)
@@ -164,15 +164,13 @@ CREATE TABLE JeuReserve (
     reservation_id INT NOT NULL REFERENCES Reservation(id) ON DELETE CASCADE,
     jeu_id INT NOT NULL REFERENCES Jeu(id),
     
-    -- Placement physique (Step 3)
-    zone_plan_id INT REFERENCES ZonePlan(id),
-    
-    -- Type de table souhaité (Info pour les bénévoles qui installent)
-    type_table taille_table DEFAULT 'PETITE', 
-    
     -- Consommation d'espace (1 = Une table entière, 0.5 = Partage)
     tables_occupees DECIMAL(3, 1) DEFAULT 1.0,
-    
     nb_exemplaires INT DEFAULT 1,
+
+    -- Placement physique (Step 3)
+    zone_plan_id INT REFERENCES ZonePlan(id),
+    -- Type de table souhaité (Info pour les bénévoles qui installent)
+    type_table taille_table DEFAULT 'PETITE', 
     est_recu BOOLEAN DEFAULT false
 );

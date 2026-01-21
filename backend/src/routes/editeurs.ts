@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireVisiteur, requireAdmin } from '../middleware/roles.js';
+import { requireVisiteur, requireAdmin, requireOrganisateurReservations } from '../middleware/roles.js';
 import pool from '../db/database.js';
 
 const router = Router();
@@ -7,6 +7,40 @@ const router = Router();
 // ==============================================================================
 // 1. LECTURE PUBLIQUE (Visiteurs+)
 // ==============================================================================
+
+
+// GET /editeurs/:id/jeux - Récupère tous les jeux d'un éditeur spécifique
+router.get('/:id/jeux', requireVisiteur(), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const query = `
+      SELECT j.id, j.nom, j.typeg, j.age_min, j.age_max, j.editeur_id,
+             json_build_object(
+               'id', e.id,
+               'nom', e.nom
+             ) AS editeur,
+             COALESCE(json_agg(
+               json_build_object(
+                 'id', p.id,
+                 'nom', p.nom,
+                 'prenom', p.prenom
+               ) ORDER BY p.nom ASC
+             ) FILTER (WHERE p.id IS NOT NULL), '[]') AS auteurs
+      FROM Jeu j
+      LEFT JOIN Editeur e ON j.editeur_id = e.id
+      LEFT JOIN Auteurs_Jeux aj ON j.id = aj.jeu_id
+      LEFT JOIN Personne p ON aj.auteur_id = p.id
+      WHERE j.editeur_id = $1
+      GROUP BY j.id, e.id, e.nom
+      ORDER BY j.nom ASC
+    `;
+    const result = await pool.query(query, [id]);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error fetching editor games:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 
 // GET /editeurs - Liste tous les éditeurs (Triés par nom)
 router.get('/', requireVisiteur(), async (_req, res) => {
@@ -70,6 +104,8 @@ router.get('/:id/contacts', requireVisiteur(), async (req, res) => {
   }
 });
 
+
+
 // ==============================================================================
 // 2. ÉCRITURE ÉDITEUR (Admin Uniquement)
 // ==============================================================================
@@ -131,11 +167,11 @@ router.delete('/:id', requireAdmin(), async (req, res) => {
 });
 
 // ==============================================================================
-// 3. GESTION DES CONTACTS (Admin Uniquement - Modification de l'éditeur)
+// 3. GESTION DES CONTACTS (Organisateurs Réservations + Admin)
 // ==============================================================================
 
 // POST /editeurs/:id/contacts - AJOUTER UN CONTACT (Upsert Intelligent)
-router.post('/:id/contacts', requireAdmin(), async (req, res) => {
+router.post('/:id/contacts', requireOrganisateurReservations(), async (req, res) => {
   const editeurId = req.params.id;
   const { nom, prenom, email, fonction, est_contact_principal } = req.body;
 
@@ -187,7 +223,7 @@ router.post('/:id/contacts', requireAdmin(), async (req, res) => {
 });
 
 // DELETE /editeurs/:id/contacts/:contactId - Supprimer un contact (Smart Delete)
-router.delete('/:id/contacts/:contactId', requireAdmin(), async (req, res) => {
+router.delete('/:id/contacts/:contactId', requireOrganisateurReservations(), async (req, res) => {
   const { id, contactId } = req.params;
   const client = await pool.connect();
 

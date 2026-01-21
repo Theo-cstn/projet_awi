@@ -1,11 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
 import { PersonneDto } from '../../types/personne-dto';
 import { ContactComponent } from '../contact-component/contact-component';
 import { ContactForm } from '../contact-form/contact-form';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { ContactService } from '../contact-service/contact-service';
 
 @Component({
   selector: 'app-contact-list',
@@ -15,16 +14,11 @@ import { map } from 'rxjs';
 })
 export class ContactList {
   readonly editeurService = inject(EditeurListService)
+  readonly contactService = inject(ContactService)
   readonly route = inject(ActivatedRoute)
   readonly router = inject(Router)
 
-  editeurId = toSignal(this.route.paramMap.pipe(
-      map(params => {
-        const id = params.get('id');
-        return id ? Number(id) : undefined;
-      })
-    )
-  );
+  editeurId = input<number | undefined>(undefined)
 
   editeur = computed(() => {
     const id = this.editeurId()
@@ -38,7 +32,7 @@ export class ContactList {
   })
 
   onAdd(formData: any): void {
-    const editeurId = this.editeurId() // CORRECTION : appel de la fonction
+    const editeurId = this.editeurId()
     
     if (editeurId) {
       const newContact: PersonneDto = {
@@ -46,8 +40,9 @@ export class ContactList {
         nom: formData.nom,
         prenom: formData.prenom,
         email: formData.email,
+        poste: formData.poste
       }
-      this.editeurService.addContact(editeurId, newContact)
+      this.contactService.addContact(editeurId, newContact)
       this.afficherFormulaire.set(false)
     }
   }
