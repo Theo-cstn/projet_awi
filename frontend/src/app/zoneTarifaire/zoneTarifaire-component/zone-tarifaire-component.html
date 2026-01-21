@@ -1,5 +1,18 @@
 <div class="zone-card">
-  <h3>{{ zoneT()!.nom }}</h3>
+  <div class="zone-header">
+    <h3>{{ zoneT()!.nom }}</h3>
+    
+    @if (canEdit() || canDelete()) {
+      <div class="zone-actions">
+        @if (canEdit()) {
+          <button type="button" class="btn-edit-zone" (click)="onEdit()">✏️</button>
+        }
+        @if (canDelete()) {
+          <button type="button" class="btn-delete-zone" (click)="onRemove()">🗑️</button>
+        }
+      </div>
+    }
+  </div>
 
   <div class="zone-detail">
     <p><strong>Nombre total de tables :</strong> {{ zoneT()!.nbTotalTables }}</p>
@@ -20,9 +33,9 @@
   <div class="zones-plan">
     <h4>Zones plan :</h4>
     @for (zone of zoneT()!.zonesPlan; track zone.id!) {
-      <app-zone-plan-component
-        [zoneP]="zone">
-      </app-zone-plan-component>
+      <app-zone-plan
+        [zonePlan]="zone">
+      </app-zone-plan>
     }
   </div>
 </div>

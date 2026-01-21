@@ -281,27 +281,109 @@ router.post('/', requireAdmin(), async (req, res) => {
 
 // ÉCRITURE : Modification -> ADMIN SEULEMENT
 router.put('/:id', requireAdmin(), async (req, res) => {
-    const { id } = req.params;
-    const { nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie } = req.body;
-    try {
-      const query = `
-        UPDATE Festival 
-        SET nom = $1, date_debut = $2, date_fin = $3, 
-            stock_tables_petites = $4, stock_tables_grandes = $5, stock_tables_mairie = $6
-        WHERE id = $7
-        RETURNING *
-      `;
-      const result = await pool.query(query, [nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie, id]);
-      
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Festival non trouvé' });
-      }
-      
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Erreur serveur' });
+  const { id } = req.params;
+  const { 
+    nom, 
+    date_debut, 
+    date_fin, 
+    stock_tables_petites, 
+    stock_tables_grandes, 
+    stock_tables_mairie,
+    zonesTarifaires 
+  } = req.body;
+  
+  const client = await pool.connect();
+  
+  try {
+    // Démarrage de la Transaction
+    await client.query('BEGIN');
+
+    // 1. Mise à jour du Festival
+    const festivalQuery = `
+      UPDATE Festival 
+      SET nom = $1, date_debut = $2, date_fin = $3, 
+          stock_tables_petites = $4, stock_tables_grandes = $5, stock_tables_mairie = $6
+      WHERE id = $7
+      RETURNING *
+    `;
+    const festivalResult = await client.query(festivalQuery, [
+      nom, 
+      date_debut, 
+      date_fin, 
+      stock_tables_petites, 
+      stock_tables_grandes, 
+      stock_tables_mairie, 
+      id
+    ]);
+    
+    if (festivalResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Festival non trouvé' });
     }
+
+    // 2. Gestion des Zones Tarifaires (si présentes dans la requête)
+    if (zonesTarifaires && Array.isArray(zonesTarifaires)) {
+      // Supprimer d'abord les ZonePlan liées aux ZoneTarifaire du festival
+      await client.query(`
+        DELETE FROM ZonePlan 
+        WHERE zone_tarifaire_id IN (
+          SELECT id FROM ZoneTarifaire WHERE festival_id = $1
+        )
+      `, [id]);
+      
+      // Puis supprimer les ZoneTarifaire du festival
+      await client.query('DELETE FROM ZoneTarifaire WHERE festival_id = $1', [id]);
+      
+      // Insérer les nouvelles zones
+      for (const zone of zonesTarifaires) {
+        const zoneQuery = `
+          INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2) 
+          VALUES ($1, $2, $3, $4) 
+          RETURNING id
+        `;
+        const zoneRes = await client.query(zoneQuery, [
+          id, 
+          zone.nom, 
+          zone.prixTable, 
+          zone.prixM
+        ]);
+        
+        const zoneId = zoneRes.rows[0].id;
+
+        // Insérer les ZonePlan si présentes
+        if (zone.zonesPlan && Array.isArray(zone.zonesPlan)) {
+          for (const plan of zone.zonesPlan) {
+            const planQuery = `
+              INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables)
+              VALUES ($1, $2, $3)
+            `;
+            await client.query(planQuery, [
+              zoneId, 
+              plan.nom, 
+              plan.nbTables
+            ]);
+          }
+        }
+      }
+    }
+
+    // Validation finale (Commit)
+    await client.query('COMMIT');
+    
+    res.json({ 
+      message: "Festival mis à jour avec succès", 
+      festival: festivalResult.rows[0] 
+    });
+
+  } catch (error) {
+    // En cas d'erreur, on annule TOUT (Rollback)
+    await client.query('ROLLBACK');
+    console.error("Erreur mise à jour festival :", error);
+    res.status(500).json({ error: 'Erreur serveur lors de la mise à jour du festival' });
+  } finally {
+    // Libération du client DB
+    client.release();
+  }
 });
 
 // ==============================================================================

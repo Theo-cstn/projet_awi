@@ -18,7 +18,16 @@ export class FestivalComponent {
   
   select = output<Festival>();
 
+  // Pour l'édition
+  canEdit = input<boolean>(false);
+  edit = output<Festival>();
+
   onSelect() {
     this.select.emit(this.festival());
+  }
+
+  onEdit(event: Event) {
+    event.stopPropagation(); // Empêche le clic de remonter à la carte parente
+    this.edit.emit(this.festival());
   }
 }

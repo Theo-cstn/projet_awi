@@ -1,6 +1,10 @@
 <div class="festival-card">
   <h2>{{ festival()!.nom }}</h2>
 
+  @if (canEdit()) {
+    <button class="btn-edit" (click)="onEdit($event)">Éditer</button>
+  }
+
   <div class="festival-detail">
     <p>
       <strong>Dates :</strong> 

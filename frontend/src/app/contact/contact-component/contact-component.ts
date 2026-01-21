@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { PersonneDto } from '../../types/personne-dto';
 
 @Component({
@@ -8,5 +8,13 @@ import { PersonneDto } from '../../types/personne-dto';
   styleUrl: './contact-component.css',
 })
 export class ContactComponent {
-  contact = input.required<PersonneDto>()
+  contact = input.required<PersonneDto>();
+
+  // Pour l'édition
+  canEdit = input<boolean>(false);
+  edit = output<PersonneDto>();
+
+  onEdit() {
+    this.edit.emit(this.contact());
+  }
 }

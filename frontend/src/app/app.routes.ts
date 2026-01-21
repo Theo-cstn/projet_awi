@@ -13,6 +13,7 @@ import { PendingComponent } from './shared/pending.component/pending.component';
 import { FestivalList } from './festival/festival-list/festival-list';
 import { EditeurList } from './editeur/editeur-list/editeur-list';
 import { JeuList } from './jeu/jeu-list/jeu-list';
+import { ContactList } from './contact/contact-list/contact-list';
 import { AdminUsersComponent } from './admin/list-users.component/list-users.component';
 
 export const routes: Routes = [
@@ -38,6 +39,21 @@ export const routes: Routes = [
       // Jeux globaux
       { path: 'jeux', component: JeuList },
 
+      { 
+        path: 'editeurs/:id/jeux', 
+        component: JeuList 
+      },
+
+      { 
+        path: 'editeurs/:id/contacts', 
+        component: ContactList 
+      },
+      
+      // Jeux Globaux
+      { 
+        path: 'jeux', 
+        component: JeuList 
+      },
       // Admin
       {
         path: 'admin/users',

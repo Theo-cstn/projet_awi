@@ -20,6 +20,9 @@ export class FestivalList implements OnInit {
   readonly festivals = this.svc.festivals;
   showForm: boolean = false;
   selectedFestival = signal<Festival | null>(null);
+  
+  // Signal pour gérer l'édition
+  festivalEnEdition = signal<Festival | undefined>(undefined);
 
   ngOnInit(): void {
     // Charger les festivals depuis le backend au démarrage du composant
@@ -43,6 +46,11 @@ export class FestivalList implements OnInit {
     console.log('Edition demandée pour', festival.nom);
   }
 
+  onEdit(festival: Festival): void {
+    this.festivalEnEdition.set(festival);
+    this.showForm = true;
+  }
+
   // --- LOGIQUE EXISTANTE ---
 
   add() {
@@ -56,8 +64,17 @@ export class FestivalList implements OnInit {
     this.svc.onAdd(newFestival);
     this.showForm = false;
     this.selectedFestival.set(null);
+    this.festivalEnEdition.set(undefined);
 
     console.log(`onAdd festival : ${JSON.stringify(newFestival)}`);
+  }
+
+  onUpdate(updatedFestival: Festival): void {
+    if (updatedFestival.id) {
+      this.svc.update(updatedFestival as Festival & { id: number });
+      this.showForm = false;
+      this.festivalEnEdition.set(undefined);
+    }
   }
 
   nbFestival = computed(() => {

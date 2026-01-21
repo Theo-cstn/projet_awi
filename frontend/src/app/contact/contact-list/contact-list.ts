@@ -25,11 +25,25 @@ export class ContactList {
     return id ? this.editeurService.findById(id) : undefined
   })
 
-  // AJOUT : computed pour les contacts
   contacts = computed(() => {
     const editeur = this.editeur()
     return editeur?.contacts || []
   })
+
+  // Signal pour gérer l'édition
+  contactEnEdition = signal<PersonneDto | undefined>(undefined);
+
+  constructor() {
+    // Charger les éditeurs si la liste est vide
+    if (this.editeurService.editeurs().length === 0) {
+      this.editeurService.loadEditeurs();
+    }
+  }
+
+  onEdit(contact: PersonneDto): void {
+    this.contactEnEdition.set(contact);
+    this.afficherFormulaire.set(true);
+  }
 
   onAdd(formData: any): void {
     const editeurId = this.editeurId()
@@ -44,6 +58,17 @@ export class ContactList {
       }
       this.contactService.addContact(editeurId, newContact)
       this.afficherFormulaire.set(false)
+      this.contactEnEdition.set(undefined)
+    }
+  }
+
+  onUpdate(updatedContact: PersonneDto): void {
+    const editeurId = this.editeurId();
+    
+    if (editeurId && updatedContact.id) {
+      this.editeurService.updateContact(editeurId, updatedContact);
+      this.afficherFormulaire.set(false);
+      this.contactEnEdition.set(undefined);
     }
   }
 

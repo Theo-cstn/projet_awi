@@ -41,15 +41,11 @@
   <div class="games-grid">
     @for (jeu of filteredJeux(); track jeu.id) {
       <div class="jeu-card">
-        <app-jeu-component [jeu]="jeu"></app-jeu-component>
-        
-        @if (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux') {
-          <div class="jeu-actions">
-            <button (click)="onEdit(jeu)" class="btn-edit">
-              Éditer
-            </button>
-          </div>
-        }
+        <app-jeu-component 
+          [jeu]="jeu"
+          [canEdit]="auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux'"
+          (edit)="onEdit($event)">
+        </app-jeu-component>
       </div>
     } @empty {
       <div class="empty-message">

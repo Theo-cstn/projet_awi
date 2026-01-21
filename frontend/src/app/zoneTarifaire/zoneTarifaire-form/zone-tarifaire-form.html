@@ -1,41 +1,31 @@
 <div style="margin:.5rem 0;">
+    <h3>{{ modeEdition() ? 'Modifier la Zone Tarifaire' : 'Ajouter une Zone Tarifaire' }}</h3>
 
     <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
-        <div>
-            <label for="nom">Nom de la zone tarifaire</label>
-            <input type="text" id="nom" formControlName="nom" placeholder="nom de la zone tarifaire">
-        </div>
-
-        <div style="padding: 0.75rem; background-color: #f0f0f0; border-radius: 4px; margin: 1rem 0;">
-            <strong>Nombre de tables totales: </strong>
-            <span style="font-size: 1.2rem; font-weight: bold; color: #2563eb;">{{ nbTotalTables() }}</span>
-        </div>
-
-        <div>
-            <label for="prixTable">Prix d'une table</label>
-            <input type="number" id="prixTable" formControlName="prixTable" placeholder="Prix d'une table en €">
-        </div>
-        
-        <div>
-            <label for="prixM">Prix d'un m²</label>
-            <input type="number" id="prixM" formControlName="prixM" placeholder="Prix au m² en €">
-        </div>
+        <input type="text" formControlName="nom" placeholder="Nom de la zone">
+        <input type="number" formControlName="nbTotalTables" placeholder="Nombre total de tables">
+        <input type="number" formControlName="prixTable" placeholder="Prix d'une table (€)">
+        <input type="number" formControlName="prixM" placeholder="Prix au m² (€)">
 
         <div class="zone-selection">
             <h3>Zones Plans</h3>
-            <app-zone-plan-form (add)="onAddZone($event)"></app-zone-plan-form>
+            <app-zone-plan-form 
+              (add)="onAddZone($event)"
+              (update)="onUpdateZonePlan($event)"
+              (cancel)="onCancelEditZonePlan()"
+              [zonePlanAEditer]="zonePlanEnEdition()">
+            </app-zone-plan-form>
 
             @if (zonesPlan().length > 0){
                 <h4>Zones plans ajoutées</h4>
                 @for (zone of zonesPlan(); track zone.id!){
-                    <div class="zone-item">
-                        <div>
-                          <strong>{{ zone.nom }}</strong>
-                          <br>
-                          <small>{{ zone.nbTables }} table(s)</small>
-                        </div>
-                        <button type="button" class="danger" (click)="onRemoveZone(zone.id!)">Supprimer</button>
-                    </div>
+                    <app-zone-plan 
+                      [zonePlan]="zone"
+                      [canEdit]="true"
+                      [canDelete]="true"
+                      (edit)="onEditZonePlan($event)"
+                      (remove)="onRemoveZone($event)">
+                    </app-zone-plan>
                 }
             }
             @else if (zonesPlan().length === 0){
@@ -43,6 +33,16 @@
             }
         </div>
 
-        <button type="submit" [disabled]="form.invalid || zonesPlan().length === 0">➕ Ajouter une zone tarifaire</button>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit" [disabled]="form.invalid || zonesPlan().length === 0">
+            {{ modeEdition() ? 'Valider la modification' : 'Ajouter la Zone' }}
+          </button>
+          
+          @if (modeEdition()) {
+            <button type="button" class="btn-cancel" (click)="onCancel()">
+              Annuler
+            </button>
+          }
+        </div>
     </form>
 </div>

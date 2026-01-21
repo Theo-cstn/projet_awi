@@ -1,4 +1,5 @@
 <form [formGroup]="form">
+  <h2>{{ jeuAEditer() ? 'Modifier le jeu' : 'Ajouter un jeu' }}</h2>
 
   <input type="text" formControlName="nom" placeholder="Nom du jeu" />
   @if (form.controls.nom.invalid && submitted) {
@@ -48,5 +49,5 @@
     <option value="grand">Grand</option>
   </select>
 
-  <button type="button" (click)="onSubmit()">Enregistrer</button>
+  <button type="button" (click)="onSubmit()">{{ jeuAEditer() ? 'Modifier' : 'Enregistrer' }}</button>
 </form>

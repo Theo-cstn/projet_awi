@@ -21,9 +21,7 @@ export class EditeurListService {
   readonly editeurs = this._editeurs.asReadonly();
 
 
-  /**
-   * Charge les éditeurs (Global ou Filtré par Festival)
-   */
+  //Charge les éditeurs (Global ou Filtré par Festival)  
   loadEditeurs(festivalId?: number): void {
     let url = this.apiUrl;
 
@@ -83,5 +81,53 @@ export class EditeurListService {
 
   findById(id: number): EditeurDto | undefined {
     return this._editeurs().find((e) => e.id === id);
+  }
+
+  // --- Gestion des Contacts ---
+  
+  addContact(editeurId: number, contact: PersonneDto): void {
+    const payload = {
+      nom: contact.nom,
+      prenom: contact.prenom,
+      email: contact.email,
+      fonction: '', // Optionnel
+      est_contact_principal: false
+    };
+
+    this.http.post(`${this.apiUrl}/${editeurId}/contacts`, payload, { withCredentials: true }).subscribe({
+      next: () => {
+        // Recharger les éditeurs pour avoir les données à jour
+        this.loadEditeurs();
+      },
+      error: (err) => console.error('Erreur ajout contact:', err)
+    });
+  }
+
+  updateContact(editeurId: number, contact: PersonneDto): void {
+    const payload = {
+      nom: contact.nom,
+      prenom: contact.prenom,
+      email: contact.email,
+      fonction: '', // Optionnel
+      est_contact_principal: false
+    };
+
+    this.http.post(`${this.apiUrl}/${editeurId}/contacts`, payload, { withCredentials: true }).subscribe({
+      next: () => {
+        // Recharger les éditeurs pour avoir les données à jour
+        this.loadEditeurs();
+      },
+      error: (err) => console.error('Erreur update contact:', err)
+    });
+  }
+
+  deleteContact(editeurId: number, contactId: number): void {
+    this.http.delete(`${this.apiUrl}/${editeurId}/contacts/${contactId}`, { withCredentials: true }).subscribe({
+      next: () => {
+        // Recharger les éditeurs pour avoir les données à jour
+        this.loadEditeurs();
+      },
+      error: (err) => console.error('Erreur suppression contact:', err)
+    });
   }
 }
