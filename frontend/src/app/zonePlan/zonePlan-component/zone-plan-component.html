@@ -1,7 +1,20 @@
 <div class="zone-card">
-    <h3>{{ zoneP()!.nom }} </h3>
+    <div class="zone-header">
+        <h3>{{ zonePlan()!.nom }} </h3>
+        
+        @if (canEdit() || canDelete()) {
+          <div class="zone-actions">
+            @if (canEdit()) {
+              <button type="button" class="btn-edit-zone" (click)="onEdit()">✏️</button>
+            }
+            @if (canDelete()) {
+              <button type="button" class="btn-delete-zone" (click)="onRemove()">🗑️</button>
+            }
+          </div>
+        }
+    </div>
 
     <div class="zone-detail">
-    <p>Nombre tables : <strong>{{ zoneP()!.nbTables }}</strong></p>
+        <p>Nombre tables : <strong>{{ zonePlan()!.nbTables }}</strong></p>
     </div>
 </div>

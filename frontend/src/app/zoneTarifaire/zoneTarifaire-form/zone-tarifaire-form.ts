@@ -5,11 +5,12 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ZoneTarifaire } from '../../types/zone-tarifaire-dto';
 import { ZonePlan } from '../../types/zone-plan-dto';
 import { ZonePlanForm } from '../../zonePlan/zonePlan-form/zone-plan-form';
+import { ZonePlanComponent } from '../../zonePlan/zonePlan-component/zone-plan-component';
 
 
 @Component({
   selector: 'app-zone-tarifaire-form',
-  imports: [ReactiveFormsModule, ZonePlanForm],
+  imports: [ReactiveFormsModule, ZonePlanForm, ZonePlanComponent],
   templateUrl: './zone-tarifaire-form.html',
   styleUrl: './zone-tarifaire-form.css',
 })
@@ -25,6 +26,9 @@ export class ZoneTarifaireForm {
     
     zonesPlan = signal<ZonePlan[]>([]);
     nextZoneId = signal<number>(0);
+    
+    // Pour l'édition des zones plan
+    zonePlanEnEdition = signal<ZonePlan | undefined>(undefined);
     
     // Pour éviter de recharger les zones plan à chaque fois
     private lastLoadedZoneId = signal<number | undefined>(undefined);
@@ -124,10 +128,25 @@ export class ZoneTarifaireForm {
     this.nextZoneId.update(id => id+1);
   }
 
-  onRemoveZone(idZone: number): void{
+  onRemoveZone(zone: ZonePlan): void{
     this.zonesPlan.update(zones =>
-      zones.filter(zone => zone.id !== idZone)
+      zones.filter(z => z.id !== zone.id)
     );
+  }
+  
+  onEditZonePlan(zone: ZonePlan): void {
+    this.zonePlanEnEdition.set(zone);
+  }
+
+  onUpdateZonePlan(updatedZone: ZonePlan): void {
+    this.zonesPlan.update(zones =>
+      zones.map(zone => zone.id === updatedZone.id ? updatedZone : zone)
+    );
+    this.zonePlanEnEdition.set(undefined);
+  }
+
+  onCancelEditZonePlan(): void {
+    this.zonePlanEnEdition.set(undefined);
   }
   
   onCancel(): void {

@@ -2,22 +2,30 @@
     <h3>{{ modeEdition() ? 'Modifier la Zone Tarifaire' : 'Ajouter une Zone Tarifaire' }}</h3>
 
     <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
-        <input type="text" formControlName="nom" placeholder="nom">
-        <input type="number" formControlName="nbTotalTables" placeholder="nombre total de tables">
-        <input type="number" formControlName="prixTable" placeholder="Prix d'une table">
-        <input type="number" formControlName="prixM" placeholder="Prix au m^2">
+        <input type="text" formControlName="nom" placeholder="Nom de la zone">
+        <input type="number" formControlName="nbTotalTables" placeholder="Nombre total de tables">
+        <input type="number" formControlName="prixTable" placeholder="Prix d'une table (€)">
+        <input type="number" formControlName="prixM" placeholder="Prix au m² (€)">
 
         <div class="zone-selection">
             <h3>Zones Plans</h3>
-            <app-zone-plan-form (add)="onAddZone($event)"></app-zone-plan-form>
+            <app-zone-plan-form 
+              (add)="onAddZone($event)"
+              (update)="onUpdateZonePlan($event)"
+              (cancel)="onCancelEditZonePlan()"
+              [zonePlanAEditer]="zonePlanEnEdition()">
+            </app-zone-plan-form>
 
             @if (zonesPlan().length > 0){
                 <h4>Zones ajoutées :</h4>
                 @for (zone of zonesPlan(); track zone.id!){
-                    <div class="zone-item">
-                        <span>{{ zone.nom }} - {{ zone.nbTables }} tables</span>
-                        <button type="button" (click)="onRemoveZone(zone.id!)">Supprimer</button>
-                    </div>
+                    <app-zone-plan 
+                      [zonePlan]="zone"
+                      [canEdit]="true"
+                      [canDelete]="true"
+                      (edit)="onEditZonePlan($event)"
+                      (remove)="onRemoveZone($event)">
+                    </app-zone-plan>
                 }
             }
             @else if (zonesPlan().length === 0){
@@ -26,13 +34,13 @@
         </div>
 
         <div class="form-actions">
-          <button type="submit" [disabled]="form.invalid || zonesPlan().length === 0">
-            {{ modeEdition() ? '✅ Valider la modification' : '➕ Ajouter la Zone' }}
+          <button type="submit" class="btn-submit" [disabled]="form.invalid || zonesPlan().length === 0">
+            {{ modeEdition() ? 'Valider la modification' : 'Ajouter la Zone' }}
           </button>
           
           @if (modeEdition()) {
             <button type="button" class="btn-cancel" (click)="onCancel()">
-              ❌ Annuler
+              Annuler
             </button>
           }
         </div>
