@@ -33,6 +33,8 @@ COPY package*.json ./
 # Copy certs volume
 VOLUME ["/app/certs"]
 
+RUN rm -f .env
+
 # Use non-root
 USER appuser
 
