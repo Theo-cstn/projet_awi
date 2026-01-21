@@ -32,7 +32,7 @@
             remise_generale: r.remise_generale, 
             est_present: r.est_present, 
             lignes: r.lignes || [],
-            lignesJeux: r.lignesJeux || []
+            jeux: r.jeux || []
           })); 
           this._reservations.set(mapped); 
         }

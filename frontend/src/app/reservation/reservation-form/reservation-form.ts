@@ -309,7 +309,7 @@ export class ReservationForm {
       est_present: value.est_present ?? true, 
       preferences_tables: value.preferences_tables ?? '',
       lignes: this.lignes(),
-      lignesJeux: this.lignesJeux()
+      jeux: this.lignesJeux()
     }; 
     this.reservationService.create(payload).subscribe(() => { 
       alert("Réservation créée"); 
