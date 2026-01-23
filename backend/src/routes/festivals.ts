@@ -5,16 +5,11 @@ import pool from '../db/database.js';
 const router = Router();
 
 // ==============================================================================
-// FESTIVALS - CRUD
-// ==============================================================================
-
-// ==============================================================================
-// 1. LECTURE
+// 1. LECTURE GLOBALE
 // ==============================================================================
 router.get('/', requireVisiteur(), async (req, res) => {
   try {
     const userRole = req.user?.role;
-    // Admin et Orga voient tout (historique inclus), les autres voient seulement le futur
     const canSeeHistory = userRole === 'admin' || userRole === 'organisateur_reservations';
 
     let sql = `
@@ -70,7 +65,9 @@ router.get('/', requireVisiteur(), async (req, res) => {
   }
 });
 
-// Lecture d'un seul festival (Avec Zones incluses aussi)
+// ==============================================================================
+// 2. LECTURE UNITAIRE
+// ==============================================================================
 router.get('/:id', requireVisiteur(), async (req, res) => {
   const { id } = req.params;
   try {
@@ -121,7 +118,70 @@ router.get('/:id', requireVisiteur(), async (req, res) => {
 });
 
 // ==============================================================================
-// 2. ÉCRITURE (ADMIN SEULEMENT) - GESTION GLOBALE
+// 3. LECTURE SPÉCIFIQUE (Pour les Réservations : Calcul des dispos)
+// ==============================================================================
+router.get('/:id/zones', requireVisiteur(), async (req, res) => {
+    const { id } = req.params;
+    try {
+      const query = `
+            SELECT 
+                zt.id, zt.nom, zt.prix_table, zt.prix_m2,
+                
+                -- 1. Calcul Capacité Totale (Somme des tables des plans)
+                COALESCE((
+                    SELECT SUM(zp.nombre_tables) 
+                    FROM ZonePlan zp 
+                    WHERE zp.zone_tarifaire_id = zt.id
+                ), 0)::INT as "nbTotalTables",
+
+                -- 2. Calcul Tables Occupées (Ventes + Jeux placés)
+                (
+                    -- A. Tables vendues via LigneReservation (Facturées)
+                    COALESCE((
+                        SELECT SUM(lr.quantite) 
+                        FROM LigneReservation lr 
+                        WHERE lr.zone_tarifaire_id = zt.id AND lr.type_emplacement = 'TABLE'
+                    ), 0)
+                    +
+                    -- B. Tables occupées par les Jeux (Positionnées sur un plan)
+                    COALESCE((
+                        SELECT SUM(jr.tables_occupees * jr.nb_exemplaires)
+                        FROM JeuReserve jr
+                        JOIN ZonePlan zp2 ON jr.zone_plan_id = zp2.id
+                        WHERE zp2.zone_tarifaire_id = zt.id
+                    ), 0)
+                )::FLOAT as "nbTablesOccupees",
+
+                -- 3. Liste des salles (Zones Plans)
+                COALESCE(
+                    json_agg(json_build_object('id', zp.id, 'nom', zp.nom, 'nombre_tables', zp.nombre_tables)) 
+                    FILTER (WHERE zp.id IS NOT NULL), 
+                    '[]'
+                ) as "zonesPlan"
+            FROM ZoneTarifaire zt
+            LEFT JOIN ZonePlan zp ON zt.id = zp.zone_tarifaire_id
+            WHERE zt.festival_id = $1
+            GROUP BY zt.id
+            ORDER BY zt.nom
+      `;
+      
+      const result = await pool.query(query, [id]);
+      
+      // Calcul final en JS pour éviter les négatifs bizarres
+      const zones = result.rows.map((z: any) => ({
+          ...z,
+          nbTablesLibres: Math.max(0, z.nbTotalTables - z.nbTablesOccupees)
+      }));
+
+      res.json(zones);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// ==============================================================================
+// 4. ÉCRITURE (ADMIN SEULEMENT) - GESTION GLOBALE
 // ==============================================================================
 
 // POST : Création Festival + Zones + Plans (Deep Insert)
@@ -175,7 +235,6 @@ router.post('/', requireAdmin(), async (req, res) => {
 });
 
 // PUT : Modification Intelligente
-// Supporte les changements de prix/taille même avec des réservations
 router.put('/:id', requireAdmin(), async (req, res) => {
   const { id } = req.params;
   const { nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie, zonesTarifaires } = req.body;
@@ -202,7 +261,7 @@ router.put('/:id', requireAdmin(), async (req, res) => {
     // 2. Gestion des Zones
     if (zonesTarifaires && Array.isArray(zonesTarifaires)) {
         
-        // A. Suppression des zones disparues
+        // A. Suppression (Sécurisée par le WHERE festival_id)
         const receivedZoneIds = zonesTarifaires
             .filter(z => z.id).map(z => z.id);
 
@@ -222,20 +281,20 @@ router.put('/:id', requireAdmin(), async (req, res) => {
             let zoneExists = false;
 
             if (currentZoneId) {
-                // Tenter l'UPDATE
+                // Tenter l'UPDATE (Sécurisé avec festival_id)
                 const updateZ = await client.query(
                     `UPDATE ZoneTarifaire 
                      SET nom = $1, prix_table = $2, prix_m2 = $3 
-                     WHERE id = $4 RETURNING id`,
-                    [zone.nom, zone.prixTable, zone.prixM, currentZoneId]
+                     WHERE id = $4 AND festival_id = $5 RETURNING id`,
+                    [zone.nom, zone.prixTable, zone.prixM, currentZoneId, id]
                 );
-                // Si l'update a marché (rowCount > 0), la zone existe bien
+                
                 if (updateZ.rowCount && updateZ.rowCount > 0) {
                     zoneExists = true;
                 }
             }
 
-            // Si pas d'ID ou si l'ID était introuvable (faux ID frontend), on INSERT
+            // Si c'était un ID temporaire (frontend) ou si l'ID était introuvable -> INSERT
             if (!currentZoneId || !zoneExists) {
                 const zRes = await client.query(
                     `INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2) 
@@ -247,10 +306,8 @@ router.put('/:id', requireAdmin(), async (req, res) => {
 
             // C. Gestion des Plans (Sous-zones)
             if (zone.zonesPlan && Array.isArray(zone.zonesPlan)) {
-                // On ne supprime que les IDs qui existent VRAIMENT en base et qui sont absents ici
-                // Pour simplifier et éviter les bugs de "Faux IDs", on supprime ce qui n'est pas dans la liste reçue
-                // MAIS attention aux faux IDs qui ne sont pas en base...
-                // L'approche la plus sûre ici : On récupère d'abord les IDs réels de la DB pour cette zone
+                
+                // On récupère les vrais IDs de CETTE zone pour ne pas supprimer ceux des autres
                 const dbPlansRes = await client.query('SELECT id FROM ZonePlan WHERE zone_tarifaire_id = $1', [currentZoneId]);
                 const dbPlanIds = dbPlansRes.rows.map(r => r.id);
                 
@@ -258,7 +315,6 @@ router.put('/:id', requireAdmin(), async (req, res) => {
                     .filter((p: any) => p.id)
                     .map((p: any) => p.id);
 
-                // On supprime les IDs de la DB qui ne sont pas dans ceux reçus
                 const idsToDelete = dbPlanIds.filter(dbId => !receivedPlanIds.includes(dbId));
 
                 if (idsToDelete.length > 0) {
@@ -273,13 +329,13 @@ router.put('/:id', requireAdmin(), async (req, res) => {
                     let planUpdated = false;
                     if (plan.id) {
                         const resUp = await client.query(
-                            `UPDATE ZonePlan SET nom = $1, nombre_tables = $2 WHERE id = $3`,
-                            [plan.nom, plan.nbTables, plan.id]
+                            `UPDATE ZonePlan SET nom = $1, nombre_tables = $2 
+                             WHERE id = $3 AND zone_tarifaire_id = $4`,
+                            [plan.nom, plan.nbTables, plan.id, currentZoneId]
                         );
                         if (resUp.rowCount && resUp.rowCount > 0) planUpdated = true;
                     }
 
-                    // Si pas d'ID ou ID inconnu (faux ID) -> INSERT
                     if (!plan.id || !planUpdated) {
                         await client.query(
                             `INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables) 
@@ -323,7 +379,7 @@ router.delete('/:id', requireAdmin(), async (req, res) => {
 });
 
 // ==============================================================================
-// 3. HELPERS (Jeux & Editeurs)
+// 5. HELPERS (Jeux & Editeurs)
 // ==============================================================================
 router.get('/:id/jeux', requireVisiteur(), async (req, res) => {
     const { id } = req.params;
