@@ -21,3 +21,32 @@
 .reservation-card strong {
   color: #333;
 }
+
+.status-select {
+  padding: 5px 10px;
+  border-radius: 15px;
+  border: 1px solid #ddd;
+  font-weight: bold;
+  cursor: pointer;
+  appearance: none;
+  text-align: center;
+}
+
+/* Couleurs selon le statut */
+.status-select.PRESENT {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border-color: #90caf9;
+}
+
+.status-select.FACTUREE {
+  background-color: #fff3cd;
+  color: #856404;
+  border-color: #ffeeba;
+}
+
+.status-select.PAYEE {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
