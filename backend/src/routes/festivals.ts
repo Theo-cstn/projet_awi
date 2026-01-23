@@ -8,10 +8,14 @@ const router = Router();
 // FESTIVALS - CRUD
 // ==============================================================================
 
-// LECTURE : Historique complet (Passé/Présent/Futur) -> ADMIN SEULEMENT
+// ==============================================================================
+// 1. LECTURE
+// ==============================================================================
 router.get('/', requireVisiteur(), async (req, res) => {
   try {
-    const isAdmin = req.user?.role === 'admin';
+    const userRole = req.user?.role;
+    // Admin et Orga voient tout (historique inclus), les autres voient seulement le futur
+    const canSeeHistory = userRole === 'admin' || userRole === 'organisateur_reservations';
 
     let sql = `
       SELECT 
@@ -50,21 +54,12 @@ router.get('/', requireVisiteur(), async (req, res) => {
       LEFT JOIN ZoneTarifaire zt ON zt.festival_id = f.id
     `;
 
-    if (!isAdmin) {
-      // Si PAS admin, on filtre les festivals passés
+    if (!canSeeHistory) {
       sql += ` WHERE f.date_fin >= CURRENT_DATE `;
     }
 
     sql += ` GROUP BY f.id `;
-
-    // ORDRE DYNAMIQUE
-    // Admin : Veut voir les derniers créés/modifiés en premier (Souvent les futurs ou récents passés)
-    // Visiteur : Veut voir le PROCHAIN festival (le plus proche dans le futur)
-    if (isAdmin) {
-        sql += ` ORDER BY f.date_debut DESC`; 
-    } else {
-        sql += ` ORDER BY f.date_debut ASC`;
-    }
+    sql += ` ORDER BY f.date_debut ${canSeeHistory ? 'DESC' : 'ASC'}`;
 
     const result = await pool.query(sql);
     res.json(result.rows);
@@ -75,7 +70,7 @@ router.get('/', requireVisiteur(), async (req, res) => {
   }
 });
 
-// LECTURE : Récupérer un SEUL festival pour un ID donné -> VISITEUR+
+// Lecture d'un seul festival (Avec Zones incluses aussi)
 router.get('/:id', requireVisiteur(), async (req, res) => {
   const { id } = req.params;
   try {
@@ -117,423 +112,235 @@ router.get('/:id', requireVisiteur(), async (req, res) => {
       WHERE f.id = $1
       GROUP BY f.id
     `;
-
     const result = await pool.query(sql, [id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Festival non trouvé' });
-    }
-
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Festival non trouvé' });
     res.json(result.rows[0]);
-
   } catch (error) {
-    console.error('Erreur récupération festival par ID :', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 // ==============================================================================
-// SOUS-RESSOURCES (Jeux & Editeurs filtrés par Festival)
+// 2. ÉCRITURE (ADMIN SEULEMENT) - GESTION GLOBALE
 // ==============================================================================
 
-// Récupérer les JEUX présents dans un festival
-router.get('/:id/jeux', requireVisiteur(), async (req, res) => {
-    const { id } = req.params;
-    try {
-        //On passe par la table 'JeuReserve' pour faire le lien
-        const sql = `
-            SELECT DISTINCT j.* FROM Jeu j
-            INNER JOIN JeuReserve jr ON jr.jeu_id = j.id
-            INNER JOIN Reservation r ON jr.reservation_id = r.id
-            WHERE r.festival_id = $1
-            ORDER BY j.nom
-        `;
-        const result = await pool.query(sql, [id]);
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Erreur SQL récupération jeux festival :', error);
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-// Récupérer les ÉDITEURS présents dans un festival
-router.get('/:id/editeurs', requireVisiteur(), async (req, res) => {
-    const { id } = req.params;
-    try {
-        const sql = `
-            SELECT DISTINCT e.* FROM Editeur e
-            INNER JOIN Reservation r ON r.editeur_id = e.id
-            WHERE r.festival_id = $1
-            ORDER BY e.nom
-        `;
-        const result = await pool.query(sql, [id]);
-        res.json(result.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-
-// ÉCRITURE : Création -> ADMIN SEULEMENT
+// POST : Création Festival + Zones + Plans (Deep Insert)
 router.post('/', requireAdmin(), async (req, res) => {
-  // 1. Extraction des données
-  const { 
-    nom, 
-    date_debut, 
-    date_fin, 
-    nbTablesPetites, 
-    nbTablesGrandes, 
-    nbTablesMairie, 
-    zonesTarifaires 
-  } = req.body;
-  
+  const { nom, date_debut, date_fin, nbTablesPetites, nbTablesGrandes, nbTablesMairie, zonesTarifaires } = req.body;
   const client = await pool.connect();
   
   try {
-    // 2. Démarrage de la Transaction
     await client.query('BEGIN');
 
-    // 3. Insertion du Festival
-    // Mapping : Frontend (nbTables...) -> DB (stock_tables...)
-    const festivalQuery = `
-      INSERT INTO Festival (
-        nom, 
-        date_debut, 
-        date_fin, 
-        stock_tables_petites, 
-        stock_tables_grandes, 
-        stock_tables_mairie
-      )
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id
-    `;
-    
-    const festivalRes = await client.query(festivalQuery, [
-      nom, 
-      date_debut, 
-      date_fin, 
-      nbTablesPetites || 0, 
-      nbTablesGrandes || 0, 
-      nbTablesMairie  || 0
-    ]);
-    
-    const festivalId = festivalRes.rows[0].id;
+    // 1. Festival
+    const fRes = await client.query(
+      `INSERT INTO Festival (nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [nom, date_debut, date_fin, nbTablesPetites || 0, nbTablesGrandes || 0, nbTablesMairie || 0]
+    );
+    const festivalId = fRes.rows[0].id;
 
-    // 4. Boucle sur les Zones Tarifaires (si présentes)
+    // 2. Zones & Plans
     if (zonesTarifaires && Array.isArray(zonesTarifaires)) {
       for (const zone of zonesTarifaires) {
-        
-        // Insertion de la Zone Tarifaire liée au festival
-        const zoneQuery = `
-          INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2) 
-          VALUES ($1, $2, $3, $4) 
-          RETURNING id
-        `;
-        // Mapping : Frontend (prixTable, prixM) -> DB (prix_table, prix_m2)
-        const zoneRes = await client.query(zoneQuery, [
-          festivalId, 
-          zone.nom, 
-          zone.prixTable, 
-          zone.prixM
-        ]);
-        
-        const zoneId = zoneRes.rows[0].id;
+        const zRes = await client.query(
+          `INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2) 
+           VALUES ($1, $2, $3, $4) RETURNING id`,
+          [festivalId, zone.nom, zone.prixTable, zone.prixM]
+        );
+        const zoneId = zRes.rows[0].id;
 
-        // 5. Boucle sur les Zones Plans à l'intérieur de cette zone
         if (zone.zonesPlan && Array.isArray(zone.zonesPlan)) {
           for (const plan of zone.zonesPlan) {
-             
-             // Insertion de la Zone Plan liée à la Zone Tarifaire
-             const planQuery = `
-               INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables)
-               VALUES ($1, $2, $3)
-             `;
-             // Mapping : Frontend (nbTables) -> DB (nombre_tables)
-             await client.query(planQuery, [
-               zoneId, 
-               plan.nom, 
-               plan.nbTables
-             ]);
+            await client.query(
+              `INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables) 
+               VALUES ($1, $2, $3)`,
+              [zoneId, plan.nom, plan.nbTables]
+            );
           }
         }
       }
     }
 
-    // 6. Validation finale (Commit)
     await client.query('COMMIT');
-    
-    res.status(201).json({ 
-      message: "Festival complet créé avec succès", 
-      id: festivalId 
-    });
+    res.status(201).json({ message: "Festival créé", id: festivalId });
 
   } catch (error) {
-    // 7. En cas d'erreur, on annule TOUT (Rollback)
     await client.query('ROLLBACK');
-    console.error("Erreur création festival (Deep Insert) :", error);
-    res.status(500).json({ error: 'Erreur serveur lors de la création du festival' });
+    console.error(error);
+    res.status(500).json({ error: 'Erreur création festival' });
   } finally {
-    // 8. Libération du client DB
     client.release();
   }
 });
 
-// ÉCRITURE : Modification -> ADMIN SEULEMENT
+// PUT : Modification Intelligente
+// Supporte les changements de prix/taille même avec des réservations
 router.put('/:id', requireAdmin(), async (req, res) => {
   const { id } = req.params;
-  const { 
-    nom, 
-    date_debut, 
-    date_fin, 
-    stock_tables_petites, 
-    stock_tables_grandes, 
-    stock_tables_mairie,
-    zonesTarifaires 
-  } = req.body;
+  const { nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie, zonesTarifaires } = req.body;
   
   const client = await pool.connect();
-  
+
   try {
-    // Démarrage de la Transaction
     await client.query('BEGIN');
 
-    // 1. Mise à jour du Festival
-    const festivalQuery = `
-      UPDATE Festival 
-      SET nom = $1, date_debut = $2, date_fin = $3, 
-          stock_tables_petites = $4, stock_tables_grandes = $5, stock_tables_mairie = $6
-      WHERE id = $7
-      RETURNING *
-    `;
-    const festivalResult = await client.query(festivalQuery, [
-      nom, 
-      date_debut, 
-      date_fin, 
-      stock_tables_petites, 
-      stock_tables_grandes, 
-      stock_tables_mairie, 
-      id
-    ]);
+    // 1. Update Festival
+    const result = await client.query(
+      `UPDATE Festival 
+       SET nom = $1, date_debut = $2, date_fin = $3, 
+           stock_tables_petites = $4, stock_tables_grandes = $5, stock_tables_mairie = $6
+       WHERE id = $7 RETURNING *`,
+      [nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie, id]
+    );
     
-    if (festivalResult.rows.length === 0) {
+    if (result.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Festival non trouvé' });
     }
 
-    // 2. Gestion des Zones Tarifaires (si présentes dans la requête)
+    // 2. Gestion des Zones
     if (zonesTarifaires && Array.isArray(zonesTarifaires)) {
-      // Supprimer d'abord les ZonePlan liées aux ZoneTarifaire du festival
-      await client.query(`
-        DELETE FROM ZonePlan 
-        WHERE zone_tarifaire_id IN (
-          SELECT id FROM ZoneTarifaire WHERE festival_id = $1
-        )
-      `, [id]);
-      
-      // Puis supprimer les ZoneTarifaire du festival
-      await client.query('DELETE FROM ZoneTarifaire WHERE festival_id = $1', [id]);
-      
-      // Insérer les nouvelles zones
-      for (const zone of zonesTarifaires) {
-        const zoneQuery = `
-          INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2) 
-          VALUES ($1, $2, $3, $4) 
-          RETURNING id
-        `;
-        const zoneRes = await client.query(zoneQuery, [
-          id, 
-          zone.nom, 
-          zone.prixTable, 
-          zone.prixM
-        ]);
         
-        const zoneId = zoneRes.rows[0].id;
+        // A. Suppression des zones disparues
+        const receivedZoneIds = zonesTarifaires
+            .filter(z => z.id).map(z => z.id);
 
-        // Insérer les ZonePlan si présentes
-        if (zone.zonesPlan && Array.isArray(zone.zonesPlan)) {
-          for (const plan of zone.zonesPlan) {
-            const planQuery = `
-              INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables)
-              VALUES ($1, $2, $3)
-            `;
-            await client.query(planQuery, [
-              zoneId, 
-              plan.nom, 
-              plan.nbTables
-            ]);
-          }
+        if (receivedZoneIds.length > 0) {
+            await client.query(
+                `DELETE FROM ZoneTarifaire 
+                 WHERE festival_id = $1 AND id NOT IN (${receivedZoneIds.join(',')})`,
+                [id]
+            );
+        } else if (zonesTarifaires.length === 0) {
+             await client.query('DELETE FROM ZoneTarifaire WHERE festival_id = $1', [id]);
         }
-      }
+
+        // B. Traitement des Zones
+        for (const zone of zonesTarifaires) {
+            let currentZoneId = zone.id;
+            let zoneExists = false;
+
+            if (currentZoneId) {
+                // Tenter l'UPDATE
+                const updateZ = await client.query(
+                    `UPDATE ZoneTarifaire 
+                     SET nom = $1, prix_table = $2, prix_m2 = $3 
+                     WHERE id = $4 RETURNING id`,
+                    [zone.nom, zone.prixTable, zone.prixM, currentZoneId]
+                );
+                // Si l'update a marché (rowCount > 0), la zone existe bien
+                if (updateZ.rowCount && updateZ.rowCount > 0) {
+                    zoneExists = true;
+                }
+            }
+
+            // Si pas d'ID ou si l'ID était introuvable (faux ID frontend), on INSERT
+            if (!currentZoneId || !zoneExists) {
+                const zRes = await client.query(
+                    `INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2) 
+                     VALUES ($1, $2, $3, $4) RETURNING id`,
+                    [id, zone.nom, zone.prixTable, zone.prixM]
+                );
+                currentZoneId = zRes.rows[0].id;
+            }
+
+            // C. Gestion des Plans (Sous-zones)
+            if (zone.zonesPlan && Array.isArray(zone.zonesPlan)) {
+                // On ne supprime que les IDs qui existent VRAIMENT en base et qui sont absents ici
+                // Pour simplifier et éviter les bugs de "Faux IDs", on supprime ce qui n'est pas dans la liste reçue
+                // MAIS attention aux faux IDs qui ne sont pas en base...
+                // L'approche la plus sûre ici : On récupère d'abord les IDs réels de la DB pour cette zone
+                const dbPlansRes = await client.query('SELECT id FROM ZonePlan WHERE zone_tarifaire_id = $1', [currentZoneId]);
+                const dbPlanIds = dbPlansRes.rows.map(r => r.id);
+                
+                const receivedPlanIds = zone.zonesPlan
+                    .filter((p: any) => p.id)
+                    .map((p: any) => p.id);
+
+                // On supprime les IDs de la DB qui ne sont pas dans ceux reçus
+                const idsToDelete = dbPlanIds.filter(dbId => !receivedPlanIds.includes(dbId));
+
+                if (idsToDelete.length > 0) {
+                    await client.query(
+                        `DELETE FROM ZonePlan WHERE id = ANY($1)`,
+                        [idsToDelete]
+                    );
+                }
+
+                // Upsert des Plans
+                for (const plan of zone.zonesPlan) {
+                    let planUpdated = false;
+                    if (plan.id) {
+                        const resUp = await client.query(
+                            `UPDATE ZonePlan SET nom = $1, nombre_tables = $2 WHERE id = $3`,
+                            [plan.nom, plan.nbTables, plan.id]
+                        );
+                        if (resUp.rowCount && resUp.rowCount > 0) planUpdated = true;
+                    }
+
+                    // Si pas d'ID ou ID inconnu (faux ID) -> INSERT
+                    if (!plan.id || !planUpdated) {
+                        await client.query(
+                            `INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables) 
+                             VALUES ($1, $2, $3)`,
+                            [currentZoneId, plan.nom, plan.nbTables]
+                        );
+                    }
+                }
+            }
+        }
     }
 
-    // Validation finale (Commit)
     await client.query('COMMIT');
-    
-    res.json({ 
-      message: "Festival mis à jour avec succès", 
-      festival: festivalResult.rows[0] 
-    });
+    res.json(result.rows[0]);
 
-  } catch (error) {
-    // En cas d'erreur, on annule TOUT (Rollback)
+  } catch (error: any) {
     await client.query('ROLLBACK');
-    console.error("Erreur mise à jour festival :", error);
-    res.status(500).json({ error: 'Erreur serveur lors de la mise à jour du festival' });
+    if (error.code === '23503') {
+        return res.status(409).json({ 
+            error: "Action impossible : Suppression bloquée car des réservations existent." 
+        });
+    }
+    console.error(error);
+    res.status(500).json({ error: 'Erreur modification festival' });
   } finally {
-    // Libération du client DB
     client.release();
   }
 });
 
+// DELETE
+router.delete('/:id', requireAdmin(), async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM Festival WHERE id = $1', [id]);
+    res.json({ message: 'Festival supprimé' });
+  } catch (error) {
+    // @ts-ignore
+    if (error.code === '23503') return res.status(409).json({ error: "Impossible de supprimer : Des données sont liées à ce festival." });
+    res.status(500).json({ error: 'Erreur suppression' });
+  }
+});
+
 // ==============================================================================
-// ZONES TARIFAIRES
+// 3. HELPERS (Jeux & Editeurs)
 // ==============================================================================
-
-// LECTURE : Voir les zones d'un festival précis -> VISITEUR+
-router.get('/:id/zones', requireVisiteur(), async (req, res) => {
+router.get('/:id/jeux', requireVisiteur(), async (req, res) => {
     const { id } = req.params;
     try {
-      const query = `
-            SELECT 
-                zt.id, zt.nom, zt.prix_table, zt.prix_m2,
-                COALESCE(
-                    json_agg(json_build_object('id', zp.id, 'nom', zp.nom, 'nombre_tables', zp.nombre_tables))
-                    FILTER (WHERE zp.id IS NOT NULL), 
-                    '[]'
-                ) as salles
-            FROM ZoneTarifaire zt
-            LEFT JOIN ZonePlan zp ON zt.id = zp.zone_tarifaire_id
-            WHERE zt.festival_id = $1
-            GROUP BY zt.id
-            ORDER BY zt.nom
-      `;
-      const result = await pool.query(query, [id]);
-      res.json(result.rows);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+        const sql = `SELECT DISTINCT j.* FROM Jeu j INNER JOIN JeuReserve jr ON jr.jeu_id = j.id INNER JOIN Reservation r ON jr.reservation_id = r.id WHERE r.festival_id = $1 ORDER BY j.nom`;
+        const result = await pool.query(sql, [id]);
+        res.json(result.rows);
+    } catch (e) { res.status(500).json({ error: 'Erreur' }); }
 });
 
-// CONFIGURATION ZONES -> ADMIN SEULEMENT
-router.post('/:id/zones', requireAdmin(), async (req, res) => {
-    const { id } = req.params;
-    const { nom, prix_table, prix_m2 } = req.body;
-    try {
-      const query = `
-        INSERT INTO ZoneTarifaire (festival_id, nom, prix_table, prix_m2)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *
-      `;
-      const result = await pool.query(query, [id, nom, prix_table, prix_m2]);
-      res.status(201).json(result.rows[0]);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-router.delete('/zones/:id', requireAdmin(), async (req, res) => {
+router.get('/:id/editeurs', requireVisiteur(), async (req, res) => {
     const { id } = req.params;
     try {
-      const result = await pool.query(`
-        DELETE FROM ZoneTarifaire 
-        WHERE id = $1 
-        RETURNING *
-      `, [id]);
-      
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Zone tarifaire non trouvée' });
-      }
-      
-      res.json({ message: 'Zone tarifaire supprimée', data: result.rows[0] });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-// CONFIGURATION ZONE PLANS -> ADMIN SEULEMENT
-router.post('/zones/:id/zones-plans', requireAdmin(), async (req, res) => {
-    const { id } = req.params;
-    const { nom, nombre_tables } = req.body;
-    try {
-      const query = `
-        INSERT INTO ZonePlan (zone_tarifaire_id, nom, nombre_tables)
-        VALUES ($1, $2, $3)
-        RETURNING *
-      `;
-      const result = await pool.query(query, [id, nom, nombre_tables]);
-      res.status(201).json(result.rows[0]);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-
-// Modification d'une zone tarifaire
-router.put('/zones/:id', requireAdmin(), async (req, res) => {
-  const { id } = req.params;
-  const { nom, prix_table, prix_m2 } = req.body;
-  try {
-    const query = `
-      UPDATE ZoneTarifaire
-      SET nom = $1, prix_table = $2, prix_m2 = $3
-      WHERE id = $4
-      RETURNING *
-    `;
-    const result = await pool.query(query, [nom, prix_table, prix_m2, id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Zone tarifaire non trouvée.' });
-    }
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erreur serveur.' });
-  }
-});
-
-
-// Modification d'une zone plan
-router.put('/zones-plans/:id', requireAdmin(), async (req, res) => {
-  const { id } = req.params;
-  const { nom, nombre_tables } = req.body;
-  try {
-    const query = `
-      UPDATE ZonePlan
-      SET nom = $1, nombre_tables = $2
-      WHERE id = $3
-      RETURNING *
-    `;
-    const result = await pool.query(query, [nom, nombre_tables, id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Zone plan non trouvée.' });
-    }
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erreur serveur.' });
-  }
-});
-
-router.delete('/zones-plans/:id', requireAdmin(), async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await pool.query(`
-      DELETE FROM ZonePlan
-      WHERE id = $1
-      RETURNING *
-    `, [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Zone plan non trouvée.' });
-    }
-    res.json({ message: 'Zone plan supprimée', data: result.rows[0] });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erreur serveur.' });
-  }
+        const sql = `SELECT DISTINCT e.* FROM Editeur e INNER JOIN Reservation r ON r.editeur_id = e.id WHERE r.festival_id = $1 ORDER BY e.nom`;
+        const result = await pool.query(sql, [id]);
+        res.json(result.rows);
+    } catch (e) { res.status(500).json({ error: 'Erreur' }); }
 });
 
 export default router;
