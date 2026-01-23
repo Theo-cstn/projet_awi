@@ -36,4 +36,14 @@ export class DashboardComponent {
     const used = zone.nbTotalTables - zone.nbTablesLibres;
     return (used / zone.nbTotalTables) * 100;
   }
+
+  totalCommercialCapacity = computed(() => {
+    const zones = this.festival()?.zonesTarifaires || [];
+    return zones.reduce((acc, z) => acc + (z.nbTotalTables || 0), 0);
+  });
+
+  totalCommercialRemaining = computed(() => {
+    const zones = this.festival()?.zonesTarifaires || [];
+    return zones.reduce((acc, z) => acc + (z.nbTablesLibres || 0), 0);
+  });
 }

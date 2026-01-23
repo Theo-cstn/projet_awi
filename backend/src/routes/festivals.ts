@@ -28,6 +28,19 @@ router.get('/', requireVisiteur(), async (req, res) => {
               'nom', zt.nom,
               'prix_table', zt.prix_table,
               'prix_m2', zt.prix_m2,
+              
+              'nb_total_tables', (
+                  SELECT COALESCE(SUM(zp.nombre_tables), 0)
+                  FROM ZonePlan zp
+                  WHERE zp.zone_tarifaire_id = zt.id
+              ),
+
+              'nb_tables_restantes', (
+                  (SELECT COALESCE(SUM(zp.nombre_tables), 0) FROM ZonePlan zp WHERE zp.zone_tarifaire_id = zt.id)
+                  -
+                  (SELECT COALESCE(SUM(lr.quantite), 0) FROM LigneReservation lr WHERE lr.zone_tarifaire_id = zt.id AND lr.type_emplacement = 'TABLE')
+              ),
+
               'zones_plan', (
                 SELECT COALESCE(
                   json_agg(
@@ -87,6 +100,23 @@ router.get('/:id', requireVisiteur(), async (req, res) => {
               'nom', zt.nom,
               'prix_table', zt.prix_table,
               'prix_m2', zt.prix_m2,
+              'nb_total_tables', (
+                  SELECT COALESCE(SUM(zp.nombre_tables), 0)
+                  FROM ZonePlan zp
+                  WHERE zp.zone_tarifaire_id = zt.id
+              ),
+
+              'nb_tables_restantes', (
+                  (SELECT COALESCE(SUM(zp.nombre_tables), 0)
+                   FROM ZonePlan zp
+                   WHERE zp.zone_tarifaire_id = zt.id)
+                  -
+                  (SELECT COALESCE(SUM(lr.quantite), 0)
+                   FROM LigneReservation lr
+                   WHERE lr.zone_tarifaire_id = zt.id 
+                   AND lr.type_emplacement = 'TABLE')
+              ),
+
               'zones_plan', (
                 SELECT COALESCE(
                   json_agg(
@@ -136,20 +166,9 @@ router.get('/:id/zones', requireVisiteur(), async (req, res) => {
 
                 -- 2. Calcul Tables Occupées (Ventes + Jeux placés)
                 (
-                    -- A. Tables vendues via LigneReservation (Facturées)
-                    COALESCE((
-                        SELECT SUM(lr.quantite) 
-                        FROM LigneReservation lr 
-                        WHERE lr.zone_tarifaire_id = zt.id AND lr.type_emplacement = 'TABLE'
-                    ), 0)
-                    +
-                    -- B. Tables occupées par les Jeux (Positionnées sur un plan)
-                    COALESCE((
-                        SELECT SUM(jr.tables_occupees * jr.nb_exemplaires)
-                        FROM JeuReserve jr
-                        JOIN ZonePlan zp2 ON jr.zone_plan_id = zp2.id
-                        WHERE zp2.zone_tarifaire_id = zt.id
-                    ), 0)
+                    SELECT COALESCE(SUM(lr.quantite), 0) 
+                    FROM LigneReservation lr 
+                    WHERE lr.zone_tarifaire_id = zt.id AND lr.type_emplacement = 'TABLE'
                 )::FLOAT as "nbTablesOccupees",
 
                 -- 3. Liste des salles (Zones Plans)
