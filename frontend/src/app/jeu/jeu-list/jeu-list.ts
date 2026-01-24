@@ -114,8 +114,8 @@ export class JeuList implements OnInit {
       id: undefined, 
       nom: formData.nom,
       typeG: formData.typeG,  
-      age_min: formData.age_min,  
-      age_max: formData.age_max,
+      age_min: formData.ageMin,  
+      age_max: formData.ageMax,
       editeur_id: targetEditeurId, 
       editeur: undefined, 
       auteurs: [] 

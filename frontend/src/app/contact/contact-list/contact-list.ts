@@ -1,9 +1,10 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal, DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
 import { PersonneDto } from '../../types/personne-dto';
 import { ContactComponent } from '../contact-component/contact-component';
 import { ContactForm } from '../contact-form/contact-form';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-contact-list',
@@ -14,11 +15,12 @@ import { ContactForm } from '../contact-form/contact-form';
 export class ContactList {
   readonly editeurService = inject(EditeurListService);
   readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
-  htmlId = input<number | undefined>(undefined, { alias: 'editeurId' });
+  editeurIdFromInput = input<number | undefined>(undefined, { alias: 'editeurId' });
   routeId = input<string | undefined>(undefined, { alias: 'id' });
   editeurId = computed(() => {
-    return this.htmlId() ?? (this.routeId() ? Number(this.routeId()) : undefined);
+    return this.editeurIdFromInput() ?? (this.routeId() ? Number(this.routeId()) : undefined);
   });
 
   editeur = computed(() => {
@@ -54,7 +56,7 @@ export class ContactList {
         poste: formData.poste
       };
       
-      this.editeurService.addContact(id, newContact).subscribe({
+      this.editeurService.addContact(id, newContact).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
          next: () => {
             this.afficherFormulaire.set(false);
             this.contactEnEdition.set(undefined);
@@ -67,7 +69,7 @@ export class ContactList {
   onUpdate(updatedContact: PersonneDto): void {
     const id = this.editeurId();
     if (id && updatedContact.id) {
-      this.editeurService.updateContact(id, updatedContact).subscribe({
+      this.editeurService.updateContact(id, updatedContact).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
            this.afficherFormulaire.set(false);
            this.contactEnEdition.set(undefined);

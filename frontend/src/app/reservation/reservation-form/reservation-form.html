@@ -128,15 +128,13 @@
         <!-- LIGNES DE JEUX -->
         @for (l of lignesJeux(); track $index) {
           <div class="ligneJeu">
-            <select (change)="updateGameLigne($index, +$any($event.target).value, l.nb_exemplaires, l.tables_occupees)">
-              <option value="0" [selected]="l.jeu_id === 0">
-                Sélectionner un jeu
-              </option>
+            <select [value]="l.jeu_id || 0" 
+                    (change)="updateGameLigne($index, +$any($event.target).value, l.nb_exemplaires, l.tables_occupees)">
+              
+              <option value="0">Sélectionner un jeu</option>
 
               @for (j of jeuxFiltres(); track j.id) {
-                <option [value]="j.id" [selected]="j.id === l.jeu_id">
-                  {{ j.nom }}
-                </option>
+                <option [value]="j.id">{{ j.nom }}</option>
               }
             </select>
             <div style="flex: 0 1 auto;">
@@ -216,16 +214,16 @@
               <!-- SÉLECTION ZONE PLAN -->
               <label><strong>Sélectionner la zone plan :</strong></label>
               
-              <select (change)="updateLignePlacement($index, +$any($event.target).value)">
+              <select [value]="l.zone_plan_id || 0" (change)="updateLignePlacement($index, +$any($event.target).value)">
                 
-                <option value="0" [selected]="!l.zone_plan_id">
+                <option value="0">
                   -- Sélectionner une zone plan --
                 </option>
 
                 @for (zp of getAllZonesPlansForSelectedZones(); track zp.id) {
                   @if (canPlaceGameInZonePlan(zp.id, l.nb_exemplaires, l.tables_occupees, $index)) {
                     
-                    <option [value]="zp.id" [selected]="zp.id === l.zone_plan_id">
+                    <option [value]="zp.id">
                       {{ zp.zone_tarifaire_nom }} • {{ zp.nom }}
                       ({{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces libres)
                     </option>

@@ -17,13 +17,12 @@ export class ZoneTarifaireListService {
   // Mapping backend → frontend 
   private mapZone(data: any): ZoneTarifaire {
     
-
-    const rawPlans = data.zonesPlan ?? data.zones_plan ?? data.salles ?? [];
+    const rawPlans = data.zonesPlan || [];
 
     const mappedPlans = rawPlans.map((p: any) => ({
         id: p.id,
         nom: p.nom,
-        nbTables: p.nombre_tables ?? p.nbTables ?? 0 
+        nbTables: p.nombre_tables ?? 0 
     }));
 
     const mapped: ZoneTarifaire = {
@@ -48,8 +47,9 @@ export class ZoneTarifaireListService {
     this.http.get<any[]>(url, { withCredentials: true })
       .subscribe({ 
         next: (data) => {
-          if (!data || data.length === 0) {
-            console.warn('⚠️ Aucune zone retournée par le serveur');
+
+          if (!data || !Array.isArray(data) || data.length === 0) {
+            console.warn('⚠️ Aucune zone valide retournée par le serveur');
             this._zones.set([]);
             return;
           }

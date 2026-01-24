@@ -3,8 +3,8 @@
     <h3>{{ nomReservant() }}</h3>
     
     <select 
-      class="status-select {{ reservation().statut || 'PRESENT' }}"
-      [value]="reservation().statut || 'PRESENT'" 
+      class="status-select {{ reservation().statut ?? 'PRESENT' }}"
+      [value]="reservation().statut ?? 'PRESENT'" 
       (change)="onStatusChange($event)">
       
       <option value="PRESENT">PRÉSENT</option>

@@ -282,16 +282,17 @@ router.put('/:id', requireAdmin(), async (req, res) => {
         
         // A. Suppression (Sécurisée par le WHERE festival_id)
         const receivedZoneIds = zonesTarifaires
-            .filter(z => z.id).map(z => z.id);
+            .filter(z => z.id)
+            .map(z => z.id);
 
         if (receivedZoneIds.length > 0) {
             await client.query(
                 `DELETE FROM ZoneTarifaire 
-                 WHERE festival_id = $1 AND id NOT IN (${receivedZoneIds.join(',')})`,
-                [id]
+                WHERE festival_id = $1 AND id <> ALL($2)`,
+                [id, receivedZoneIds]
             );
         } else if (zonesTarifaires.length === 0) {
-             await client.query('DELETE FROM ZoneTarifaire WHERE festival_id = $1', [id]);
+            await client.query('DELETE FROM ZoneTarifaire WHERE festival_id = $1', [id]);
         }
 
         // B. Traitement des Zones
@@ -326,20 +327,24 @@ router.put('/:id', requireAdmin(), async (req, res) => {
             // C. Gestion des Plans (Sous-zones)
             if (zone.zonesPlan && Array.isArray(zone.zonesPlan)) {
                 
-                // On récupère les vrais IDs de CETTE zone pour ne pas supprimer ceux des autres
-                const dbPlansRes = await client.query('SELECT id FROM ZonePlan WHERE zone_tarifaire_id = $1', [currentZoneId]);
-                const dbPlanIds = dbPlansRes.rows.map(r => r.id);
-                
-                const receivedPlanIds = zone.zonesPlan
+                // 1. Récupérer les IDs des plans que l'on souhaite GARDER
+                const receivedPlanIds: any[] = zone.zonesPlan
                     .filter((p: any) => p.id)
                     .map((p: any) => p.id);
 
-                const idsToDelete = dbPlanIds.filter(dbId => !receivedPlanIds.includes(dbId));
-
-                if (idsToDelete.length > 0) {
+                if (receivedPlanIds.length > 0) {
+                    const placeholders = receivedPlanIds.map((_: any, i: number) => `$${i + 2}`).join(',');
+                    
                     await client.query(
-                        `DELETE FROM ZonePlan WHERE id = ANY($1)`,
-                        [idsToDelete]
+                        `DELETE FROM ZonePlan 
+                         WHERE zone_tarifaire_id = $1 
+                         AND id NOT IN (${placeholders})`,
+                        [currentZoneId, ...receivedPlanIds]
+                    );
+                } else {
+                    await client.query(
+                        `DELETE FROM ZonePlan WHERE zone_tarifaire_id = $1`,
+                        [currentZoneId]
                     );
                 }
 
@@ -390,9 +395,14 @@ router.delete('/:id', requireAdmin(), async (req, res) => {
   try {
     await pool.query('DELETE FROM Festival WHERE id = $1', [id]);
     res.json({ message: 'Festival supprimé' });
-  } catch (error) {
-    // @ts-ignore
-    if (error.code === '23503') return res.status(409).json({ error: "Impossible de supprimer : Des données sont liées à ce festival." });
+  } catch (error: any) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === '23503') {
+        return res.status(409).json({ 
+            error: "Impossible de supprimer : Des données (réservations, zones) sont encore liées à ce festival." 
+        });
+    }
+    
+    console.error('Erreur suppression festival :', error);
     res.status(500).json({ error: 'Erreur suppression' });
   }
 });

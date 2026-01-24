@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { ReservationListService } from '../reservation-service/reservation-list-service';
 import { ActivatedRoute } from '@angular/router';
 import { ReservationForm } from '../reservation-form/reservation-form';
 import { ReservationComponent } from '../reservation-component/reservation-component';
 import { Reservation } from '../../types/reservation-dto'; 
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-reservation-list',
@@ -15,6 +16,7 @@ import { Reservation } from '../../types/reservation-dto';
 export class ReservationList implements OnInit {
   private svc = inject(ReservationListService); 
   private route = inject(ActivatedRoute); 
+  private destroyRef = inject(DestroyRef);
   
   festivalId = signal<number | undefined>(undefined); 
   showForm = signal(false);
@@ -47,18 +49,21 @@ export class ReservationList implements OnInit {
 
   editRequest(r: Reservation) {
     if (!r.id) return;
-    this.svc.getDetails(r.id).subscribe({
-      next: (fullDetails: any) => {
-        const flatObj = {
-          ...fullDetails.reservation,
-          lignes: fullDetails.lignes,
-          jeux: fullDetails.jeux
-        };
-        this.reservationToEdit.set(flatObj);
-        this.showForm.set(true);
-      },
-      error: (err) => console.error("Erreur chargement détails", err)
-    });
+    
+    this.svc.getDetails(r.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (fullDetails: any) => {
+          const flatObj = {
+            ...fullDetails.reservation,
+            lignes: fullDetails.lignes,
+            jeux: fullDetails.jeux
+          };
+          this.reservationToEdit.set(flatObj);
+          this.showForm.set(true);
+        },
+        error: (err) => console.error("Erreur chargement détails", err)
+      });
   }
 
   onFormClose() {
@@ -72,20 +77,24 @@ export class ReservationList implements OnInit {
   deleteRequest(r: Reservation) {
     if (!r.id) return;
     if (confirm("Supprimer cette réservation ?")) {
-      this.svc.delete(r.id).subscribe(() => {
-        if (this.festivalId()) this.svc.loadReservations(this.festivalId()!);
-      });
+      this.svc.delete(r.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          if (this.festivalId()) this.svc.loadReservations(this.festivalId()!);
+        });
     }
   }
 
   updateStatusRequest(r: Reservation, newStatus: 'PRESENT' | 'FACTUREE' | 'PAYEE') {
     if (!r.id) return;
     
-    this.svc.updateStatut(r.id, newStatus).subscribe({
-      next: () => {
-        if (this.festivalId()) this.svc.loadReservations(this.festivalId()!);
-      },
-      error: (err) => console.error("Erreur update statut", err)
-    });
+    this.svc.updateStatut(r.id, newStatus)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          if (this.festivalId()) this.svc.loadReservations(this.festivalId()!);
+        },
+        error: (err) => console.error("Erreur update statut", err)
+      });
   }
 }

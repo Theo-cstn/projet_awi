@@ -76,14 +76,12 @@ export class JeuForm {
     }
 
     if (this.form.valid) {
-      // ✅ CORRECTION 3 : Utiliser getRawValue() pour avoir les valeurs propres
       const f = this.form.getRawValue();
       const jeuEdit = this.jeuAEditer();
 
       // Sécurité pour l'éditeur
       if (!f.editeur) { console.error("Editeur manquant"); return; }
 
-      // ✅ CORRECTION 4 : Le Payload complet
       const payload = {
         nom: f.nom,
         typeG: f.type,

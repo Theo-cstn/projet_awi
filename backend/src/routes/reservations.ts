@@ -10,6 +10,11 @@ export enum TailleTable {
     MAIRIE = 'MAIRIE'
 }
 
+export enum TypeEmplacement {
+    TABLE = 'TABLE',
+    M2 = 'M2'
+}
+
 // ==============================================================================
 // 1. LECTURE PUBLIQUE (Visiteurs / App Mobile)
 // Règle : Pas de prix, on veut juste savoir QUI vient et avec QUOI.
@@ -271,9 +276,36 @@ router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
     const { id } = req.params;
     const { 
         nombre_prises, est_present, remise_generale, preferences_tables,
-        lignes, // Tableau complet des lignes tarifaires
-        jeux    // Tableau complet des jeux
+        lignes, 
+        jeux
     } = req.body;
+
+    // 1. Validation des types simples et des plages de valeurs pour eviter de faire confiance à l'entrée utilisateur
+    if (typeof nombre_prises !== 'number' || nombre_prises < 0) {
+        return res.status(400).json({ error: "Le nombre de prises doit être un nombre positif." });
+    }
+
+    if (typeof remise_generale !== 'number' || remise_generale < 0) {
+        return res.status(400).json({ error: "La remise générale doit être un nombre positif." });
+    }
+
+    if (typeof est_present !== 'boolean') {
+        return res.status(400).json({ error: "Le champ 'est_present' doit être un booléen." });
+    }
+
+    // preferences_tables est optionnel, mais s'il est là, ce doit être une string
+    if (preferences_tables !== undefined && preferences_tables !== null && typeof preferences_tables !== 'string') {
+        return res.status(400).json({ error: "Les préférences tables doivent être du texte." });
+    }
+
+    // 2. Validation structurelle des tableaux (Optionnel mais recommandé par la review)
+    if (lignes && !Array.isArray(lignes)) {
+        return res.status(400).json({ error: "Le format des lignes tarifaires est invalide." });
+    }
+    
+    if (jeux && !Array.isArray(jeux)) {
+        return res.status(400).json({ error: "Le format des jeux est invalide." });
+    }
 
     const client = await pool.connect();
 
@@ -295,7 +327,12 @@ router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
             
             // 2. Supprimer les lignes qui ne sont plus dans la liste
             if (receivedLigneIds.length > 0) {
-                await client.query(`DELETE FROM LigneReservation WHERE reservation_id = $1 AND id NOT IN (${receivedLigneIds.join(',')})`, [id]);
+                await client.query(
+                    `DELETE FROM LigneReservation 
+                     WHERE reservation_id = $1 
+                     AND id <> ALL($2)`, 
+                    [id, receivedLigneIds]
+                );
             } else {
                 await client.query(`DELETE FROM LigneReservation WHERE reservation_id = $1`, [id]);
             }
@@ -310,8 +347,14 @@ router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
                 } else {
                     await client.query(
                         `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_unitaire_applique)
-                         VALUES ($1, $2, 'TABLE', $3, $4)`, // On force 'TABLE' pour l'instant
-                        [id, l.zone_tarifaire_id, l.quantite, l.prix_unitaire_applique]
+                         VALUES ($1, $2, $5, $3, $4)`, 
+                        [
+                            id, 
+                            l.zone_tarifaire_id, 
+                            l.quantite, 
+                            l.prix_unitaire_applique,
+                            TypeEmplacement.TABLE
+                        ]
                     );
                 }
             }
@@ -323,7 +366,12 @@ router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
 
             // 1. Suppression
             if (receivedJeuIds.length > 0) {
-                await client.query(`DELETE FROM JeuReserve WHERE reservation_id = $1 AND id NOT IN (${receivedJeuIds.join(',')})`, [id]);
+                await client.query(
+                    `DELETE FROM JeuReserve 
+                     WHERE reservation_id = $1 
+                     AND id <> ALL($2)`, 
+                    [id, receivedJeuIds]
+                );
             } else {
                 await client.query(`DELETE FROM JeuReserve WHERE reservation_id = $1`, [id]);
             }
@@ -352,10 +400,37 @@ router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
         await client.query('COMMIT');
         res.json({ message: 'Réservation mise à jour', id });
 
-    } catch (error) {
+    } catch (error: any) {
         await client.query('ROLLBACK');
         console.error("Erreur update réservation:", error);
-        res.status(500).json({ error: 'Erreur mise à jour' });
+
+        if (error && typeof error === 'object' && 'code' in error) {
+            const dbError = error as { code: string; detail?: string; message?: string };
+
+            if (dbError.code === '23503') {
+                return res.status(409).json({
+                    error: 'Conflit de données : certains éléments sont liés à d’autres ressources et ne peuvent être modifiés ainsi.',
+                    details: dbError.detail || dbError.message,
+                    code: dbError.code
+                });
+            }
+
+            if (dbError.code === '23505') {
+                return res.status(409).json({
+                    error: 'Cette ressource existe déjà (violation d’unicité).',
+                    details: dbError.detail || dbError.message,
+                    code: dbError.code
+                });
+            }
+
+            return res.status(500).json({
+                error: 'Erreur lors de la mise à jour en base de données',
+                details: dbError.detail || dbError.message,
+                code: dbError.code
+            });
+        }
+
+        res.status(500).json({ error: 'Erreur mise à jour serveur' });
     } finally {
         client.release();
     }
