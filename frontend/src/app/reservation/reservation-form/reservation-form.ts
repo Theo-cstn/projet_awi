@@ -121,7 +121,9 @@ export class ReservationForm {
   totalPrixAfterRed = computed(() => this.totalPrixBeforeRed() - this.remiseGenerale() );
 
   // Calcule les tables libres restantes pour chaque zone en tenant compte des lignes actuelles
-  getTablesLibresRestantes = (zoneId: number): number => {
+  getTablesLibresRestantes = (zoneId: number | undefined): number => {
+    if (zoneId === undefined) return 0;
+
     const zone = this.zones().find(z => z.id === zoneId);
     if (!zone) return 0;
     
@@ -129,7 +131,7 @@ export class ReservationForm {
       .filter(l => l.zone_tarifaire_id === zoneId)
       .reduce((sum, l) => sum + l.quantite, 0);
     
-    return zone.nbTablesLibres! - tablesReservees;
+    return (zone.nbTablesLibres || 0) - tablesReservees;
   };
 
   // ----------------ligne de reservation zone tarifaire --------------------------
@@ -196,7 +198,7 @@ export class ReservationForm {
 
   getSelectedZones = (): Array<any> => {
     const zoneIds = new Set(this.lignes().map(l => l.zone_tarifaire_id));
-    return this.zones().filter(z => zoneIds.has(z.id));
+    return this.zones().filter(z => z.id !== undefined && zoneIds.has(z.id));
   };
   getZonePlanById = (id: number): any => {
     for (const zone of this.zones()) {
@@ -362,7 +364,7 @@ export class ReservationForm {
       this.reservationService.update(existingResa.id, payload).subscribe({
         next: () => { 
           alert("Réservation mise à jour !"); 
-          this.close.emit(); // <--- ON EMET L'EVENT
+          this.close.emit();
         },
         error: (err) => console.error("Erreur update:", err)
       });
@@ -371,7 +373,7 @@ export class ReservationForm {
       this.reservationService.create(payload).subscribe({
         next: () => { 
           alert("Réservation créée !"); 
-          this.close.emit(); // <--- ON EMET L'EVENT
+          this.close.emit();
         },
         error: (err) => console.error("Erreur create:", err)
       }); 

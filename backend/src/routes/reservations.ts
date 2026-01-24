@@ -4,6 +4,12 @@ import pool from '../db/database.js';
 
 const router = Router();
 
+export enum TailleTable {
+    PETITE = 'PETITE',
+    GRANDE = 'GRANDE',
+    MAIRIE = 'MAIRIE'
+}
+
 // ==============================================================================
 // 1. LECTURE PUBLIQUE (Visiteurs / App Mobile)
 // Règle : Pas de prix, on veut juste savoir QUI vient et avec QUOI.
@@ -160,7 +166,7 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
                         reservationId, 
                         j.jeu_id, 
                         j.nb_exemplaires || 1, 
-                        j.type_table || 'PETITE', 
+                        j.type_table || TailleTable.PETITE, 
                         j.tables_occupees || 1,
                         j.zone_plan_id || null // Optionnel à la création
                     ]
@@ -201,7 +207,7 @@ router.post('/:id/jeux', requireOrganisateurReservations(), async (req, res) => 
             `INSERT INTO JeuReserve 
              (reservation_id, jeu_id, zone_plan_id, type_table, tables_occupees, nb_exemplaires)
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [id, jeu_id, zone_plan_id, type_table || 'PETITE', tables_occupees || 1, nb_exemplaires || 1]
+            [id, jeu_id, zone_plan_id, type_table || TailleTable.PETITE, tables_occupees || 1, nb_exemplaires || 1]
         );
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -336,8 +342,8 @@ router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
                     // Insert
                     await client.query(
                         `INSERT INTO JeuReserve (reservation_id, jeu_id, nb_exemplaires, tables_occupees, type_table, zone_plan_id)
-                         VALUES ($1, $2, $3, $4, 'PETITE', $5)`,
-                        [id, j.jeu_id, j.nb_exemplaires, j.tables_occupees, j.zone_plan_id || null]
+                         VALUES ($1, $2, $3, $4, $5, $6)`,
+                        [id, j.jeu_id, j.nb_exemplaires, j.tables_occupees, TailleTable.PETITE, j.zone_plan_id || null]
                     );
                 }
             }

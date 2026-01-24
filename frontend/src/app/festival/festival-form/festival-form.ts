@@ -88,20 +88,18 @@ export class FestivalForm {
 
     if (this.form.valid) {
       const zonesPropres = this.zonesTarifaires().map(z => {
-        // On copie l'objet pour ne pas modifier l'affichage actuel
         const zoneClean = { ...z };
 
         // 1. Si l'ID est négatif (temporaire), on le supprime (undefined)
-        // Le backend verra "pas d'id" => INSERT
         if (zoneClean.id && zoneClean.id < 0) {
-           (zoneClean as any).id = undefined; 
+           zoneClean.id = undefined; 
         }
 
         if (zoneClean.zonesPlan) {
             zoneClean.zonesPlan = zoneClean.zonesPlan.map(p => {
                 const planClean = { ...p };
                 if (planClean.id && planClean.id < 0) {
-                    (planClean as any).id = undefined;
+                    planClean.id = undefined;
                 }
                 return planClean;
             });
