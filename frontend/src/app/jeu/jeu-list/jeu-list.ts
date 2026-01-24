@@ -108,14 +108,14 @@ export class JeuList implements OnInit {
 
   onAdd(formData: any): void {
     // Si on est sur la page d'un éditeur, on force l'ID
-    const targetEditeurId = this.editeurId() || formData.editeurId;
+    const targetEditeurId = this.editeurId() || formData.editeur_id; 
 
     const newJeu: JeuDto = {
       id: undefined, 
       nom: formData.nom,
-      typeG: formData.type,  
-      age_min: formData.ageMin,  
-      age_max: formData.ageMax,
+      typeG: formData.typeG,  
+      age_min: formData.age_min,  
+      age_max: formData.age_max,
       editeur_id: targetEditeurId, 
       editeur: undefined, 
       auteurs: [] 

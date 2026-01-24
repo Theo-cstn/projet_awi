@@ -1,78 +1,62 @@
 import { Component, output, inject, input, computed, effect } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
+import { PersonneService } from '../../personne/personne-service';
+import { UpperCasePipe } from '@angular/common'; // Import nécessaire pour le template
 import { JeuDto } from '../../types/jeu-dto';
-
 
 @Component({
   selector: 'app-jeu-form',
-  imports: [ReactiveFormsModule],
+  // ✅ On garde UpperCasePipe
+  imports: [ReactiveFormsModule, UpperCasePipe], 
   templateUrl: './jeu-form.html',
   styleUrl: './jeu-form.css',
 })
 export class JeuForm {
+  // ... (injections et inputs inchangés) ...
   private readonly editeurService = inject(EditeurListService);
-  // id de l'éditeur est optionnel - présent seulement si on vient d'un éditeur spécifique
-  editeurId = input<number|undefined>(undefined)
-  
-  // input du jeu que l'on modifie 
+  private readonly personneService = inject(PersonneService);
+
+  editeurId = input<number|undefined>(undefined);
   jeuAEditer = input<JeuDto | undefined>(undefined);
 
   modeEdition = computed(() => this.jeuAEditer() !== undefined);
-  
-  // ✨ L'éditeur est pré-sélectionné si on vient d'un éditeur OU si on édite un jeu
-  editeurPreSelected = computed(() => {
-    return this.editeurId() !== undefined || this.modeEdition();
-  });
+  editeurPreSelected = computed(() => this.editeurId() !== undefined || this.modeEdition());
 
   update = output<JeuDto>();
+  add = output<any>();
+  submitted = false;
 
   readonly form = new FormGroup({
-    nom: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3)]
-    }),
+    nom: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(3)] }),
+    ageMin: new FormControl<number | null>(null, { validators: [Validators.min(0)] }),
+    ageMax: new FormControl<number | null>(null, { validators: [Validators.min(0)] }),
+    editeur: new FormControl<number | null>(null, { validators: [Validators.required] }),
     
-    ageMin: new FormControl<number | undefined>(undefined, {
-      validators: [Validators.min(0)]
-    }),
+    auteurs: new FormControl<number[]>([], { nonNullable: true }),
     
-    ageMax: new FormControl<number | undefined>(undefined, {
-      validators: [Validators.min(0)]
-    }),
-
-    editeur: new FormControl<number|undefined>(undefined, {
-      validators: [Validators.required]
-    }),
-    
-    auteur: new FormControl<number | undefined>(undefined),
-    
-    type: new FormControl('', {
-      validators: [Validators.required]
-    }),
-    
-    taille: new FormControl<'petit' | 'grand' | undefined>(undefined)
+    type: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    taille: new FormControl<'petit' | 'grand' | null>(null)
   });
 
-  add = output<any>()
-  submitted = false
-
   constructor(){
-    // pré-remplir le formulaire quand jeuAEditer change
+    this.editeurService.loadEditeurs();
+    this.personneService.loadPersonnes(); 
+    
     effect(() => {
       const jeu = this.jeuAEditer();
       
       if (jeu) {
-        // Mode édition : pré-remplir le formulaire
         this.form.patchValue({
           nom: jeu.nom,
           ageMin: jeu.age_min,
           ageMax: jeu.age_max,
           editeur: jeu.editeur_id,
-          type: jeu.typeG
+          type: jeu.typeG,
+          // On mappe les objets auteurs vers un tableau d'IDs pour le formulaire
+          auteurs: jeu.auteurs?.map(a => a.id).filter((id): id is number => id !== undefined) || []
         });
       } else if (this.editeurId()) {
-        // Mode ajout avec éditeur pré-sélectionné
         this.form.patchValue({ editeur: this.editeurId() });
       }
     });
@@ -81,44 +65,44 @@ export class JeuForm {
   onSubmit(): void {
     this.submitted = true;
 
-    // Pré-remplir l'éditeur si nécessaire
+    // Logique de pré-sélection forcée (inchangée)
     if (this.editeurPreSelected()) {
-      // Si on vient d'un éditeur spécifique, on utilise cet ID
       if (this.editeurId()) {
         this.form.patchValue({ editeur: this.editeurId() });
       } 
-      // Sinon, si on est en mode édition, on utilise l'éditeur du jeu
       else if (this.modeEdition() && this.jeuAEditer()) {
         this.form.patchValue({ editeur: this.jeuAEditer()!.editeur_id });
       }
     }
 
     if (this.form.valid) {
+      // ✅ CORRECTION 3 : Utiliser getRawValue() pour avoir les valeurs propres
+      const f = this.form.getRawValue();
       const jeuEdit = this.jeuAEditer();
 
+      // Sécurité pour l'éditeur
+      if (!f.editeur) { console.error("Editeur manquant"); return; }
+
+      // ✅ CORRECTION 4 : Le Payload complet
+      const payload = {
+        nom: f.nom,
+        typeG: f.type,
+        age_min: f.ageMin, 
+        age_max: f.ageMax,
+        editeur_id: f.editeur,
+        
+        // IMPORTANT : On envoie la liste des IDs au backend via la clé 'auteurs_ids'
+        auteurs_ids: f.auteurs, 
+        
+        // Champs techniques pour le DTO Frontend (pas lus par le backend mais requis par TypeScript)
+        editeur: undefined as any,
+        auteurs: []
+      };
+
       if (jeuEdit) {
-        // Mode édition - émet via update
-        this.update.emit({
-          id: jeuEdit.id!,
-          nom: this.form.value.nom!,
-          typeG: this.form.value.type!,
-          age_min: this.form.value.ageMin ?? undefined, //convertit null en undefined
-          age_max: this.form.value.ageMax ?? undefined,
-          editeur_id: this.form.value.editeur!,
-          editeur: undefined as any,
-          auteurs: []
-        });
+        this.update.emit({ ...payload, id: jeuEdit.id! });
       } else {
-        // Mode création - émet via add
-        this.add.emit({
-          nom: this.form.value.nom!,
-          typeG: this.form.value.type!,
-          age_min: this.form.value.ageMin ?? undefined,
-          age_max: this.form.value.ageMax ?? undefined,
-          editeur_id: this.form.value.editeur!,
-          editeur: undefined as any,
-          auteurs: []
-        });
+        this.add.emit(payload);
       }
 
       this.form.reset();
@@ -126,33 +110,55 @@ export class JeuForm {
     }
   }
 
-  getErrorMessage(control: AbstractControl | null): string | null {
-    if (control != null) {
-      if (control.errors?.['required']) {
-        return "Champ obligatoire"
-      }
-      if (control.errors?.['minlength']) {
-        const required = control.errors['minlength'].requiredLength;
-        return `Minimum ${required} caractères`;
-      }
-      if (control.errors?.['min']) {
-        return "La valeur doit être positive"
-      }
+  ajouterAuteur(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const id = Number(select.value);
+
+    if (!id) return; // Sécurité si valeur vide
+
+    const actuels = this.form.controls.auteurs.value;
+    
+    // On évite les doublons
+    if (!actuels.includes(id)) {
+      this.form.controls.auteurs.setValue([...actuels, id]);
     }
-    return null
+
+    // On remet le select sur l'option par défaut
+    select.value = "";
   }
 
-  editeurs() {
-    return this.editeurService.editeurs();
+  // 2. Retirer un auteur quand on clique sur la croix
+  retirerAuteur(idToRemove: number): void {
+    const actuels = this.form.controls.auteurs.value;
+    this.form.controls.auteurs.setValue(actuels.filter(id => id !== idToRemove));
+  }
+
+  // 3. Helper pour afficher le nom dans les badges (car le form ne stocke que l'ID)
+  getNomAuteur(id: number): string {
+    const p = this.personnes().find(p => p.id === id);
+    return p ? `${p.prenom} ${p.nom}` : 'Inconnu';
+  }
+
+  personnes() {
+    return this.personneService.personnes();
+  }
+
+  getErrorMessage(control: AbstractControl | null): string | null {
+    if (control != null) {
+      if (control.errors?.['required']) return "Champ obligatoire";
+      if (control.errors?.['minlength']) return `Trop court`;
+      if (control.errors?.['min']) return "Doit être positif";
+    }
+    return null;
   }
   
+  editeurs() { return this.editeurService.editeurs(); }
+  
   getNomEditeur(): string {
-    // Si on vient d'un éditeur spécifique
-    if (this.editeurId()) {
+     if (this.editeurId()) {
       const editeur = this.editeurs().find(e => e.id === this.editeurId());
       return editeur?.nom || 'Editeur selectionné';
     }
-    // Si on est en mode édition, on récupère l'éditeur du jeu
     else if (this.modeEdition() && this.jeuAEditer()) {
       const editeur = this.editeurs().find(e => e.id === this.jeuAEditer()!.editeur_id);
       return editeur?.nom || 'Editeur du jeu';
@@ -160,14 +166,6 @@ export class JeuForm {
     return 'Editeur selectionné';
   }
 
-  readonly typesJeu = [
-    'Action',
-    'Aventure',
-    'RPG',
-    'Reflexion',
-    'Simulation',
-    'Strategie',
-    'Sport',
-    'Carte'
-  ];
+  
+  readonly typesJeu = ['Action', 'Aventure', 'RPG', 'Reflexion', 'Simulation', 'Strategie', 'Sport', 'Carte'];
 }

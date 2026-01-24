@@ -5,8 +5,8 @@ export interface JeuDto {
     id: number | undefined
     nom: string 
     typeG: string  
-    age_min: number | undefined
-    age_max: number | undefined
+    age_min: number | null; 
+    age_max: number | null;
     
     // Relations
     editeur_id: number  
