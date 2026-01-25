@@ -10,11 +10,18 @@ import { PersonneDto } from '../../types/personne-dto';
 export class ContactComponent {
   contact = input.required<PersonneDto>();
 
-  // Pour l'édition
   canEdit = input<boolean>(false);
   edit = output<PersonneDto>();
+  
+  delete = output<PersonneDto>();
 
   onEdit() {
     this.edit.emit(this.contact());
+  }
+
+  onDelete() {
+    if(confirm('Voulez-vous vraiment supprimer ce contact ?')) {
+      this.delete.emit(this.contact());
+    }
   }
 }

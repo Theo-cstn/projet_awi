@@ -78,6 +78,22 @@ export class ContactList {
     }
   }
 
+  onDeleteContact(contact: PersonneDto): void {
+    const editeurId = this.editeurId();
+    if (editeurId && contact.id) {
+      this.editeurService.deleteContact(editeurId, contact.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            console.log('Contact supprimé');
+            this.afficherFormulaire.set(false);
+            this.contactEnEdition.set(undefined);
+          },
+          error: (err) => console.error('Erreur suppression:', err)
+        });
+    }
+  }
+
   toggleFormulaire(): void {
     this.afficherFormulaire.update(v => !v);
   }
