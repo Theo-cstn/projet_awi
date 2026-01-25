@@ -18,19 +18,6 @@
     <p><strong>Prises :</strong> {{ reservation().nombre_prises }}</p>
     <p><strong>Tables :</strong> {{ totalTables() }}</p>
 
-    @if (reservation().lignes.length > 0) {
-      <div class="recap">
-        <strong>Zones :</strong>
-        <ul>
-          @for (ligne of reservation().lignes; track ligne.zone_tarifaire_id) {
-            <li>
-              Zone #{{ ligne.zone_tarifaire_id }} : {{ ligne.quantite }} tables
-            </li>
-          }
-        </ul>
-      </div>
-    }
-
     <p class="total-row">
       <strong>Total :</strong> 
       <span class="highlight">{{ totalPrix() }} €</span>
@@ -39,10 +26,10 @@
 
   <div class="card-actions">
     <button class="btn-edit" (click)="onEdit($event)">
-      ✏️ Modifier
+      Modifier
     </button>
     <button class="btn-delete" (click)="onRemove($event)">
-      🗑️ Supprimer
+      Supprimer
     </button>
   </div>
 </div>

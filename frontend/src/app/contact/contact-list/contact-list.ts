@@ -53,7 +53,7 @@ export class ContactList {
         nom: formData.nom,
         prenom: formData.prenom,
         email: formData.email,
-        poste: formData.poste
+        poste: formData.fonction
       };
       
       this.editeurService.addContact(id, newContact).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

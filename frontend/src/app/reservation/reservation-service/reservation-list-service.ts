@@ -22,7 +22,6 @@
       this.http.get<any[]>(url, { withCredentials: true })
       .subscribe({ 
         next: (data) => { 
-          
           const mapped: Reservation[] = data.map(r => ({ 
             id: r.id, 
             festival_id: r.festival_id, 
@@ -35,6 +34,7 @@
             lignes: r.lignes || [],
             statut: r.statut,
             jeux: r.jeux || []
+            
           })); 
           this._reservations.set(mapped); 
         }
