@@ -88,7 +88,7 @@ export class JeuForm {
         age_max: f.ageMax,
         editeur_id: f.editeur,
         
-        // IMPORTANT : On envoie la liste des IDs au backend via la clé 'auteurs_ids'
+        // On envoie la liste des IDs au backend via la clé 'auteurs_ids'
         auteurs_ids: f.auteurs, 
         
         // Champs techniques pour le DTO Frontend (pas lus par le backend mais requis par TypeScript)

@@ -26,6 +26,38 @@
   >
 </div>
 
+<!-- Filtre par type -->
+<div class="filter-bar">
+  <label for="type-select" class="filter-label">Filtrer par type :</label>
+  <select 
+    id="type-select"
+    class="type-select"
+    [value]="selectedType()"
+    (change)="selectedType.set($any($event.target).value)">
+    <option value="all">Tous les types</option>
+    @for (type of gameTypes; track type) {
+      <option [value]="type">{{ type }}</option>
+    }
+  </select>
+</div>
+
+<!-- Barre de tri -->
+<div class="sort-bar">
+  <span class="sort-label">Trier par :</span>
+  <button 
+    class="sort-btn"
+    [class.active]="sortField() === 'age_min'"
+    (click)="setSortField('age_min')">
+    Âge min{{ getSortIndicator('age_min') }}
+  </button>
+  <button 
+    class="sort-btn"
+    [class.active]="sortField() === 'age_max'"
+    (click)="setSortField('age_max')">
+    Âge max{{ getSortIndicator('age_max') }}
+  </button>
+</div>
+
 @if (afficherFormulaire()) {
   <div class="form-wrapper">
     <app-jeu-form
