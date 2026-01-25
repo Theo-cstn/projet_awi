@@ -99,8 +99,26 @@ router.post('/', requireOrganisateurJeux(), async (req, res) => {
         }
     }
 
+    // 3. Récupérer le jeu complet avec éditeur et auteurs
+    const fullGameResult = await client.query(
+      `SELECT 
+        j.id, j.nom, j.typeG, j.age_min, j.age_max, j.editeur_id, e.nom as nom_editeur,
+        COALESCE(
+          json_agg(json_build_object('id', p.id, 'nom', p.nom, 'prenom', p.prenom)) 
+          FILTER (WHERE p.id IS NOT NULL), 
+          '[]'
+        ) as auteurs
+      FROM Jeu j
+      JOIN Editeur e ON j.editeur_id = e.id
+      LEFT JOIN Auteurs_Jeux aj ON j.id = aj.jeu_id
+      LEFT JOIN Personne p ON aj.auteur_id = p.id
+      WHERE j.id = $1
+      GROUP BY j.id, e.nom`,
+      [newGame.id]
+    );
+
     await client.query('COMMIT');
-    res.status(201).json(newGame);
+    res.status(201).json(fullGameResult.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
     console.error(error);

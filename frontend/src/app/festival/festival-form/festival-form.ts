@@ -27,7 +27,7 @@ export class FestivalForm {
   modeEdition = computed(() => this.festivalAEditer() !== undefined);
   
   zonesTarifaires = signal<ZoneTarifaire[]>([]);
-  nextZoneId = signal<number>(0);
+  nextZoneId = signal<number>(-1);
   
   // Signal pour gérer l'édition d'une zone
   zoneEnEdition = signal<ZoneTarifaire | undefined>(undefined);
@@ -69,11 +69,7 @@ export class FestivalForm {
         if (this.lastLoadedFestivalId() !== festival.id) {
           this.zonesTarifaires.set(festival.zonesTarifaires || []);
           
-          // Mettre à jour le nextZoneId pour éviter les conflits d'ID
-          const maxId = festival.zonesTarifaires && festival.zonesTarifaires.length > 0
-            ? Math.max(...festival.zonesTarifaires.map(z => z.id || 0))
-            : 0;
-          this.nextZoneId.set(maxId + 1);
+          this.nextZoneId.set(-1);
           
           this.lastLoadedFestivalId.set(festival.id);
         }
@@ -81,7 +77,7 @@ export class FestivalForm {
         // Mode ajout : réinitialiser
         this.form.reset();
         this.zonesTarifaires.set([]);
-        this.nextZoneId.set(0);
+        this.nextZoneId.set(-1);
         this.lastLoadedFestivalId.set(undefined);
       }
     });
@@ -91,10 +87,31 @@ export class FestivalForm {
     const formValue = this.form.getRawValue();
 
     if (this.form.valid) {
+      const zonesPropres = this.zonesTarifaires().map(z => {
+        const zoneClean = { ...z };
+
+        // 1. Si l'ID est négatif (temporaire), on le supprime (undefined)
+        if (zoneClean.id && zoneClean.id < 0) {
+           zoneClean.id = undefined; 
+        }
+
+        if (zoneClean.zonesPlan) {
+            zoneClean.zonesPlan = zoneClean.zonesPlan.map(p => {
+                const planClean = { ...p };
+                if (planClean.id && planClean.id < 0) {
+                    planClean.id = undefined;
+                }
+                return planClean;
+            });
+        }
+
+        return zoneClean;
+      });
+
       const festivalEdit = this.festivalAEditer();
 
       if (festivalEdit) {
-        // Mode édition - émet via update
+        // Mode édition
         const updatedFestival: Festival = {
           id: festivalEdit.id!,
           nom: formValue.nom,
@@ -104,12 +121,12 @@ export class FestivalForm {
           nbTablesGrandes: formValue.nbTablesGrandes,
           nbTablesMairie: formValue.nbTablesMairie,
           nbTotalTables: this.nbTotalTables(),
-          zonesTarifaires: this.zonesTarifaires()
+          zonesTarifaires: zonesPropres
         };
         
         this.update.emit(updatedFestival);
       } else {
-        // Mode création - émet via add
+        // Mode création
         const festival: Omit<Festival, 'id'> = {
           nom: formValue.nom,
           date_debut: new Date(formValue.date_debut),
@@ -118,7 +135,7 @@ export class FestivalForm {
           nbTablesGrandes: formValue.nbTablesGrandes,
           nbTablesMairie: formValue.nbTablesMairie,
           nbTotalTables: this.nbTotalTables(),
-          zonesTarifaires: this.zonesTarifaires()
+          zonesTarifaires: zonesPropres
         };
         
         this.add.emit(festival);
@@ -134,7 +151,7 @@ export class FestivalForm {
         nbTablesMairie: undefined
       });
       this.zonesTarifaires.set([]);
-      this.nextZoneId.set(0);
+      this.nextZoneId.set(-1);
       this.lastLoadedFestivalId.set(undefined);
     }
   }
@@ -147,7 +164,7 @@ export class FestivalForm {
     };
     
     this.zonesTarifaires.update(zones => [...zones, zoneWithId]);
-    this.nextZoneId.update(id => id + 1);
+    this.nextZoneId.update(id => id - 1);
   }
 
   onUpdateZone(updatedZone: ZoneTarifaire): void {

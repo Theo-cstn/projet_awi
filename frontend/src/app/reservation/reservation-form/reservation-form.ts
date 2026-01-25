@@ -23,8 +23,13 @@ export class ReservationForm {
 
   festivalId = signal<number>(0);
   remiseGenerale = signal(0)
+
+  reservationAEditer = input<any>(undefined);
+
   // 1 = Zones & quantités, 2 = Jeux, 3 = Disposition
   currentPhase = signal<1 | 2 | 3>(1);
+
+  close = output<void>();
 
   // Liste des éditeurs 
   editeurs = this.editeurService.editeurs; 
@@ -53,7 +58,44 @@ export class ReservationForm {
     this.form.controls.type.valueChanges.subscribe(v => this.typeValue.set(v!));
     this.form.controls.remise_generale.valueChanges.subscribe(v => {
       this.remiseGenerale.set(v ?? 0)
-    })
+    });
+
+    effect(() => {
+      const resa = this.reservationAEditer();
+      if (resa) {
+        // 1. Remplir le formulaire principal
+        this.form.patchValue({
+          type: resa.type,
+          editeur_id: resa.editeur_id,
+          autre_nom_reservant: resa.autre_nom_reservant,
+          nombre_prises: resa.nombre_prises,
+          remise_generale: resa.remise_generale,
+          est_present: resa.est_present,
+          preferences_tables: resa.preferences_tables
+        });
+
+        // 2. Remplir les lignes (IMPORTANT: mapper les IDs pour le Smart Update)
+        if (resa.lignes) {
+             this.lignes.set(resa.lignes.map((l: any) => ({
+                 id: l.id,
+                 zone_tarifaire_id: l.zone_tarifaire_id,
+                 quantite: l.quantite,
+                 prix_unitaire_applique: l.prix_unitaire_applique
+             })));
+        }
+
+        // 3. Remplir les jeux
+        if (resa.jeux) {
+            this.lignesJeux.set(resa.jeux.map((j: any) => ({
+                id: j.id,
+                jeu_id: j.jeu_id,
+                nb_exemplaires: j.nb_exemplaires,
+                tables_occupees: j.tables_occupees,
+                zone_plan_id: j.zone_plan_id
+            })));
+        }
+      }
+    });
   }
 
   isEditeur = computed(() => this.typeValue() === 'Editeur');
@@ -79,7 +121,9 @@ export class ReservationForm {
   totalPrixAfterRed = computed(() => this.totalPrixBeforeRed() - this.remiseGenerale() );
 
   // Calcule les tables libres restantes pour chaque zone en tenant compte des lignes actuelles
-  getTablesLibresRestantes = (zoneId: number): number => {
+  getTablesLibresRestantes = (zoneId: number | undefined): number => {
+    if (zoneId === undefined) return 0;
+
     const zone = this.zones().find(z => z.id === zoneId);
     if (!zone) return 0;
     
@@ -87,7 +131,7 @@ export class ReservationForm {
       .filter(l => l.zone_tarifaire_id === zoneId)
       .reduce((sum, l) => sum + l.quantite, 0);
     
-    return zone.nbTablesLibres! - tablesReservees;
+    return (zone.nbTablesLibres || 0) - tablesReservees;
   };
 
   // ----------------ligne de reservation zone tarifaire --------------------------
@@ -154,7 +198,7 @@ export class ReservationForm {
 
   getSelectedZones = (): Array<any> => {
     const zoneIds = new Set(this.lignes().map(l => l.zone_tarifaire_id));
-    return this.zones().filter(z => zoneIds.has(z.id));
+    return this.zones().filter(z => z.id !== undefined && zoneIds.has(z.id));
   };
   getZonePlanById = (id: number): any => {
     for (const zone of this.zones()) {
@@ -310,16 +354,34 @@ export class ReservationForm {
       preferences_tables: value.preferences_tables ?? '',
       lignes: this.lignes(),
       jeux: this.lignesJeux()
-    }; 
-    this.reservationService.create(payload).subscribe(() => { 
-      alert("Réservation créée"); 
-      this.reservationService.loadReservations(this.festivalId());
-      this.router.navigate([`/festivals/${this.festivalId()}/reservations`]);
-    }); 
-  } 
+    };
+
+    // 2. Détection du mode (Création vs Édition)
+    const existingResa = this.reservationAEditer();
+
+    if (existingResa) {
+      // UPDATE
+      this.reservationService.update(existingResa.id, payload).subscribe({
+        next: () => { 
+          alert("Réservation mise à jour !"); 
+          this.close.emit();
+        },
+        error: (err) => console.error("Erreur update:", err)
+      });
+    } else {
+      // CREATE
+      this.reservationService.create(payload).subscribe({
+        next: () => { 
+          alert("Réservation créée !"); 
+          this.close.emit();
+        },
+        error: (err) => console.error("Erreur create:", err)
+      }); 
+    }
+  }
 
   cancel() {
-    this.router.navigate([`/festivals/${this.festivalId()}/reservations`]);
+    this.close.emit();
   }
   
   

@@ -111,7 +111,7 @@ export class JeuListService {
         const newJeu: JeuDto = {
           id: data.id,
           nom: data.nom,
-          typeG: data.typeG,
+          typeG: data.typeG || data.typeg,
           age_min: data.age_min,
           age_max: data.age_max,
           editeur_id: data.editeur_id,
@@ -142,7 +142,7 @@ export class JeuListService {
         const updatedJeu: JeuDto = {
           id: data.id,
           nom: data.nom,
-          typeG: data.typeg,
+          typeG: data.typeG || data.typeg,
           age_min: data.age_min,
           age_max: data.age_max,
           editeur_id: data.editeur_id,

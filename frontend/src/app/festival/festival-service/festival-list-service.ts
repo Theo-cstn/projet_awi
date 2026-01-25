@@ -34,8 +34,8 @@ export class FestivalListService {
           nom: plan.nom,
           nbTables: plan.nombre_tables,
         })) : [],
-        nbTotalTables: zone.zones_plan ? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0) : 0,
-        nbTablesLibres: zone.nb_tables_libres ?? (zone.zones_plan ? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0) : 0),
+        nbTotalTables: zone.nb_total_tables ?? (zone.zones_plan ? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0) : 0),
+        nbTablesLibres: zone.nb_tables_restantes ?? (zone.zones_plan ? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0) : 0),
       })) : [],
     };
   }

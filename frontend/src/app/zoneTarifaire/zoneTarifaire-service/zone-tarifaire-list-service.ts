@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { ZoneTarifaire } from '../../types/zone-tarifaire-dto';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -8,47 +9,52 @@ import { HttpClient } from '@angular/common/http';
 export class ZoneTarifaireListService {
   private http = inject(HttpClient); 
   
-  private readonly apiUrl = 'https://localhost:4000/api/zone-tarifaire/festival';
-  private readonly _zones = signal<ZoneTarifaire[]>([]);
+  private readonly apiUrl = environment.apiUrl + '/festivals';
   
+  private readonly _zones = signal<ZoneTarifaire[]>([]);
   readonly zones = this._zones.asReadonly();
   
   // Mapping backend → frontend 
   private mapZone(data: any): ZoneTarifaire {
+    
+    const rawPlans = data.zonesPlan || [];
 
-    const nbTablesLibres = data.nb_tables_libres ?? data.nbTablesLibres ?? 
-                           (data.nbTotalTables ? data.nbTotalTables - (data.nbTablesReservees ?? 0) : 
-                            (data.nb_total_tables ? data.nb_total_tables - (data.nb_tables_reservees ?? 0) : 0));
+    const mappedPlans = rawPlans.map((p: any) => ({
+        id: p.id,
+        nom: p.nom,
+        nbTables: p.nombre_tables ?? 0 
+    }));
 
-    const mapped = {
+    const mapped: ZoneTarifaire = {
       id: data.id, 
       nom: data.nom, 
-      prixTable: data.prix_table ?? data.prixTable,
-      prixM: data.prix_m2 ?? data.prixM,
-      nbTotalTables: data.nb_total_tables ?? data.nbTotalTables ?? 0,
-      nbTablesLibres,
-      zonesPlan: data.zones_plan ?? data.zonesPlan ?? [] 
+      
+      prixTable: typeof data.prix_table === 'string' ? parseFloat(data.prix_table) : (data.prix_table ?? 0),
+      prixM: typeof data.prix_m2 === 'string' ? parseFloat(data.prix_m2) : (data.prix_m2 ?? 0),
+      
+      nbTotalTables: data.nbTotalTables ?? 0,
+      nbTablesLibres: data.nbTablesLibres ?? 0,
+      
+      zonesPlan: mappedPlans 
     };
 
     return mapped;
   }
   
   loadZones(festivalId: number): void {
-    
-    const url = `${this.apiUrl}/${festivalId}`;
+    const url = `${this.apiUrl}/${festivalId}/zones`;
     
     this.http.get<any[]>(url, { withCredentials: true })
       .subscribe({ 
         next: (data) => {
-          
-          if (!data || data.length === 0) {
-            console.warn('⚠️ Aucune zone retournée par le serveur');
+
+          if (!data || !Array.isArray(data) || data.length === 0) {
+            console.warn('⚠️ Aucune zone valide retournée par le serveur');
             this._zones.set([]);
             return;
           }
           
           const mapped = data.map(z => this.mapZone(z));
-          
           this._zones.set(mapped);
         }, 
         error: (err) => {

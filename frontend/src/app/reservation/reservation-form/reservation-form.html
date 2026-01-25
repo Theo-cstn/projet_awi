@@ -49,9 +49,14 @@
       @for (l of lignes(); track $index) {
         <div class="ligne">
           <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)">
-            <option value="0">Sélectionner une zone</option>
+            <option value="0" [selected]="l.zone_tarifaire_id === 0">
+              Sélectionner une zone
+            </option>
+            
             @for (z of zones(); track z.id) {
-              <option [value]="z.id">{{ z.nom }} ({{ getTablesLibresRestantes(z.id) }} libres)</option>
+              <option [value]="z.id" [selected]="z.id === l.zone_tarifaire_id">
+                {{ z.nom }} ({{ getTablesLibresRestantes(z.id) }} libres)
+              </option>
             }
           </select>
 
@@ -89,8 +94,14 @@
 
       <!-- BOUTON CONTINUER PHASE 1 -->
       @if (currentPhase() === 1) {
-        <div class="phase-buttons">
-          <button type="button" (click)="goToPhase(2)" class="primary">Continuer vers Phase 2 →</button>
+        <div class="phase-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" (click)="submit()" class="secondary" style="background-color: #28a745; color: white; border: none;">
+            💾 Sauvegarder (Finir plus tard)
+          </button>
+          
+          <button type="button" (click)="goToPhase(2)" class="primary">
+            Continuer vers Phase 2 →
+          </button>
         </div>
       }
     </section>
@@ -117,13 +128,15 @@
         <!-- LIGNES DE JEUX -->
         @for (l of lignesJeux(); track $index) {
           <div class="ligneJeu">
-            <select (change)="updateGameLigne($index, +$any($event.target).value, l.nb_exemplaires, l.tables_occupees)">
+            <select [value]="l.jeu_id || 0" 
+                    (change)="updateGameLigne($index, +$any($event.target).value, l.nb_exemplaires, l.tables_occupees)">
+              
               <option value="0">Sélectionner un jeu</option>
+
               @for (j of jeuxFiltres(); track j.id) {
                 <option [value]="j.id">{{ j.nom }}</option>
               }
             </select>
-
             <div style="flex: 0 1 auto;">
               <label>Nombre d'exemplaires :</label>
               <input type="number"
@@ -160,8 +173,14 @@
 
         <!-- BOUTON CONTINUER PHASE 2 -->
         @if (currentPhase() === 2) {
-          <div class="phase-buttons">
-            <button type="button" (click)="goToPhase(3)" class="primary">Continuer vers Phase 3 →</button>
+          <div class="phase-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" (click)="submit()" class="secondary" style="background-color: #28a745; color: white; border: none;">
+              💾 Sauvegarder (Finir plus tard)
+            </button>
+
+            <button type="button" (click)="goToPhase(3)" class="primary">
+              Continuer vers Phase 3 →
+            </button>
           </div>
         }
       </section>
@@ -194,16 +213,21 @@
 
               <!-- SÉLECTION ZONE PLAN -->
               <label><strong>Sélectionner la zone plan :</strong></label>
-              <select [value]="l.zone_plan_id || 0"
-                      (change)="updateLignePlacement($index, +$any($event.target).value)">
-                <option value="0">-- Sélectionner une zone plan --</option>
+              
+              <select [value]="l.zone_plan_id || 0" (change)="updateLignePlacement($index, +$any($event.target).value)">
+                
+                <option value="0">
+                  -- Sélectionner une zone plan --
+                </option>
 
                 @for (zp of getAllZonesPlansForSelectedZones(); track zp.id) {
                   @if (canPlaceGameInZonePlan(zp.id, l.nb_exemplaires, l.tables_occupees, $index)) {
+                    
                     <option [value]="zp.id">
                       {{ zp.zone_tarifaire_nom }} • {{ zp.nom }}
                       ({{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces libres)
                     </option>
+
                   } @else {
                     <option [value]="zp.id" disabled>
                       {{ zp.zone_tarifaire_nom }} • {{ zp.nom }}
@@ -242,15 +266,24 @@
 
         <!-- BOUTON SOUMETTRE PHASE 3 -->
         <div class="phase-buttons">
-          <button type="button" (click)="submit()" class="primary">Créer la réservation</button>
+          <button type="button" (click)="submit()" class="primary">
+            {{ reservationAEditer() ? 'Enregistrer les modifications' : 'Créer la réservation' }}
+          </button>
         </div>
       </section>
     }
 
     <!-- BOUTON RETOUR -->
-    <div class="actions">
+    <div class="actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc;">
+      
+      <button type="button" (click)="cancel()" class="danger">
+        ❌ Annuler / Retour liste
+      </button>
+
       @if (currentPhase() > 1) {
-        <button type="button" (click)="goToPhase(currentPhase() - 1)" class="secondary">← Retour à la phase {{ currentPhase() - 1 }}</button>
+        <button type="button" (click)="goToPhase(currentPhase() - 1)" class="secondary">
+          ← Retour à la phase {{ currentPhase() - 1 }}
+        </button>
       }
     </div>
 

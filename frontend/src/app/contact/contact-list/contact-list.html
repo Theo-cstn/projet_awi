@@ -1,3 +1,12 @@
+@if (editeurId()) {
+<h1>Contact de {{ editeur()?.nom ?? '...' }}</h1>
+<button (click)="retourEditeurs()" class="link-back">
+← Retour aux éditeurs
+</button>
+} @else {
+<h1>Liste des Contacts</h1>
+}
+
 <button (click)="toggleFormulaire()">
     {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un contact' }}
 </button>

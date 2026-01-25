@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin } from '../middleware/roles.js';
+import { requireAdmin, requireOrganisateurJeux } from '../middleware/roles.js';
 import pool from '../db/database.js';
 
 const router = Router();
@@ -10,12 +10,11 @@ const router = Router();
 // ==============================================================================
 
 // GET /personnes - Liste complète
-router.get('/', requireAdmin(), async (_req, res) => {
+router.get('/', requireOrganisateurJeux(), async (_req, res) => {
     try {
         const query = `
             SELECT 
                 p.*,
-                -- Compter les relations (éditeurs + jeux)
                 (SELECT COUNT(*) FROM Editeur_Contact ec WHERE ec.contact_id = p.id) as nb_editeurs,
                 (SELECT COUNT(*) FROM Auteurs_Jeux aj WHERE aj.auteur_id = p.id) as nb_jeux
             FROM Personne p

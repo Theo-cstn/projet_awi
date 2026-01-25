@@ -6,48 +6,70 @@
     <div class="error">{{ getErrorMessage(form.controls.nom) }}</div>
   }
 
-  <input type="number" formControlName="ageMin" placeholder="Âge minimum" />
-  @if (form.controls.ageMin.invalid && submitted) {
-    <div class="error">{{ getErrorMessage(form.controls.ageMin) }}</div>
+  <div style="display: flex; gap: 10px;">
+    <input type="number" formControlName="ageMin" placeholder="Âge min" style="flex:1"/>
+    <input type="number" formControlName="ageMax" placeholder="Âge max" style="flex:1"/>
+  </div>
+  @if ((form.controls.ageMin.invalid || form.controls.ageMax.invalid) && submitted) {
+    <div class="error">Vérifiez les âges (positifs)</div>
   }
 
-  <input type="number" formControlName="ageMax" placeholder="Âge maximum" />
-  @if (form.controls.ageMax.invalid && submitted) {
-    <div class="error">{{ getErrorMessage(form.controls.ageMax) }}</div>
-  }
-
-  <!-- Traitement automatique ou non du champs editeur -->
   @if (editeurPreSelected()) {
     <label>Editeur: </label>
     <input type="text" [value]="getNomEditeur()" readonly />
   }
   @else {
     <select formControlName="editeur">
-      <option [value]="undefined">Selectionner un editeur</option>
+      <option [ngValue]="null">Selectionner un editeur</option>
       @for (editeur of editeurs(); track editeur.id){
-        <option [value]="editeur.id">{{ editeur.nom }}</option>
+        <option [ngValue]="editeur.id">{{ editeur.nom }}</option>
       }
     </select>
   }
   @if (form.controls.editeur.invalid && submitted) {
     <div class="error">{{ getErrorMessage(form.controls.editeur) }}</div>
   }
+  
+  <div style="margin-top: 15px; margin-bottom: 15px;">
+    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Auteurs</label>
+    
+   <select (change)="ajouterAuteur($event)" style="width: 100%; margin-bottom: 10px; padding: 8px;">
+      <option value="">Ajouter un auteur...</option>
+      @for (personne of personnes(); track personne.id) {
+        @if (personne.id && !form.value.auteurs?.includes(personne.id)) {
+          <option [value]="personne.id">
+            {{ (personne.nom) | uppercase }} {{ personne.prenom }}
+          </option>
+        }
+      }
+    </select>
 
-  <select formControlName="type">
-  <option value="">Sélectionner un type</option>
-  @for (type of typesJeu; track type) {
-    <option [value]="type">{{ type }}</option>
-  }
-</select>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      @for (auteurId of form.value.auteurs; track auteurId) {
+        <span class="badge-auteur">
+          {{ getNomAuteur(auteurId) }}
+          <button type="button" (click)="retirerAuteur(auteurId)" class="btn-remove" title="Retirer">×</button>
+        </span>
+      }
+      
+      @if (form.value.auteurs?.length === 0) {
+        <small style="color: #888; font-style: italic;">Aucun auteur pour le moment</small>
+      }
+    </div>
+  </div>
+
+  <select formControlName="type" style="margin-top: 15px;">
+    <option value="">Sélectionner un type</option>
+    @for (type of typesJeu; track type) {
+      <option [value]="type">{{ type }}</option>
+    }
+  </select>
   @if (form.controls.type.invalid && submitted) {
     <div class="error">{{ getErrorMessage(form.controls.type) }}</div>
   }
 
-  <select formControlName="taille">
-    <option value="">Taille du jeu</option>
-    <option value="petit">Petit</option>
-    <option value="grand">Grand</option>
-  </select>
+  <button type="button" (click)="onSubmit()" style="margin-top: 20px;">
+    {{ jeuAEditer() ? 'Modifier' : 'Enregistrer' }}
+  </button>
 
-  <button type="button" (click)="onSubmit()">{{ jeuAEditer() ? 'Modifier' : 'Enregistrer' }}</button>
 </form>

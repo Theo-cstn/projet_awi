@@ -82,7 +82,4 @@ export class EditeurList implements OnInit {
     return this.editeurs()?.filter(e => e.nom.toLowerCase().includes(term)) || [];
   });
 
-  edit(editeur: EditeurDto): void {
-    // TODO
-  }
 }

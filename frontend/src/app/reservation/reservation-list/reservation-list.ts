@@ -1,29 +1,32 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { ReservationListService } from '../reservation-service/reservation-list-service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { ReservationForm } from '../reservation-form/reservation-form';
 import { ReservationComponent } from '../reservation-component/reservation-component';
+import { Reservation } from '../../types/reservation-dto'; 
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-reservation-list',
-  imports: [ReservationComponent],
+  standalone: true,
+  imports: [ReservationForm, ReservationComponent],
   templateUrl: './reservation-list.html',
   styleUrl: './reservation-list.css',
 })
 export class ReservationList implements OnInit {
   private svc = inject(ReservationListService); 
   private route = inject(ActivatedRoute); 
-  private router = inject(Router); 
+  private destroyRef = inject(DestroyRef);
   
   festivalId = signal<number | undefined>(undefined); 
-  // Filtre les réservations pour afficher seulement celles du festival courant
+  showForm = signal(false);
+  reservationToEdit = signal<any>(undefined); 
+
   reservations = computed(() => {
     const fId = this.festivalId();
     const allReservations = this.svc.reservations();
-    if (!fId) {
-      return [];
-    }
-    const filtered = allReservations.filter(r => r.festival_id === fId);
-    return filtered;
+    if (!fId) return [];
+    return allReservations.filter(r => r.festival_id === fId);
   });
   
   ngOnInit(): void {
@@ -38,13 +41,60 @@ export class ReservationList implements OnInit {
       this.svc.loadReservations(numId);
     }
   } 
-  openReservation(rId: number) { 
-    this.router.navigate([`/festivals/${this.festivalId()}/reservations/${rId}`]); 
+
+  createRequest() {
+    this.reservationToEdit.set(undefined);
+    this.showForm.set(true);
   }
-  addReservation() {
-    this.router.navigate(['new'], { 
-      relativeTo: this.route,
-      state: { festivalId: this.festivalId() } 
-    });
+
+  editRequest(r: Reservation) {
+    if (!r.id) return;
+    
+    this.svc.getDetails(r.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (fullDetails: any) => {
+          const flatObj = {
+            ...fullDetails.reservation,
+            lignes: fullDetails.lignes,
+            jeux: fullDetails.jeux
+          };
+          this.reservationToEdit.set(flatObj);
+          this.showForm.set(true);
+        },
+        error: (err) => console.error("Erreur chargement détails", err)
+      });
+  }
+
+  onFormClose() {
+    this.showForm.set(false);
+    this.reservationToEdit.set(undefined);
+    if (this.festivalId()) {
+      this.svc.loadReservations(this.festivalId()!);
+    }
+  }
+
+  deleteRequest(r: Reservation) {
+    if (!r.id) return;
+    if (confirm("Supprimer cette réservation ?")) {
+      this.svc.delete(r.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          if (this.festivalId()) this.svc.loadReservations(this.festivalId()!);
+        });
+    }
+  }
+
+  updateStatusRequest(r: Reservation, newStatus: 'PRESENT' | 'FACTUREE' | 'PAYEE') {
+    if (!r.id) return;
+    
+    this.svc.updateStatut(r.id, newStatus)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          if (this.festivalId()) this.svc.loadReservations(this.festivalId()!);
+        },
+        error: (err) => console.error("Erreur update statut", err)
+      });
   }
 }

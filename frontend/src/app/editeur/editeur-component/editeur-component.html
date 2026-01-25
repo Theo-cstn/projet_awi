@@ -5,21 +5,6 @@
     <button class="btn-edit" (click)="onEdit()">Éditer</button>
   }
 
-  <div class="contacts">
-    <h3>
-      Contacts
-      <button (click)="toggleContacts($event)">
-        {{ showContacts() ? '▲' : '▼' }}
-      </button>
-    </h3>
-
-    @if (showContacts()) {
-      <app-contact-list 
-        [editeurId]="editeur().id">
-      </app-contact-list>
-    }
-  </div>
-
   <div class="links">
     <a [routerLink]="['/editeurs', editeur().id, 'jeux']" (click)="$event.stopPropagation()">
       Voir les jeux

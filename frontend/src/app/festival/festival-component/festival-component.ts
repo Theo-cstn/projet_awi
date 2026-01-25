@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Festival } from '../../types/festival-dto';
 import { ZoneTarifaireComponent } from "../../zoneTarifaire/zoneTarifaire-component/zone-tarifaire-component";
@@ -27,7 +27,20 @@ export class FestivalComponent {
   }
 
   onEdit(event: Event) {
-    event.stopPropagation(); // Empêche le clic de remonter à la carte parente
+    event.stopPropagation();
     this.edit.emit(this.festival());
   }
+
+  totalStockPhysique = computed(() => {
+    const f = this.festival();
+    return f.nbTablesPetites + f.nbTablesGrandes + f.nbTablesMairie;
+  });
+
+  totalCommercialCapacity = computed(() => {
+    return this.festival().zonesTarifaires.reduce((acc, z) => acc + (z.nbTotalTables || 0), 0);
+  });
+
+  totalCommercialRemaining = computed(() => {
+    return this.festival().zonesTarifaires.reduce((acc, z) => acc + (z.nbTablesLibres || 0), 0);
+  });
 }

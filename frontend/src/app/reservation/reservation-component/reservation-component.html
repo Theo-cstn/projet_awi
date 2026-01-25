@@ -1,29 +1,35 @@
 <div class="reservation-card">
-  <h3>{{ nomReservant() }}</h3>
+  <div class="card-header">
+    <h3>{{ nomReservant() }}</h3>
+    
+    <select 
+      class="status-select {{ reservation().statut ?? 'PRESENT' }}"
+      [value]="reservation().statut ?? 'PRESENT'" 
+      (change)="onStatusChange($event)">
+      
+      <option value="PRESENT">PRÉSENT</option>
+      <option value="FACTUREE">FACTURÉE</option>
+      <option value="PAYEE">PAYÉE</option>
+    </select>
+  </div>
 
-  <p><strong>Type :</strong> {{ reservation().type }}</p>
-  <p><strong>Nombre de prises :</strong> {{ reservation().nombre_prises }}</p>
-  <p><strong>Tables :</strong> {{ totalTables() }}</p>
+  <div class="card-body">
+    <p><strong>Type :</strong> {{ reservation().type }}</p>
+    <p><strong>Prises :</strong> {{ reservation().nombre_prises }}</p>
+    <p><strong>Tables :</strong> {{ totalTables() }}</p>
 
-  @if (reservation().lignes.length > 0) {
-    <div class="recap">
-      <strong>Répartition par zone :</strong>
-      <ul>
-        @for (ligne of reservation().lignes; track ligne.zone_tarifaire_id) {
-          <li>
-            Zone #{{ ligne.zone_tarifaire_id }}
-            — {{ ligne.quantite }} table(s) × {{ ligne.prix_unitaire_applique }} €
-            = {{ ligne.quantite * ligne.prix_unitaire_applique }} €
-          </li>
-        }
-      </ul>
-    </div>
-  }
+    <p class="total-row">
+      <strong>Total :</strong> 
+      <span class="highlight">{{ totalPrix() }} €</span>
+    </p>
+  </div>
 
-  @if (reservation().remise_generale > 0) {
-    <p><strong>Remise :</strong> -{{ reservation().remise_generale }} €</p>
-  }
-
-  <p><strong>Prix total :</strong> <span class="highlight">{{ totalPrix() }} €</span></p>
-
+  <div class="card-actions">
+    <button class="btn-edit" (click)="onEdit($event)">
+      Modifier
+    </button>
+    <button class="btn-delete" (click)="onRemove($event)">
+      Supprimer
+    </button>
+  </div>
 </div>
