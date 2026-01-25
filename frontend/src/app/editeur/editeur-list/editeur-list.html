@@ -64,11 +64,16 @@
 
 } @else {
   <div class="empty-message">
-    @if (searchTerm() !== '') {
-      <p>Aucun éditeur ne correspond à votre recherche.</p>
-    } @else if (svc.editeurs().length === 0) {
+    @if (svc.loading()) {
       <p class="loading">Chargement des éditeurs...</p>
-    } @else {
+    } 
+    @else if (searchTerm() !== '') {
+      <p>Aucun éditeur ne correspond à votre recherche.</p>
+    } 
+    @else if (svc.editeurs().length === 0) {
+      <p>Aucun éditeur pour ce festival.</p>
+    } 
+    @else {
       <p>Aucun éditeur trouvé.</p>
     }
   </div>

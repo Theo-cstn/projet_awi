@@ -1,8 +1,8 @@
 import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router'; // Ajout de Router
+import { ActivatedRoute, Router } from '@angular/router';
 import { JeuListService } from '../jeu-service/jeu-list-service';
-import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service'; // Ajout du service éditeur
+import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
 import { AuthService } from '../../shared/auth/auth.service';
 import { JeuComponent } from '../jeu-component/jeu-component';
 import { JeuForm } from '../jeu-form/jeu-form';

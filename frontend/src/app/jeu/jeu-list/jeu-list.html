@@ -105,12 +105,17 @@
 
 } @else {
   <div class="empty-message">
-    @if (searchTerm() !== '' || selectedType() !== 'all') {
-      <p>Aucun jeu ne correspond à votre recherche.</p>
-    } @else if (svc.jeux().length === 0) {
+    @if (svc.loading()) {
       <p class="loading">Chargement des jeux...</p>
-    } @else {
-       <p>Aucun jeu disponible.</p>
+    } 
+    @else if (searchTerm() !== '' || selectedType() !== 'all') {
+      <p>Aucun jeu ne correspond à votre recherche.</p>
+    } 
+    @else if (svc.jeux().length === 0) {
+      <p>Aucun jeu disponible pour le moment.</p>
+    } 
+    @else {
+       <p>Aucun jeu trouvé.</p>
     }
   </div>
 }
