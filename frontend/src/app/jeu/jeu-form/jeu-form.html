@@ -68,12 +68,6 @@
     <div class="error">{{ getErrorMessage(form.controls.type) }}</div>
   }
 
-  <select formControlName="taille" style="margin-top: 15px;">
-    <option [ngValue]="null">Taille du jeu</option>
-    <option value="petit">Petit</option>
-    <option value="grand">Grand</option>
-  </select>
-
   <button type="button" (click)="onSubmit()" style="margin-top: 20px;">
     {{ jeuAEditer() ? 'Modifier' : 'Enregistrer' }}
   </button>

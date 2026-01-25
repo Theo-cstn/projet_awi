@@ -69,9 +69,6 @@ export class EditeurListService {
     return this._editeurs().find((e) => e.id === id);
   }
 
-  // =========================================================
-  // ⚡️ GESTION DES CONTACTS (Uniformisée)
-  // =========================================================
   
   addContact(editeurId: number, contact: PersonneDto) {
     const payload = {

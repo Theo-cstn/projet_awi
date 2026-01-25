@@ -35,8 +35,7 @@ export class JeuForm {
     
     auteurs: new FormControl<number[]>([], { nonNullable: true }),
     
-    type: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    taille: new FormControl<'petit' | 'grand' | null>(null)
+    type: new FormControl('', { nonNullable: true, validators: [Validators.required] })
   });
 
   constructor(){
