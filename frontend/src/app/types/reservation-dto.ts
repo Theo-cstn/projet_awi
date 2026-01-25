@@ -20,7 +20,7 @@ export interface Reservation {
     id?: number;
     zone_tarifaire_id: number;
     quantite: number;
-    prix_unitaire_applique: number;
+    prix_moment_reservation: number;
   }[];
 
   jeux: {

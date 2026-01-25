@@ -49,7 +49,7 @@ export class ReservationForm {
     preferences_tables: new FormControl<string>('')
   });
 
-  lignes = signal<{ zone_tarifaire_id: number; quantite: number; prix_unitaire_applique: number }[]>([]);
+  lignes = signal<{ zone_tarifaire_id: number; quantite: number; prix_moment_reservation: number }[]>([]);
   lignesJeux = signal <{ jeu_id: number; nb_exemplaires: number, tables_occupees: number, zone_plan_id?: number}[]>([]);
 
   typeValue = signal<'Editeur' | 'Boutique' | 'Association' | 'Prestataire' | 'Autre'>('Autre');
@@ -80,7 +80,7 @@ export class ReservationForm {
                  id: l.id,
                  zone_tarifaire_id: l.zone_tarifaire_id,
                  quantite: l.quantite,
-                 prix_unitaire_applique: l.prix_unitaire_applique
+                 prix_moment_reservation: l.prix_moment_reservation
              })));
         }
 
@@ -116,7 +116,7 @@ export class ReservationForm {
   });
   
   totalTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite, 0) );
-  totalPrixTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite * l.prix_unitaire_applique, 0) );
+  totalPrixTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite * l.prix_moment_reservation, 0) );
   totalPrixBeforeRed = computed(() => this.totalPrixTables() + (250 * (this.form.controls.nombre_prises.value ?? 0)));
   totalPrixAfterRed = computed(() => this.totalPrixBeforeRed() - this.remiseGenerale() );
 
@@ -136,7 +136,7 @@ export class ReservationForm {
 
   // ----------------ligne de reservation zone tarifaire --------------------------
   addLigne() { 
-    this.lignes.update(list => [ ...list, { zone_tarifaire_id: 0, quantite: 0, prix_unitaire_applique: 0 } ]); 
+    this.lignes.update(list => [ ...list, { zone_tarifaire_id: 0, quantite: 0, prix_moment_reservation: 0 } ]); 
   }
   updateLigne(index: number, zoneId: number, quantite: number) { 
     const zone = this.zones().find(z => z.id === zoneId); 
@@ -154,7 +154,7 @@ export class ReservationForm {
       updated[index] = {
         zone_tarifaire_id: zoneId, 
         quantite, 
-        prix_unitaire_applique: zone.prixTable 
+        prix_moment_reservation: zone.prixTable 
       }; 
       return updated; 
     }); 

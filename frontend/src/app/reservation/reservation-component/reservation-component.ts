@@ -27,7 +27,7 @@ export class ReservationComponent {
   totalTables = computed(() => this.reservation().lignes.reduce((acc, l) => acc + l.quantite, 0) );
   
   totalPrix = computed(() => {
-    const lignesTotal = this.reservation().lignes.reduce((acc, l) => acc + l.quantite * l.prix_unitaire_applique, 0);
+    const lignesTotal = this.reservation().lignes.reduce((acc, l) => acc + l.quantite * l.prix_moment_reservation, 0);
     return lignesTotal - (this.reservation().remise_generale || 0);
   });
 

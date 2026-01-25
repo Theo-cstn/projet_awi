@@ -67,7 +67,7 @@ router.get('/festival/:id', requireOrganisateurReservations(), async (req, res) 
                 COALESCE(e.nom, r.autre_nom_reservant) as nom_reservant,
                 -- Calcul dynamique du total dû (Somme des lignes - Remise)
                 (
-                  SELECT COALESCE(SUM(quantite * prix_unitaire_applique), 0) 
+                  SELECT COALESCE(SUM(quantite * prix_moment_reservation), 0) 
                   FROM LigneReservation WHERE reservation_id = r.id
                 ) - COALESCE(r.remise_generale, 0) as total_a_payer,
                 -- Indicateur si des jeux sont déjà placés (Logistique commencée ?)
@@ -152,9 +152,9 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
         if (lignes && lignes.length > 0) {
             for (const l of lignes) {
                 await client.query(
-                    `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_unitaire_applique)
+                    `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_moment_reservation)
                      VALUES ($1, $2, $3, $4, $5)`,
-                    [reservationId, l.zone_tarifaire_id, l.type_emplacement, l.quantite, l.prix_unitaire_applique]
+                    [reservationId, l.zone_tarifaire_id, l.type_emplacement, l.quantite, l.prix_moment_reservation]
                 );
             }
         }
@@ -341,18 +341,18 @@ router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
             for (const l of lignes) {
                 if (l.id) {
                     await client.query(
-                        `UPDATE LigneReservation SET zone_tarifaire_id = $1, quantite = $2, prix_unitaire_applique = $3 WHERE id = $4`,
-                        [l.zone_tarifaire_id, l.quantite, l.prix_unitaire_applique, l.id]
+                        `UPDATE LigneReservation SET zone_tarifaire_id = $1, quantite = $2, prix_moment_reservation = $3 WHERE id = $4`,
+                        [l.zone_tarifaire_id, l.quantite, l.prix_moment_reservation, l.id]
                     );
                 } else {
                     await client.query(
-                        `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_unitaire_applique)
+                        `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_moment_reservation)
                          VALUES ($1, $2, $5, $3, $4)`, 
                         [
                             id, 
                             l.zone_tarifaire_id, 
                             l.quantite, 
-                            l.prix_unitaire_applique,
+                            l.prix_moment_reservation,
                             TypeEmplacement.TABLE
                         ]
                     );
