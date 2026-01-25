@@ -224,7 +224,7 @@ export class JeuList {
       
       setTimeout(() => {
         window.scrollTo({ 
-          top: document.body.scrollHeight
+          top: 0
         });
       }, 0);
     }

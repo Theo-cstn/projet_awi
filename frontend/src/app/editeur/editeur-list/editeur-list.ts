@@ -110,8 +110,8 @@ export class EditeurList implements OnInit {
       this.currentPage.set(newPage);
       
       setTimeout(() => {
-        window.scrollTo({ 
-          top: document.body.scrollHeight
+        window.scrollTo({
+          top: 0
         });
       }, 0);
     }
