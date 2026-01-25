@@ -25,4 +25,12 @@ export class PersonneService {
       error: (err) => console.error('Erreur chargement personnes:', err)
     });
   }
+
+  create(personne: Partial<PersonneDto>) {
+    return this.http.post<PersonneDto>(this.apiUrl, personne, { withCredentials: true });
+  }
+
+  addPersonneLocal(personne: PersonneDto): void {
+    this._personnes.update(listeActuelle => [...listeActuelle, personne]);
+  }
 }

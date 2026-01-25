@@ -26,7 +26,6 @@
   >
 </div>
 
-<!-- Filtre par type -->
 <div class="filter-bar">
   <label for="type-select" class="filter-label">Filtrer par type :</label>
   <select 
@@ -41,7 +40,6 @@
   </select>
 </div>
 
-<!-- Barre de tri -->
 <div class="sort-bar">
   <span class="sort-label">Trier par :</span>
   <button 
@@ -70,8 +68,9 @@
 }
 
 @if (filteredJeux().length > 0) {
+  
   <div class="games-grid">
-    @for (jeu of filteredJeux(); track jeu.id) {
+    @for (jeu of paginatedJeux(); track jeu.id) {
       <div class="jeu-card">
         <app-jeu-component 
           [jeu]="jeu"
@@ -79,15 +78,39 @@
           (edit)="onEdit($event)">
         </app-jeu-component>
       </div>
-    } @empty {
-      <div class="empty-message">
-        <p>Aucun jeu trouvé.</p>
-        @if (editeurId() && !isFestivalMode()) {
-           <p>Soyez le premier à ajouter un jeu pour cet éditeur !</p>
-        }
-      </div>
     }
   </div>
+
+  @if (totalPages() > 1) {
+    <div class="pagination-controls">
+      <button 
+        class="btn-page" 
+        [disabled]="currentPage() === 1"
+        (click)="changePage(currentPage() - 1)">
+        Précédent
+      </button>
+
+      <span class="page-info">
+        Page {{ currentPage() }} sur {{ totalPages() }}
+      </span>
+
+      <button 
+        class="btn-page" 
+        [disabled]="currentPage() === totalPages()"
+        (click)="changePage(currentPage() + 1)">
+        Suivant
+      </button>
+    </div>
+  }
+
 } @else {
-  <p class="loading">Chargement des jeux...</p>
+  <div class="empty-message">
+    @if (searchTerm() !== '' || selectedType() !== 'all') {
+      <p>Aucun jeu ne correspond à votre recherche.</p>
+    } @else if (svc.jeux().length === 0) {
+      <p class="loading">Chargement des jeux...</p>
+    } @else {
+       <p>Aucun jeu disponible.</p>
+    }
+  </div>
 }

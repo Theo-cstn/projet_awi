@@ -2,14 +2,16 @@
   <h2>{{ jeuAEditer() ? 'Modifier le jeu' : 'Ajouter un jeu' }}</h2>
 
   <input type="text" formControlName="nom" placeholder="Nom du jeu" />
+  
   @if (form.controls.nom.invalid && submitted) {
     <div class="error">{{ getErrorMessage(form.controls.nom) }}</div>
   }
 
-  <div style="display: flex; gap: 10px;">
-    <input type="number" formControlName="ageMin" placeholder="Âge min" style="flex:1"/>
-    <input type="number" formControlName="ageMax" placeholder="Âge max" style="flex:1"/>
+  <div class="row-ages">
+    <input type="number" formControlName="ageMin" placeholder="Âge min" />
+    <input type="number" formControlName="ageMax" placeholder="Âge max" />
   </div>
+  
   @if ((form.controls.ageMin.invalid || form.controls.ageMax.invalid) && submitted) {
     <div class="error">Vérifiez les âges (positifs)</div>
   }
@@ -26,15 +28,39 @@
       }
     </select>
   }
+  
   @if (form.controls.editeur.invalid && submitted) {
     <div class="error">{{ getErrorMessage(form.controls.editeur) }}</div>
   }
   
-  <div style="margin-top: 15px; margin-bottom: 15px;">
-    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Auteurs</label>
+  <div class="section-auteurs">
     
-   <select (change)="ajouterAuteur($event)" style="width: 100%; margin-bottom: 10px; padding: 8px;">
-      <option value="">Ajouter un auteur...</option>
+    <div class="header-auteurs">
+        <label class="label-bold">Auteurs</label>
+        <button type="button" class="btn-small" (click)="toggleNewAuteur()">
+            {{ showNewAuteur() ? 'Annuler' : '+ Nouveau' }}
+        </button>
+    </div>
+
+    @if (showNewAuteur()) {
+        <div [formGroup]="auteurForm" class="sub-form">
+            <div class="row-names">
+                <input formControlName="nom" placeholder="Nom *" />
+                <input formControlName="prenom" placeholder="Prénom *" />
+            </div>
+            <input formControlName="email" placeholder="Email (optionnel)" class="input-email" />
+            
+            <button type="button" 
+                    class="btn-full"
+                    (click)="saveNewAuteur()" 
+                    [disabled]="auteurForm.invalid">
+                Valider et Ajouter
+            </button>
+        </div>
+    }
+    
+    <select (change)="ajouterAuteur($event)">
+      <option value="">Sélectionner un auteur existant...</option>
       @for (personne of personnes(); track personne.id) {
         @if (personne.id && !form.value.auteurs?.includes(personne.id)) {
           <option [value]="personne.id">
@@ -44,7 +70,7 @@
       }
     </select>
 
-    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+    <div class="badges-list">
       @for (auteurId of form.value.auteurs; track auteurId) {
         <span class="badge-auteur">
           {{ getNomAuteur(auteurId) }}
@@ -53,22 +79,23 @@
       }
       
       @if (form.value.auteurs?.length === 0) {
-        <small style="color: #888; font-style: italic;">Aucun auteur pour le moment</small>
+        <small class="text-muted">Aucun auteur pour le moment</small>
       }
     </div>
   </div>
 
-  <select formControlName="type" style="margin-top: 15px;">
+  <select formControlName="type" class="mt-15">
     <option value="">Sélectionner un type</option>
     @for (type of typesJeu; track type) {
       <option [value]="type">{{ type }}</option>
     }
   </select>
+  
   @if (form.controls.type.invalid && submitted) {
     <div class="error">{{ getErrorMessage(form.controls.type) }}</div>
   }
 
-  <button type="button" (click)="onSubmit()" style="margin-top: 20px;">
+  <button type="button" (click)="onSubmit()" class="mt-20">
     {{ jeuAEditer() ? 'Modifier' : 'Enregistrer' }}
   </button>
 
