@@ -23,13 +23,18 @@
     <p><strong>Tables restantes à vendre :</strong> {{ totalCommercialRemaining() }}</p>
   </div>
 
-
-  <div class="zones-tarifaires">
-    <h3>Zones tarifaires :</h3>
-    @for (zone of festival()!.zonesTarifaires; track zone.id!) {
-      <app-zone-tarifaire-component
-        [zoneT]="zone">
-      </app-zone-tarifaire-component>
-    }
+  <div class="zones-header" (click)="toggleZones($event)">
+    <h3>Zones tarifaires</h3>
+    <span class="arrow-icon" [class.rotated]="zonesVisible()">▼</span>
   </div>
+
+  @if (zonesVisible()) {
+    <div class="zones-tarifaires animate-slide-down">
+      @for (zone of festival()!.zonesTarifaires; track zone.id!) {
+        <app-zone-tarifaire-component
+          [zoneT]="zone">
+        </app-zone-tarifaire-component>
+      }
+    </div>
+  }
 </div>
