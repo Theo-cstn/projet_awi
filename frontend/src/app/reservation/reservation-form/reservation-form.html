@@ -3,11 +3,9 @@
 
   <form [formGroup]="form">
 
-    <!-- ========== PHASE 1 : INFORMATIONS RÉSERVANT ========== -->
     <section>
-      <h3>Phase 1 - Informations du réservant</h3>
+      <h3>Informations du réservant</h3>
 
-      <!-- TYPE DE RÉSERVANT -->
       <label>Type de réservant</label>
       <select formControlName="type">
         <option value="Editeur">Éditeur</option>
@@ -17,7 +15,6 @@
         <option value="Autre">Autre</option>
       </select>
 
-      <!-- SÉLECTION ÉDITEUR (si type = Éditeur) -->
       @if (isEditeur()) {
         <label>Éditeur</label>
         <select formControlName="editeur_id">
@@ -32,17 +29,14 @@
         </label>
       }
 
-      <!-- NOM DU RÉSERVANT (si type ≠ Éditeur) -->
       @if (!isEditeur()) {
         <label>Nom du réservant</label>
         <input type="text" formControlName="autre_nom_reservant">
       }
 
-      <!-- NOMBRE DE PRISES -->
       <label>Nombre de prises</label>
       <input type="number" formControlName="nombre_prises">
 
-      <!-- LIGNES TARIFAIRES -->
       <h3>Lignes tarifaires</h3>
       <button type="button" (click)="addLigne()">Ajouter une ligne</button>
 
@@ -70,7 +64,6 @@
         </div>
       }
 
-      <!-- RÉSUMÉ TARIFICATION -->
       <div class="recap">
         <p><strong>Total tables :</strong> {{ totalTables() }}</p>
         <p><strong>Montant des tables :</strong> {{ totalPrixTables() }} €</p>
@@ -85,34 +78,30 @@
         }
       </div>
 
-      <!-- PRÉFÉRENCES -->
       <label>Commentaire - Préférence des tables</label>
       <textarea formControlName="preferences_tables"
                 placeholder="Entrez vos commentaires, préférences ou demandes spéciales..."
                 rows="4">
       </textarea>
 
-      <!-- BOUTON CONTINUER PHASE 1 -->
       @if (currentPhase() === 1) {
-        <div class="phase-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button type="button" (click)="submit()" class="secondary" style="background-color: #28a745; color: white; border: none;">
-            💾 Sauvegarder (Finir plus tard)
+        <div class="phase-buttons">
+          <button type="button" (click)="submit()" class="btn-save">
+            Sauvegarder (Finir plus tard)
           </button>
           
           <button type="button" (click)="goToPhase(2)" class="primary">
-            Continuer vers Phase 2 →
+            Continuer vers Phase 2
           </button>
         </div>
       }
     </section>
 
-    <!-- ========== PHASE 2 : SÉLECTION DES JEUX ========== -->
     @if (currentPhase() >= 2) {
       <hr>
       <section>
-        <h3>Phase 2 - Sélection des jeux à présenter</h3>
+        <h3>Sélection des jeux à présenter</h3>
 
-        <!-- MESSAGE D'AVERTISSEMENT -->
         <div class="recap" [class.recap-error]="hasTablesExceeded()">
           {{ getTablesWarningMessage() }}
         </div>
@@ -125,7 +114,6 @@
 
         <button type="button" (click)="addGameLigne()">Ajouter un jeu</button>
 
-        <!-- LIGNES DE JEUX -->
         @for (l of lignesJeux(); track $index) {
           <div class="ligneJeu">
             <select [value]="l.jeu_id || 0" 
@@ -137,12 +125,13 @@
                 <option [value]="j.id">{{ j.nom }}</option>
               }
             </select>
-            <div style="flex: 0 1 auto;">
+            
+            <div class="qty-group">
               <label>Nombre d'exemplaires :</label>
               <input type="number"
+                     class="input-qty"
                      [value]="l.nb_exemplaires"
                      min="1"
-                     style="width: 100px;"
                      (input)="updateGameLigne($index, l.jeu_id, +$any($event.target).value, l.tables_occupees)">
             </div>
 
@@ -171,47 +160,41 @@
           </div>
         }
 
-        <!-- BOUTON CONTINUER PHASE 2 -->
         @if (currentPhase() === 2) {
-          <div class="phase-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button type="button" (click)="submit()" class="secondary" style="background-color: #28a745; color: white; border: none;">
-              💾 Sauvegarder (Finir plus tard)
+          <div class="phase-buttons">
+            <button type="button" (click)="submit()" class="btn-save">
+              Sauvegarder (Finir plus tard)
             </button>
 
             <button type="button" (click)="goToPhase(3)" class="primary">
-              Continuer vers Phase 3 →
+              Continuer vers Phase 3
             </button>
           </div>
         }
       </section>
     }
 
-    <!-- ========== PHASE 3 : DISPOSITION DES JEUX ========== -->
     @if (currentPhase() >= 3) {
       <hr>
       <section>
-        <h3>Phase 3 - Disposition des jeux dans les zones</h3>
+        <h3>Disposition des jeux dans les zones</h3>
 
         <p><strong>Positionnez chaque jeu dans les zones plan de vos zones tarifaires réservées :</strong></p>
 
-        <!-- ERREUR : AUCUNE ZONE -->
         @if (getSelectedZones().length === 0) {
           <div class="recap recap-error">
-            <strong>❌ Erreur:</strong> Aucune zone tarifaire réservée. Veuillez revenir à la phase 1 et réserver au moins une zone.
+            <strong>Erreur:</strong> Aucune zone tarifaire réservée. Veuillez revenir à la phase 1 et réserver au moins une zone.
           </div>
         } @else {
-          <!-- PLACEMENT DE CHAQUE JEU -->
           @for (l of lignesJeux(); track $index) {
             <div class="ligneDisposition">
 
-              <!-- INFO JEU -->
               <div class="game-info">
-                <strong>🎮 Jeu {{ $index + 1 }}: {{ getJeuName(l.jeu_id) }}</strong>
+                <strong>Jeu {{ $index + 1 }}: {{ getJeuName(l.jeu_id) }}</strong>
                 <br>
                 <small>Exemplaires: {{ l.nb_exemplaires }}, {{ l.tables_occupees }} table par exemplaire</small>
               </div>
 
-              <!-- SÉLECTION ZONE PLAN -->
               <label><strong>Sélectionner la zone plan :</strong></label>
               
               <select [value]="l.zone_plan_id || 0" (change)="updateLignePlacement($index, +$any($event.target).value)">
@@ -231,23 +214,22 @@
                   } @else {
                     <option [value]="zp.id" disabled>
                       {{ zp.zone_tarifaire_nom }} • {{ zp.nom }}
-                      (❌ Pas assez d'espace: {{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces, {{ l.nb_exemplaires * l.tables_occupees }} nécessaires)
+                      (Pas assez d'espace: {{ getTablesLibresInZonePlan(zp.id, $index) }}/{{ zp.nbTables }} espaces, {{ l.nb_exemplaires * l.tables_occupees }} nécessaires)
                     </option>
                   }
                 }
               </select>
 
-              <!-- STATUT PLACEMENT -->
               @if (l.zone_plan_id) {
                 @if (canPlaceGameInZonePlan(l.zone_plan_id, l.nb_exemplaires, l.tables_occupees, $index)) {
                   <div class="placement-success">
-                    <strong>✅ Placé dans: {{ getZonePlanName(l.zone_plan_id) }}</strong>
+                    <strong>Placé dans: {{ getZonePlanName(l.zone_plan_id) }}</strong>
                     <br>
                     <small>Espaces utilisés: {{ l.nb_exemplaires * l.tables_occupees }}/{{ getZonePlanNbTables(l.zone_plan_id) }}</small>
                   </div>
                 } @else {
                   <div class="placement-error">
-                    <strong>❌ Erreur: Pas assez d'espace dans cette zone plan!</strong>
+                    <strong>Erreur: Pas assez d'espace dans cette zone plan!</strong>
                     <br>
                     <small>
                       Espaces nécessaires: {{ l.nb_exemplaires * l.tables_occupees }},
@@ -257,14 +239,13 @@
                 }
               } @else {
                 <div class="placement-warning">
-                  ⚠️ Zone plan non définie - le placement sera aléatoire
+                  Zone plan non définie - le placement sera aléatoire
                 </div>
               }
             </div>
           }
         }
 
-        <!-- BOUTON SOUMETTRE PHASE 3 -->
         <div class="phase-buttons">
           <button type="button" (click)="submit()" class="primary">
             {{ reservationAEditer() ? 'Enregistrer les modifications' : 'Créer la réservation' }}
@@ -273,16 +254,14 @@
       </section>
     }
 
-    <!-- BOUTON RETOUR -->
-    <div class="actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc;">
-      
+    <div class="actions">
       <button type="button" (click)="cancel()" class="danger">
-        ❌ Annuler / Retour liste
+        Annuler / Retour liste
       </button>
 
       @if (currentPhase() > 1) {
         <button type="button" (click)="goToPhase(currentPhase() - 1)" class="secondary">
-          ← Retour à la phase {{ currentPhase() - 1 }}
+          Retour à la phase {{ currentPhase() - 1 }}
         </button>
       }
     </div>

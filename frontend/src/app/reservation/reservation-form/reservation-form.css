@@ -30,13 +30,7 @@ textarea {
   resize: vertical;
 }
 
-input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-  margin-right: 8px;
-}
-
-input[type="radio"] {
+input[type="checkbox"], input[type="radio"] {
   width: auto;
   margin: 0;
   margin-right: 8px;
@@ -59,6 +53,7 @@ input[type="radio"] {
   font-weight: normal;
 }
 
+/* Lignes (Zones et Jeux) */
 .ligne, .ligneJeu, .ligneDisposition {
   display: flex;
   gap: 10px;
@@ -68,15 +63,20 @@ input[type="radio"] {
 }
 
 .ligne input,
-.ligne select {
-  flex: 1;
-  min-width: 100px;
-}
-
+.ligne select,
 .ligneJeu input,
 .ligneJeu select {
   flex: 1;
   min-width: 100px;
+}
+
+/* Groupes spécifiques ligne Jeu */
+.qty-group {
+  flex: 0 1 auto;
+}
+
+.input-qty {
+  width: 100px !important; /* Force la largeur fixe pour la quantité */
 }
 
 .radio-group {
@@ -87,10 +87,10 @@ input[type="radio"] {
 
 .radio-group label {
   margin: 0;
-  margin-top: 0;
   font-weight: normal;
 }
 
+/* Récapitulatifs */
 .recap {
   margin-top: 20px;
   background: #f5f7fa;
@@ -98,17 +98,20 @@ input[type="radio"] {
   border-radius: 4px;
 }
 
-.highlight {
-  color: #2e7d32;
-  font-weight: bold;
+.recap-error {
+  background-color: #ffe6e6 !important;
+  color: #d32f2f;
+  border: 1px solid #d32f2f;
 }
 
+/* Boutons */
 button {
   padding: 8px 14px;
   border-radius: 4px;
   border: none;
   cursor: pointer;
   font-weight: 600;
+  transition: opacity 0.2s, background-color 0.2s;
 }
 
 button:hover {
@@ -142,9 +145,30 @@ button:hover {
   background: #b71c1c;
 }
 
-.phase-buttons,
-.actions {
+.btn-save {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-save:hover {
+  background-color: #218838;
+}
+
+/* Navigation et Actions */
+.phase-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
   margin-top: 25px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #ccc;
 }
 
 hr {
@@ -153,18 +177,13 @@ hr {
   border-top: 2px solid #ddd;
 }
 
+/* Feedback Placement Jeux */
 .game-info {
   background-color: #f0f8ff;
   padding: 10px;
   border-radius: 3px;
   width: 100%;
   margin-bottom: 10px;
-}
-
-.recap-error {
-  background-color: #ffe6e6 !important;
-  color: #d32f2f;
-  border: 2px solid #d32f2f;
 }
 
 .placement-success {

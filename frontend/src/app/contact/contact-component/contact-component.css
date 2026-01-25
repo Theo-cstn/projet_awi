@@ -19,6 +19,10 @@
     margin: 0;
     line-height: 1.8;
 }
+.actions {
+    display: flex;
+    gap: 10px;
+}
 
 .btn {
     margin-top: 10px;
