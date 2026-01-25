@@ -1,0 +1,77 @@
+<div class="suivi-container">
+  <h2>Workflow de suivi des éditeurs</h2>
+
+  <!-- Filtre par état -->
+  <div class="filters">
+    <label for="filtre-etat">Filtrer par état :</label>
+    <select id="filtre-etat" (change)="changerFiltre($event)">
+      @for (etat of etatsDisponibles; track etat.value) {
+        <option [value]="etat.value">{{ etat.label }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Table des suivis -->
+  @if (suivisFiltres().length > 0) {
+    <div class="table-responsive">
+      <table class="suivi-table">
+        <thead>
+          <tr>
+            <th>Éditeur</th>
+            <th>État</th>
+            <th>Dates de contact</th>
+            <th>Nb jeux</th>
+            <th>Responsable</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (suivi of suivisFiltres(); track suivi.editeur_id) {
+            <tr>
+              <td class="editeur-nom">{{ suivi.editeur_nom }}</td>
+              <td>
+                <select
+                  class="select-etat"
+                  (change)="changerEtat(suivi.editeur_id, $any($event.target).value)"
+                  [disabled]="auth.currentUser()?.role !== 'organisateur_reservations' && !auth.isAdmin()"
+                >
+                  @for (etat of etatsWorkflow; track etat.value) {
+                    <option [value]="etat.value" [selected]="etat.value === suivi.etat">
+                      {{ etat.label }}
+                    </option>
+                  }
+                </select>
+              </td>
+              <td class="dates-contact">
+                {{ formaterDatesContact(suivi.dates_contact) }}
+              </td>
+              <td class="text-center">{{ suivi.nb_jeux }}</td>
+              <td>{{ suivi.responsable_nom || '-' }}</td>
+              <td>
+                @if (suivi.etat === 'PAS_CONTACTE') {
+                  <button
+                    class="btn-contact"
+                    (click)="prendreContact(suivi.editeur_id)"
+                    [disabled]="auth.currentUser()?.role !== 'organisateur_reservations' && !auth.isAdmin()"
+                  >
+                    Prendre contact
+                  </button>
+                } @else {
+                  <button
+                    class="btn-contact-secondary"
+                    (click)="prendreContact(suivi.editeur_id)"
+                    [disabled]="auth.currentUser()?.role !== 'organisateur_reservations' && !auth.isAdmin()"
+                  >
+                    Relancer
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="no-data">Aucun éditeur à afficher avec ce filtre.</p>
+  }
+</div>

@@ -1,0 +1,130 @@
+.suivi-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.filters {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filters label {
+  font-weight: bold;
+}
+
+.filters select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.suivi-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.suivi-table thead {
+  background-color: #f0f0f0;
+}
+
+.suivi-table th,
+.suivi-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.suivi-table th {
+  font-weight: bold;
+  color: #555;
+}
+
+.suivi-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.editeur-nom {
+  font-weight: 500;
+  color: #333;
+}
+
+.select-etat {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 13px;
+  width: 100%;
+  max-width: 250px;
+}
+
+.select-etat:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.dates-contact {
+  font-size: 13px;
+  color: #666;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.btn-contact,
+.btn-contact-secondary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.3s;
+}
+
+.btn-contact {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-contact:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn-contact-secondary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-contact-secondary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.btn-contact:disabled,
+.btn-contact-secondary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+}
