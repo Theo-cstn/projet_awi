@@ -27,13 +27,20 @@ router.get('/:festivalId', requireOrganisateurReservations(), async (req, res) =
                 u.id as responsable_id,
                 u.login as responsable_nom,
 
+                -- Dates de contact (array JSONB)
+                COALESCE(s.dates_contact, '[]'::jsonb) as dates_contact,
+
                 -- Bonus : Combien de jeux ont-ils dans notre base ?
                 -- Utile pour savoir si c'est un "gros" éditeur à prioriser
-                (SELECT COUNT(*) FROM Jeu j WHERE j.editeur_id = e.id) as nb_jeux
+                (SELECT COUNT(*) FROM Jeu j WHERE j.editeur_id = e.id) as nb_jeux,
+
+                -- ID de la réservation si elle existe pour cet éditeur dans ce festival
+                r.id as reservation_id
             
             FROM Editeur e
             LEFT JOIN SuiviEditeur s ON e.id = s.editeur_id AND s.festival_id = $1
             LEFT JOIN Users u ON s.responsable_id = u.id
+            LEFT JOIN Reservation r ON r.editeur_id = e.id AND r.festival_id = $1
             ORDER BY e.nom ASC
         `;
         
@@ -46,7 +53,37 @@ router.get('/:festivalId', requireOrganisateurReservations(), async (req, res) =
 });
 
 // ==============================================================================
-// 2. MISE À JOUR (Action de prospection)
+// 2. PRENDRE CONTACT (Ajoute une date de contact)
+// Règle : Orga Résa
+// ==============================================================================
+router.post('/contact', requireOrganisateurReservations(), async (req, res) => {
+    const { festival_id, editeur_id } = req.body;
+    
+    try {
+        // On ajoute la date actuelle au tableau des dates de contact
+        const query = `
+            INSERT INTO SuiviEditeur (festival_id, editeur_id, etat, dates_contact)
+            VALUES ($1, $2, 'CONTACTE', jsonb_build_array(NOW()))
+            ON CONFLICT (festival_id, editeur_id)
+            DO UPDATE SET 
+                etat = CASE 
+                    WHEN SuiviEditeur.etat = 'PAS_CONTACTE' THEN 'CONTACTE'::etat_suivi
+                    ELSE SuiviEditeur.etat
+                END,
+                dates_contact = SuiviEditeur.dates_contact || jsonb_build_array(NOW())
+            RETURNING *
+        `;
+        
+        const result = await pool.query(query, [festival_id, editeur_id]);
+        res.status(200).json(result.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erreur ajout contact' });
+    }
+});
+
+// ==============================================================================
+// 3. MISE À JOUR (Action de prospection)
 // Règle : Orga Résa
 // ==============================================================================
 router.post('/', requireOrganisateurReservations(), async (req, res) => {

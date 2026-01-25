@@ -114,6 +114,7 @@ CREATE TABLE SuiviEditeur (
     etat etat_suivi DEFAULT 'PAS_CONTACTE',
     compte_rendu TEXT, 
     responsable_id INT REFERENCES users(id),
+    dates_contact JSONB DEFAULT '[]', -- Tableau des dates de contact (relances multiples)
     PRIMARY KEY (festival_id, editeur_id)
 );
 

@@ -8,7 +8,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-festival_app}
       POSTGRES_DB: ${POSTGRES_DB:-festival_app}
     volumes:
-      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./backend/db/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./backend/db/02_import_reference.sql:/docker-entrypoint-initdb.d/02_import_reference.sql
+      - ./backend/db/03_data_demo.sql:/docker-entrypoint-initdb.d/03_data_demo.sql
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
