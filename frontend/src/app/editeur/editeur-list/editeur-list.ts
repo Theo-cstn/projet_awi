@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { EditeurListService } from '../editeur-service/editeur-list-service';
 import { AuthService } from '../../shared/auth/auth.service';
 import { EditeurComponent } from '../editeur-component/editeur-component';
@@ -10,7 +10,7 @@ import { EditeurDto } from '../../types/editeur-dto';
 @Component({
   selector: 'app-editeur-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, EditeurComponent, EditeurForm],
+  imports: [CommonModule, EditeurComponent, EditeurForm],
   templateUrl: './editeur-list.html',
   styleUrl: './editeur-list.css'
 })

@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router'; // Ajout de Router
+import { ActivatedRoute, Router } from '@angular/router'; // Ajout de Router
 import { JeuListService } from '../jeu-service/jeu-list-service';
 import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service'; // Ajout du service éditeur
 import { AuthService } from '../../shared/auth/auth.service';
@@ -14,7 +14,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-jeu-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, JeuComponent, JeuForm],
+  imports: [CommonModule, JeuComponent, JeuForm],
   templateUrl: './jeu-list.html',
   styleUrl: './jeu-list.css',
 })

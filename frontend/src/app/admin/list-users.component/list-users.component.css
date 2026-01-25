@@ -152,3 +152,8 @@ select:disabled {
   cursor: not-allowed;
   opacity: 0.3;
 }
+
+.disabled-self {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

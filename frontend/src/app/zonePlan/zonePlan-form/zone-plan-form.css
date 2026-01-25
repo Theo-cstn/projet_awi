@@ -63,3 +63,7 @@ button[type="submit"]:disabled {
 .btn-cancel:hover {
   background: #f57c00;
 }
+
+.zone-form-container {
+    margin: 0.5rem 0;
+}

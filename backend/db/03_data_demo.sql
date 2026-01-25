@@ -1,5 +1,5 @@
 -- ===================================================================================
--- SCÉNARIOS DE DÉMONSTRATION (À lancer APRÈS le gros seed.sql)
+-- SCÉNARIOS DE DÉMONSTRATION
 -- ===================================================================================
 
 -- 1. CRÉATION DES HUMAINS (Avec IDs forcés pour la cohérence)
@@ -28,20 +28,19 @@ INSERT INTO Editeur_Contact (editeur_id, contact_id, poste, est_contact_principa
 -- Queendomino (35) -> Bruno Cathala (1)
 INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES (35, 1);
 
--- 7 Wonders (ID 170 à vérifier dans votre CSV, sinon prenons un autre exemple sûr)
--- Attention : L'ID 170 doit exister dans Jeu. Si incertain, on commente :
--- INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES (170, 2);
+
+INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES (170, 2);
 
 -- Kingdomino (392) -> Bruno Cathala (1)
 INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES (392, 1);
 
--- 4. SUIVI CRM (Correction Enum 'A_CONTACTER' -> 'PAS_CONTACTE' ou 'CONTACTE')
+-- 4. SUIVI CRM
 INSERT INTO SuiviEditeur (festival_id, editeur_id, etat, compte_rendu) VALUES
 (1, 100, 'CONFIRME', 'Gros stand prévu, viennent avec Lorcana.'), -- Asmodee
 (1, 138, 'CONTACTE', 'Message laissé sur répondeur le 12/04.'),   -- Gigamic
 (1, 104, 'DISCUSSION', 'Hésitent entre 2 et 3 tables.'),          -- Blue Orange
 (1, 146, 'REFUS', 'Pas de budget cette année.'),                  -- Iello
-(1, 161, 'PAS_CONTACTE', NULL);                                   -- Ravensburger (Correction ici)
+(1, 161, 'PAS_CONTACTE', NULL);                                   -- Ravensburger
 
 -- 5. RÉSERVATIONS
 

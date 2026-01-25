@@ -1,11 +1,9 @@
 import { Component, input, computed, output } from '@angular/core';
 import { Reservation } from '../../types/reservation-dto';
-import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-reservation-component',
   standalone: true,
-  imports: [DatePipe],
   templateUrl: './reservation-component.html',
   styleUrl: './reservation-component.css',
 })
