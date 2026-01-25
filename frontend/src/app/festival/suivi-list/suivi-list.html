@@ -56,7 +56,7 @@
                   >
                     Prendre contact
                   </button>
-                } @else {
+                } @else if (suivi.etat === 'CONTACTE') {
                   <button
                     class="btn-contact-secondary"
                     (click)="prendreContact(suivi.editeur_id)"
