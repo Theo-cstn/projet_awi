@@ -45,7 +45,7 @@ export class JeuForm {
   readonly auteurForm = new FormGroup({
     nom: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     prenom: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    email: new FormControl('', { nonNullable: true }) // Email facultatif
+    email: new FormControl('', { nonNullable: true, validators: [Validators.email] })  // Email facultatif
   });
 
   readonly typesJeu = ['Action', 'Aventure', 'RPG', 'Reflexion', 'Simulation', 'Strategie', 'Sport', 'Carte'];
@@ -172,7 +172,7 @@ export class JeuForm {
 
       this.personneService.create(newPerson).subscribe({
         next: (createdPerson) => {
-          this.personneService.loadPersonnes();
+          this.personneService.addPersonneLocal(createdPerson);
 
           if (createdPerson.id) {
             const currentSelection = this.form.controls.auteurs.value;

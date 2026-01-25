@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, effect } from '@angular/core'; // + effect
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { EditeurListService } from '../editeur-service/editeur-list-service';
@@ -34,6 +34,7 @@ export class EditeurList implements OnInit {
 
   constructor() {
     effect(() => {
+      // Read searchTerm so this effect re-runs whenever the search term changes : reset the current page to 1 on each new search.
       this.searchTerm();
       this.currentPage.set(1);
     });

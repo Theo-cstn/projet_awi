@@ -111,6 +111,7 @@ export class JeuList {
     });
 
     effect(() => {
+      // On lit ces signaux uniquement pour déclencher le reset de la page quand ils changent
       this.searchTerm();
       this.selectedType();
       this.sortField();
