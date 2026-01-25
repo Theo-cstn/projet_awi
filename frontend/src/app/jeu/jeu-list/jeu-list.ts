@@ -33,6 +33,9 @@ export class JeuList {
   editeurId = signal<number | undefined>(undefined);
 
   isFestivalMode = signal(false);
+
+  currentPage = signal(1);
+  pageSize = 50; // Nombre d'éléments par page
   
   // On récupère l'objet éditeur complet si on a un ID
   editeur = computed(() => {
@@ -90,10 +93,29 @@ export class JeuList {
     return filtered;
   });
 
+  paginatedJeux = computed(() => {
+    const list = this.filteredJeux(); // On prend la liste déjà filtrée et triée
+    const startIndex = (this.currentPage() - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    
+    return list.slice(startIndex, endIndex);
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredJeux().length / this.pageSize);
+  });
+
   constructor() {
     effect(() => {
       this.detectContextAndLoad();
-    })
+    });
+
+    effect(() => {
+      this.searchTerm();
+      this.selectedType();
+      this.sortField();
+      this.currentPage.set(1);
+    });
   }
 
   private detectContextAndLoad() {
@@ -194,5 +216,17 @@ export class JeuList {
   getSortIndicator(field: SortField): string {
     if (this.sortField() !== field) return '';
     return this.sortDirection() === 'asc' ? ' ▲' : ' ▼';
+  }
+
+  changePage(newPage: number) {
+    if (newPage >= 1 && newPage <= this.totalPages()) {
+      this.currentPage.set(newPage);
+      
+      setTimeout(() => {
+        window.scrollTo({ 
+          top: document.body.scrollHeight
+        });
+      }, 0);
+    }
   }
 }

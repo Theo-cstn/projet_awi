@@ -35,3 +35,107 @@ button:hover {
     margin-top: -8px;
     margin-bottom: 10px;
 }
+
+
+.row-ages {
+    display: flex;
+    gap: 10px;
+}
+
+.row-ages input {
+    flex: 1;
+}
+
+.section-auteurs {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.header-auteurs {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 5px;
+}
+
+.label-bold {
+    font-weight: bold;
+}
+
+.btn-small {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    width: auto;
+}
+
+.sub-form {
+    background: #f9f9f9;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.row-names {
+    display: flex; 
+    gap: 5px; 
+    margin-bottom: 5px;
+}
+
+.row-names input {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.input-email {
+    margin-bottom: 8px;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* Liste des badges */
+.badges-list {
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 8px;
+}
+
+.badge-auteur {
+    background-color: #e0e0e0;
+    padding: 4px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+}
+
+.btn-remove {
+    background: none;
+    border: none;
+    color: #666;
+    padding: 0;
+    font-size: 1.2em;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.btn-remove:hover {
+    background: none;
+    color: red;
+}
+
+.text-muted {
+    color: #888; 
+    font-style: italic;
+}
+
+.mt-15 {
+    margin-top: 15px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
