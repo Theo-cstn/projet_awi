@@ -32,11 +32,15 @@ router.get('/:festivalId', requireOrganisateurReservations(), async (req, res) =
 
                 -- Bonus : Combien de jeux ont-ils dans notre base ?
                 -- Utile pour savoir si c'est un "gros" éditeur à prioriser
-                (SELECT COUNT(*) FROM Jeu j WHERE j.editeur_id = e.id) as nb_jeux
+                (SELECT COUNT(*) FROM Jeu j WHERE j.editeur_id = e.id) as nb_jeux,
+
+                -- ID de la réservation si elle existe pour cet éditeur dans ce festival
+                r.id as reservation_id
             
             FROM Editeur e
             LEFT JOIN SuiviEditeur s ON e.id = s.editeur_id AND s.festival_id = $1
             LEFT JOIN Users u ON s.responsable_id = u.id
+            LEFT JOIN Reservation r ON r.editeur_id = e.id AND r.festival_id = $1
             ORDER BY e.nom ASC
         `;
         

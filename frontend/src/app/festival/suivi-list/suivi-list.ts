@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SuiviService } from '../suivi-service/suivi-service';
 import { SuiviDto } from '../../types/suivi-dto';
 import { AuthService } from '../../shared/auth/auth.service';
@@ -8,7 +8,7 @@ import { AuthService } from '../../shared/auth/auth.service';
 @Component({
   selector: 'app-suivi-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './suivi-list.html',
   styleUrl: './suivi-list.css',
 })

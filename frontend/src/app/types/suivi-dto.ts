@@ -7,4 +7,5 @@ export interface SuiviDto {
   responsable_nom?: string;
   dates_contact: string[]; // Tableau de dates ISO
   nb_jeux: number;
+  reservation_id?: number; // ID de la réservation si elle existe
 }

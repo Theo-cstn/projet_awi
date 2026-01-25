@@ -64,6 +64,13 @@
                   >
                     Relancer
                   </button>
+                } @else if (suivi.etat === 'CONFIRME' && suivi.reservation_id) {
+                  <a
+                    [routerLink]="['/festival', festivalId(), 'reservations', suivi.reservation_id]"
+                    class="btn-reservation"
+                  >
+                    Voir réservation
+                  </a>
                 }
               </td>
             </tr>
