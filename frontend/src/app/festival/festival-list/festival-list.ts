@@ -4,6 +4,7 @@ import { Festival } from "../../types/festival-dto";
 import { FestivalComponent } from "../festival-component/festival-component";
 import { FestivalForm } from "../festival-form/festival-form";
 import { FestivalListService } from "../festival-service/festival-list-service";
+import { AuthService } from '../../shared/auth/auth.service';
 import { Router } from "@angular/router";
 
 @Component({
@@ -16,6 +17,7 @@ import { Router } from "@angular/router";
 export class FestivalList implements OnInit {
   readonly svc = inject(FestivalListService);
   private router = inject(Router);
+  public auth = inject(AuthService);
 
   readonly festivals = this.svc.festivals;
   showForm: boolean = false;
@@ -75,6 +77,11 @@ export class FestivalList implements OnInit {
       this.showForm = false;
       this.festivalEnEdition.set(undefined);
     }
+  }
+
+  cancel() {
+    this.showForm = false;
+    this.festivalEnEdition.set(undefined);
   }
 
   nbFestival = computed(() => {
