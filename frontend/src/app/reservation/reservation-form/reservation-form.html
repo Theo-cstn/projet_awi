@@ -42,23 +42,31 @@
 
       @for (l of lignes(); track $index) {
         <div class="ligne">
-          <select (change)="updateLigne($index, +$any($event.target).value, l.quantite)">
+          
+          <select [value]="l.type_emplacement" 
+                  (change)="updateLigne($index, 'type', $any($event.target).value)">
+            <option value="TABLE">Table</option>
+            <option value="M2">Surface (m²)</option>
+          </select>
+
+          <select (change)="updateLigne($index, 'zone', +$any($event.target).value)">
             <option value="0" [selected]="l.zone_tarifaire_id === 0">
               Sélectionner une zone
             </option>
             
             @for (z of zones(); track z.id) {
               <option [value]="z.id" [selected]="z.id === l.zone_tarifaire_id">
-                {{ z.nom }} ({{ getTablesLibresRestantes(z.id) }} libres)
+                {{ z.nom }} 
+                (@if(l.type_emplacement === 'M2') { {{z.prixM}}€/m² } @else { {{z.prixTable}}€/table })
               </option>
             }
           </select>
 
           <input type="number"
-                 [value]="l.quantite"
-                 [max]="getTablesLibresRestantes(l.zone_tarifaire_id)"
-                 min="0"
-                 (input)="updateLigne($index, l.zone_tarifaire_id, +$any($event.target).value)">
+                [value]="l.quantite"
+                min="0"
+                placeholder="Qté"
+                (input)="updateLigne($index, 'qty', +$any($event.target).value)">
 
           <button type="button" (click)="removeLigne($index)" class="danger">X</button>
         </div>
@@ -66,7 +74,7 @@
 
       <div class="recap">
         <p><strong>Total tables :</strong> {{ totalTables() }}</p>
-        <p><strong>Montant des tables :</strong> {{ totalPrixTables() }} €</p>
+        <p><strong>Montant des tables ou surface :</strong> {{ totalPrixTables() }} €</p>
         <p><strong>Montant de la réservation avant remise :</strong> {{ totalPrixBeforeRed() }} €</p>
 
         @if (isEditeur()) {

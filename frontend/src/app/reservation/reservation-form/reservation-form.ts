@@ -49,7 +49,13 @@ export class ReservationForm {
     preferences_tables: new FormControl<string>('')
   });
 
-  lignes = signal<{ zone_tarifaire_id: number; quantite: number; prix_moment_reservation: number }[]>([]);
+  lignes = signal<{ 
+    id?: number;
+    zone_tarifaire_id: number; 
+    quantite: number; 
+    prix_moment_reservation: number;
+    type_emplacement: 'TABLE' | 'M2';
+  }[]>([]);
   lignesJeux = signal <{ jeu_id: number; nb_exemplaires: number, tables_occupees: number, zone_plan_id?: number}[]>([]);
 
   typeValue = signal<'Editeur' | 'Boutique' | 'Association' | 'Prestataire' | 'Autre'>('Autre');
@@ -136,28 +142,33 @@ export class ReservationForm {
 
   // ----------------ligne de reservation zone tarifaire --------------------------
   addLigne() { 
-    this.lignes.update(list => [ ...list, { zone_tarifaire_id: 0, quantite: 0, prix_moment_reservation: 0 } ]); 
+    this.lignes.update(list => [ 
+      ...list, 
+      { zone_tarifaire_id: 0, quantite: 0, prix_moment_reservation: 0, type_emplacement: 'TABLE' } 
+    ]); 
   }
-  updateLigne(index: number, zoneId: number, quantite: number) { 
-    const zone = this.zones().find(z => z.id === zoneId); 
-    if (!zone) return; 
-    
-    // Récupère les tables libres RESTANTES (après les autres lignes)
-    const tablesLibresRestantes = this.getTablesLibresRestantes(zoneId);
-    
-    // Rejette les quantités invalides silencieusement
-    if (quantite < 0 || quantite > tablesLibresRestantes) {
-      return; 
-    } 
+  updateLigne(index: number, field: 'zone' | 'qty' | 'type', value: any) { 
     this.lignes.update(list => {
-      const updated = [...list]; 
-      updated[index] = {
-        zone_tarifaire_id: zoneId, 
-        quantite, 
-        prix_moment_reservation: zone.prixTable 
-      }; 
-      return updated; 
-    }); 
+      const updated = [...list];
+      const ligne = { ...updated[index] };
+      
+      if (field === 'zone') ligne.zone_tarifaire_id = value;
+      if (field === 'qty') ligne.quantite = value;
+      if (field === 'type') ligne.type_emplacement = value;
+
+      const zone = this.zones().find(z => z.id === ligne.zone_tarifaire_id);
+      
+      if (zone) {
+        if (ligne.type_emplacement === 'M2') {
+          ligne.prix_moment_reservation = zone.prixM;
+        } else {
+          ligne.prix_moment_reservation = zone.prixTable;
+        }
+      }
+
+      updated[index] = ligne;
+      return updated;
+    });
   }
   removeLigne(index: number) { 
     this.lignes.update(list => list.filter((_, i) => i !== index)); 

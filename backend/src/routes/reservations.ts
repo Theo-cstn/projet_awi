@@ -174,8 +174,14 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
             for (const l of lignes) {
                 await client.query(
                     `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_moment_reservation)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [reservationId, l.zone_tarifaire_id, l.type_emplacement, l.quantite, l.prix_moment_reservation]
+                    VALUES ($1, $2, $3, $4, $5)`,
+                    [
+                    reservationId, 
+                    l.zone_tarifaire_id, 
+                    l.type_emplacement || 'TABLE',
+                    l.quantite, 
+                    l.prix_moment_reservation
+                    ]
                 );
             }
         }
@@ -362,19 +368,27 @@ router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
             for (const l of lignes) {
                 if (l.id) {
                     await client.query(
-                        `UPDATE LigneReservation SET zone_tarifaire_id = $1, quantite = $2, prix_moment_reservation = $3 WHERE id = $4`,
-                        [l.zone_tarifaire_id, l.quantite, l.prix_moment_reservation, l.id]
+                        `UPDATE LigneReservation 
+                        SET zone_tarifaire_id = $1, quantite = $2, prix_moment_reservation = $3, type_emplacement = $4 
+                        WHERE id = $5`,
+                        [
+                            l.zone_tarifaire_id, 
+                            l.quantite, 
+                            l.prix_moment_reservation, 
+                            l.type_emplacement || 'TABLE',
+                            l.id
+                        ]
                     );
                 } else {
                     await client.query(
                         `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_moment_reservation)
-                         VALUES ($1, $2, $5, $3, $4)`, 
+                        VALUES ($1, $2, $3, $4, $5)`,
                         [
-                            id, 
+                            id,
                             l.zone_tarifaire_id, 
-                            l.quantite, 
-                            l.prix_moment_reservation,
-                            TypeEmplacement.TABLE
+                            l.type_emplacement || 'TABLE',
+                            l.quantite,
+                            l.prix_moment_reservation
                         ]
                     );
                 }
