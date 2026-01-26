@@ -349,7 +349,7 @@ export class ReservationForm {
       editeur_id: value.type === 'Editeur' ? (value.editeur_id ?? undefined) : undefined,
       autre_nom_reservant: value.type !== 'Editeur' ? (value.autre_nom_reservant ?? undefined) : undefined,      
       nombre_prises: value.nombre_prises ?? 0, 
-      remise_generale: value.remise_generale ?? 0, 
+      remise_generale: Number(value.remise_generale ?? 0),
       est_present: value.est_present ?? true, 
       preferences_tables: value.preferences_tables ?? '',
       lignes: this.lignes(),

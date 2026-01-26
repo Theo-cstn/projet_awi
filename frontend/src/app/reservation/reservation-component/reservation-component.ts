@@ -8,7 +8,9 @@ import { Reservation } from '../../types/reservation-dto';
   styleUrl: './reservation-component.css',
 })
 export class ReservationComponent {
-  reservation = input.required<Reservation>(); 
+  reservation = input.required<Reservation>();
+
+  
   
   // --- NOUVEAUX OUTPUTS ---
   edit = output<void>();
@@ -18,7 +20,15 @@ export class ReservationComponent {
 
   // Nom du réservant (éditeur ou autre) 
   nomReservant = computed(() => { 
-    const r = this.reservation(); 
+    const r = this.reservation();
+    
+    if (r.nom_reservant) {
+      if (r.editeur_id) {
+        return `${r.nom_reservant} (#${r.editeur_id})`;
+      }
+      return r.nom_reservant;
+    }
+
     return r.autre_nom_reservant ?? `Éditeur #${r.editeur_id}`; 
   }); 
   

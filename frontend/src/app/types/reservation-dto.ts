@@ -4,6 +4,7 @@ export interface Reservation {
   type: 'Editeur' | 'Boutique' | 'Association' | 'Prestataire' | 'Autre';
   editeur_id?: number;
   autre_nom_reservant?: string;
+  nom_reservant?: string;
 
   nombre_prises: number;
   remise_generale: number;
