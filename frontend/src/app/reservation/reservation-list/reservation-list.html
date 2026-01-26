@@ -1,21 +1,32 @@
-<div class="reservation-list">
+<div class="reservation-list-container">
 
-  <h2>Réservations du festival</h2>
+  @if (showForm()) {
+    <div class="form-wrapper">
+      <app-reservation-form 
+        [reservationAEditer]="reservationToEdit()"
+        (close)="onFormClose()">
+      </app-reservation-form>
+    </div>
+  } 
 
-  <button class="add-btn" (click)="addReservation()">
-     Ajouter une réservation
-  </button>
+  @else {
+    <div class="header-section">
+      <h2>Réservations du festival</h2>
+      <button class="btn-primary" (click)="createRequest()">➕ Nouvelle Réservation</button>
+    </div>
 
-  @if (reservations().length === 0) {
-    <p>Aucune réservation pour le moment.</p>
-  }
-
-  <div class="cards">
-    @for (r of reservations(); track r.id) {
-      <app-reservation-component
-        [reservation]="r"
-        (click)="openReservation(r.id!)">
-      </app-reservation-component>
+    @if (reservations().length === 0) {
+      <p class="empty-msg">Aucune réservation pour le moment.</p>
     }
-  </div>
+
+    <div class="cards-grid">
+      @for (r of reservations(); track r.id) {
+        <app-reservation-component 
+          [reservation]="r"
+          (edit)="editRequest(r)"
+          (remove)="deleteRequest(r)"
+          (statusChange)="updateStatusRequest(r, $event)"> </app-reservation-component>
+      }
+    </div>
+  }
 </div>

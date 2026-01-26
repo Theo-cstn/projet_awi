@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, computed, signal, inject, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Festival } from '../../types/festival-dto';
 import { ZoneTarifaireComponent } from "../../zoneTarifaire/zoneTarifaire-component/zone-tarifaire-component";
@@ -22,12 +22,48 @@ export class FestivalComponent {
   canEdit = input<boolean>(false);
   edit = output<Festival>();
 
+  zonesVisible = signal(false);
+
+  private elementRef = inject(ElementRef);
+  
   onSelect() {
     this.select.emit(this.festival());
   }
 
   onEdit(event: Event) {
-    event.stopPropagation(); // Empêche le clic de remonter à la carte parente
+    event.stopPropagation();
     this.edit.emit(this.festival());
   }
+
+  toggleZones(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // On regarde si on est sur le point de fermer
+    const isClosing = this.zonesVisible();
+
+    this.zonesVisible.update(v => !v);
+
+    if (isClosing) {
+      setTimeout(() => {
+        this.elementRef.nativeElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest'
+        });
+      }, 0);
+    }
+  }
+
+  totalStockPhysique = computed(() => {
+    const f = this.festival();
+    return f.nbTablesPetites + f.nbTablesGrandes + f.nbTablesMairie;
+  });
+
+  totalCommercialCapacity = computed(() => {
+    return this.festival().zonesTarifaires.reduce((acc, z) => acc + (z.nbTotalTables || 0), 0);
+  });
+
+  totalCommercialRemaining = computed(() => {
+    return this.festival().zonesTarifaires.reduce((acc, z) => acc + (z.nbTablesLibres || 0), 0);
+  });
 }

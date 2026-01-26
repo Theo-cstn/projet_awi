@@ -1,24 +1,48 @@
-<button (click)="toggleFormulaire()">
-    {{ afficherFormulaire() ? 'Annuler' : 'Ajouter un contact' }}
-</button>
+<div class="contact-container">
 
-@if (afficherFormulaire()) {
-    <app-contact-form
-        [editeurId]="editeurId()"
-        [contactAEditer]="contactEnEdition()"
-        (add)="onAdd($event)"
-        (update)="onUpdate($event)">
-    </app-contact-form>
-}
+  @if (editeurId()) {
+    <h1>Contact de {{ editeur()?.nom ?? '...' }}</h1>
+  } @else {
+    <h1>Liste des Contacts</h1>
+  }
 
-@if (contacts().length > 0) {
-    @for (contact of contacts(); track contact.id) {
-        <app-contact-component
-            [contact]="contact"
-            [canEdit]="true"
-            (edit)="onEdit($event)">
-        </app-contact-component>
+  <div class="actions-header">
+    
+    @if (editeurId()) {
+      <button (click)="retourEditeurs()" class="secondary">
+        &larr; Retour aux éditeurs
+      </button>
+    } @else {
+      <div></div> 
     }
-} @else {
-    <p>Aucun contact</p>
-}
+
+    <button (click)="toggleFormulaire()" 
+            [class]="afficherFormulaire() ? 'secondary' : 'primary'">
+        {{ afficherFormulaire() ? 'Annuler' : '+ Ajouter un contact' }}
+    </button>
+  </div>
+
+  @if (afficherFormulaire()) {
+      <app-contact-form
+          [editeurId]="editeurId()"
+          [contactAEditer]="contactEnEdition()"
+          (add)="onAdd($event)"
+          (update)="onUpdate($event)">
+      </app-contact-form>
+  }
+
+  @if (contacts().length > 0) {
+      <div class="list-grid"> @for (contact of contacts(); track contact.id) {
+            <app-contact-component
+                [contact]="contact"
+                [canEdit]="true"
+                (edit)="onEdit($event)"
+                (delete)="onDeleteContact($event)"> 
+            </app-contact-component>
+        }
+      </div>
+  } @else {
+      <p class="empty-msg">Aucun contact trouvé.</p>
+  }
+
+</div>

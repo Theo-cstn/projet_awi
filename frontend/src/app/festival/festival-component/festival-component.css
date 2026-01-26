@@ -36,7 +36,6 @@
   transition: transform 0.2s ease; /* Petit effet fluide */
 }
 
-/* Effet au survol (optionnel mais sympa) */
 :host:hover {
   transform: translateY(-5px); /* Monte légèrement */
 }
@@ -53,4 +52,53 @@
 
 .btn-edit:hover {
     background-color: #0056b3;
+}
+
+.zones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 0;
+  border-top: 1px solid #eee;
+  margin-top: 10px;
+  user-select: none; /* Empêche la sélection du texte au double clic */
+  transition: background-color 0.2s;
+}
+
+.zones-header:hover {
+  background-color: rgba(0, 0, 0, 0.03); /* Léger gris au survol */
+  border-radius: 4px;
+}
+
+.zones-header h3 {
+  margin: 0;
+  border-bottom: none; /* On enlève la bordure du h3 car on l'a mise sur le header */
+  padding-bottom: 0;
+  font-size: 1.1em;
+}
+
+/* La flèche */
+.arrow-icon {
+  font-size: 0.8em;
+  color: #666;
+  transition: transform 0.3s ease; /* Animation fluide de rotation */
+  margin-right: 5px;
+}
+
+/* Classe appliquée quand c'est ouvert */
+.rotated {
+  transform: rotate(180deg);
+}
+
+/* Optionnel : petite animation d'apparition pour la liste */
+.zones-tarifaires {
+  margin-top: 10px;
+  /* animation simple */
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }

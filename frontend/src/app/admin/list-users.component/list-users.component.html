@@ -67,7 +67,7 @@
                 (click)="deleteUser(user)" 
                 title="Supprimer le compte"
                 [disabled]="user.id === auth.currentUser()?.id"
-                [style.opacity]="user.id === auth.currentUser()?.id ? '0.3' : '1'">
+                [class.disabled-self]="user.id === auth.currentUser()?.id">
                 🗑️
               </button>
             </td>

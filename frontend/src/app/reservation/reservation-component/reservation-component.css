@@ -21,3 +21,92 @@
 .reservation-card strong {
   color: #333;
 }
+
+.status-select {
+  padding: 5px 10px;
+  border-radius: 15px;
+  border: 1px solid #ddd;
+  font-weight: bold;
+  cursor: pointer;
+  appearance: none;
+  text-align: center;
+}
+
+.status-select.PRESENT {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border-color: #90caf9;
+}
+
+.status-select.FACTUREE {
+  background-color: #fff3cd;
+  color: #856404;
+  border-color: #ffeeba;
+}
+
+.status-select.PAYEE {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.card-body {
+  margin-bottom: 15px;
+}
+
+.total-row {
+  margin-top: 12px !important;
+  font-size: 1.1rem !important;
+  padding-top: 10px;
+  border-top: 1px dashed #eee;
+  display: flex;
+  justify-content: space-between;
+}
+
+.highlight {
+  color: #10b981;
+  font-weight: bold;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-edit, .btn-delete {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  color: white;
+}
+
+.btn-edit {
+  background-color: #3b82f6; 
+}
+
+.btn-edit:hover {
+  background-color: #2563eb;
+}
+
+.btn-delete {
+  background-color: #ef4444; 
+}
+
+.btn-delete:hover {
+  background-color: #dc2626;
+}

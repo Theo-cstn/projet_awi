@@ -4,9 +4,15 @@
         <p>
             <strong>Email :</strong> {{ this.contact().email }}
         </p>
+        @if(contact().poste) {
+            <p><strong>Poste :</strong> {{ contact().poste }}</p>
+        }
     </div>
 
     @if (canEdit()) {
-        <button class="btn-edit" (click)="onEdit()">Éditer</button>
+        <div class="actions">
+            <button class="btn" (click)="onEdit()">Éditer</button>
+            <button class="btn" (click)="onDelete()">Supprimer</button>
+        </div>
     }
 </div>

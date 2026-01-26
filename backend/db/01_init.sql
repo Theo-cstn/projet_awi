@@ -114,6 +114,7 @@ CREATE TABLE SuiviEditeur (
     etat etat_suivi DEFAULT 'PAS_CONTACTE',
     compte_rendu TEXT, 
     responsable_id INT REFERENCES users(id),
+    dates_contact JSONB DEFAULT '[]', -- Tableau des dates de contact (relances multiples)
     PRIMARY KEY (festival_id, editeur_id)
 );
 
@@ -155,7 +156,7 @@ CREATE TABLE LigneReservation (
     quantite INT NOT NULL, 
     
     -- Prix figé (permet de faire des remises ligne par ligne si besoin en mettant 0)
-    prix_unitaire_applique DECIMAL(10, 2) 
+    prix_moment_reservation DECIMAL(10, 2) NOT NULL
 );
 
 -- TABLE D : JeuReserve (Step 2 & 3 - L'INSTALLATION)

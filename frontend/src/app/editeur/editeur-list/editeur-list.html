@@ -28,20 +28,53 @@
 }
 
 @if (filteredEditeurs().length > 0) {
+  
   <div class="editors-grid">
-    @for (editeur of filteredEditeurs(); track editeur.id) {
+    @for (editeur of paginatedEditeurs(); track editeur.id) {
       <app-editeur-component
         [editeur]="editeur"
         [canEdit]="auth.isAdmin()"
         (edit)="onEdit($event)"
         class="editor-card">
       </app-editeur-component>
-    } @empty {
-      <div class="empty-message">
-        <p>Aucun éditeur trouvé.</p>
-      </div>
     }
   </div>
+
+  @if (totalPages() > 1) {
+    <div class="pagination-controls">
+      <button 
+        class="btn-page" 
+        [disabled]="currentPage() === 1"
+        (click)="changePage(currentPage() - 1)">
+        Précédent
+      </button>
+
+      <span class="page-info">
+        Page {{ currentPage() }} sur {{ totalPages() }}
+      </span>
+
+      <button 
+        class="btn-page" 
+        [disabled]="currentPage() === totalPages()"
+        (click)="changePage(currentPage() + 1)">
+        Suivant
+      </button>
+    </div>
+  }
+
 } @else {
-  <p class="loading">Chargement des éditeurs...</p>
+  <div class="empty-message">
+    @if (svc.loading()) {
+      <p class="loading">Chargement des éditeurs...</p>
+    } 
+    @else if (searchTerm() !== '') {
+      <p>Aucun éditeur ne correspond à votre recherche.</p>
+    } 
+    @else if (svc.editeurs().length === 0) {
+      <p>Aucun éditeur pour ce festival.</p>
+    } 
+    @else {
+      <p>Aucun éditeur trouvé.</p>
+    }
+  </div>
 }

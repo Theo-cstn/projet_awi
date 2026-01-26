@@ -2,16 +2,12 @@ import type { Response, NextFunction } from 'express'
 import type { TokenPayload } from '../types/token-payload.js'
 
 
-// Hiérarchie des rôles (du plus faible au plus fort)
-const ROLE_HIERARCHY = {
-  'no-role': 0,
-  'visiteur': 1,
-  'organisateur_jeux': 2,
-  'organisateur_reservations': 3,
-  'admin': 4
-} as const
-
-type RoleType = keyof typeof ROLE_HIERARCHY //One of the above
+export type RoleType = 
+  | 'no-role'
+  | 'visiteur'
+  | 'organisateur_jeux'
+  | 'organisateur_reservations'
+  | 'admin';
 
 /**
  * Middleware d'autorisation basé sur les rôles

@@ -1,6 +1,6 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { EditeurListService } from '../editeur-service/editeur-list-service';
 import { AuthService } from '../../shared/auth/auth.service';
 import { EditeurComponent } from '../editeur-component/editeur-component';
@@ -10,7 +10,7 @@ import { EditeurDto } from '../../types/editeur-dto';
 @Component({
   selector: 'app-editeur-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, EditeurComponent, EditeurForm],
+  imports: [CommonModule, EditeurComponent, EditeurForm],
   templateUrl: './editeur-list.html',
   styleUrl: './editeur-list.css'
 })
@@ -27,12 +27,24 @@ export class EditeurList implements OnInit {
   editeurEnEdition = signal<EditeurDto | undefined>(undefined);
   isFestivalMode = signal(false);
 
+  currentPage = signal(1);
+  pageSize = 50; // Nombre d'éditeurs par page
+
+  searchTerm = signal('');
+
+  constructor() {
+    effect(() => {
+      // Read searchTerm so this effect re-runs whenever the search term changes : reset the current page to 1 on each new search.
+      this.searchTerm();
+      this.currentPage.set(1);
+    });
+  }
+
   ngOnInit(): void {
     this.loadData();
   }
 
   private loadData() {
-    // Récupération de l'ID depuis le parent (Festival)
     const parentId = this.route.parent?.snapshot.paramMap.get('id');
     
     if (parentId) {
@@ -75,14 +87,34 @@ export class EditeurList implements OnInit {
     this.editeurEnEdition.set(undefined);
   }
 
-  searchTerm = signal('');
-
   filteredEditeurs = computed(() => {
     const term = this.searchTerm().toLowerCase();
     return this.editeurs()?.filter(e => e.nom.toLowerCase().includes(term)) || [];
   });
 
-  edit(editeur: EditeurDto): void {
-    // TODO
+
+  paginatedEditeurs = computed(() => {
+    const list = this.filteredEditeurs();
+    const startIndex = (this.currentPage() - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    
+    return list.slice(startIndex, endIndex);
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredEditeurs().length / this.pageSize);
+  });
+
+
+  changePage(newPage: number) {
+    if (newPage >= 1 && newPage <= this.totalPages()) {
+      this.currentPage.set(newPage);
+      
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0
+        });
+      }, 0);
+    }
   }
 }

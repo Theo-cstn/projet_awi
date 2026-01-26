@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 import { JeuDto } from '../../types/jeu-dto';
 import { environment } from '../../../environments/environment';
 
@@ -18,87 +19,98 @@ export class JeuListService {
   private readonly _jeux = signal<JeuDto[]>([]); 
   readonly jeux = this._jeux.asReadonly();
 
+  // Signal de chargement (AJOUTÉ)
+  readonly loading = signal<boolean>(false);
+
 
   /**
    * Charge les jeux.
    * - Si festivalId est fourni : charge les jeux de ce festival.
    * - Sinon : charge tous les jeux (Global).
    */
-
   loadJeux(festivalId?: number): void {
-    let url = this.apiUrl; // Par défaut : Global (/api/jeux)
+    this.loading.set(true);
+
+    let url = this.apiUrl;
 
     if (festivalId) {
-      // Si ID fourni : Filtré (/api/festivals/:id/jeux)
       url = `${this.festivalApiUrl}/${festivalId}/jeux`;
     }
 
-
-    this.http.get<any[]>(url, { withCredentials: true }).subscribe({
-      next: (data) => {
-        // Mapping des données (Backend -> Frontend DTO)
-        const jeux: JeuDto[] = data.map(jeu => ({
-          id: jeu.id,
-          nom: jeu.nom,
-          typeG: jeu.typeg,
-          age_min: jeu.age_min,
-          age_max: jeu.age_max,
-          editeur_id: jeu.editeur_id,
-          editeur: jeu.editeur ? {
-            id: jeu.editeur.id,
-            nom: jeu.editeur.nom,
-          } : (jeu.nom_editeur ? {
-            id: jeu.editeur_id,
-            nom: jeu.nom_editeur,
-          } : undefined),
-          auteurs: jeu.auteurs ? jeu.auteurs.map((auteur: any) => ({
-            id: auteur.id,
-            nom: auteur.nom,
-            prenom: auteur.prenom,
-          })) : [],
-        }));
-        this._jeux.set(jeux);
-      },
-      error: (err) => console.error('❌ Erreur chargement jeux', err)
-    });
+    this.http.get<any[]>(url, { withCredentials: true })
+      .pipe(
+        finalize(() => this.loading.set(false))
+      )
+      .subscribe({
+        next: (data) => {
+          // Mapping des données (Backend -> Frontend DTO)
+          const jeux: JeuDto[] = data.map(jeu => ({
+            id: jeu.id,
+            nom: jeu.nom,
+            typeG: jeu.typeg,
+            age_min: jeu.age_min,
+            age_max: jeu.age_max,
+            editeur_id: jeu.editeur_id,
+            editeur: jeu.editeur ? {
+              id: jeu.editeur.id,
+              nom: jeu.editeur.nom,
+            } : (jeu.nom_editeur ? {
+              id: jeu.editeur_id,
+              nom: jeu.nom_editeur,
+            } : undefined),
+            auteurs: jeu.auteurs ? jeu.auteurs.map((auteur: any) => ({
+              id: auteur.id,
+              nom: auteur.nom,
+              prenom: auteur.prenom,
+            })) : [],
+          }));
+          this._jeux.set(jeux);
+        },
+        error: (err) => console.error('❌ Erreur chargement jeux', err)
+      });
   }
 
   /**
    * Charge les jeux d'un éditeur spécifique.
    */
   loadJeuxByEditeur(editeurId: number): void {
+    this.loading.set(true);
     const url = `${this.editeurApiUrl}/${editeurId}/jeux`;
 
-    this.http.get<any[]>(url, { withCredentials: true }).subscribe({
-      next: (data) => {
-        console.log(`📥 Données brutes reçues pour éditeur ${editeurId}:`, data);
-        
-        // Mapping des données (Backend -> Frontend DTO)
-        const jeux: JeuDto[] = data.map(jeu => ({
-          id: jeu.id,
-          nom: jeu.nom,
-          typeG: jeu.typeg,
-          age_min: jeu.age_min,
-          age_max: jeu.age_max,
-          editeur_id: jeu.editeur_id,
-          editeur: jeu.editeur ? {
-            id: jeu.editeur.id,
-            nom: jeu.editeur.nom,
-          } : undefined,
-          auteurs: jeu.auteurs ? jeu.auteurs.map((auteur: any) => ({
-            id: auteur.id,
-            nom: auteur.nom,
-            prenom: auteur.prenom,
-          })) : [],
-        }));
-        console.log(`✅ Jeux de l'éditeur ${editeurId} chargés et mappés:`, jeux);
-        this._jeux.set(jeux);
-      },
-      error: (err) =>  {
-        console.error('❌ Erreur chargement jeux éditeur', err);
-        this.loadJeux();
-      }
-    });
+    this.http.get<any[]>(url, { withCredentials: true })
+      .pipe(
+        finalize(() => this.loading.set(false))
+      )
+      .subscribe({
+        next: (data) => {
+          console.log(`📥 Données brutes reçues pour éditeur ${editeurId}:`, data);
+          
+          // Mapping des données (Backend -> Frontend DTO)
+          const jeux: JeuDto[] = data.map(jeu => ({
+            id: jeu.id,
+            nom: jeu.nom,
+            typeG: jeu.typeg,
+            age_min: jeu.age_min,
+            age_max: jeu.age_max,
+            editeur_id: jeu.editeur_id,
+            editeur: jeu.editeur ? {
+              id: jeu.editeur.id,
+              nom: jeu.editeur.nom,
+            } : undefined,
+            auteurs: jeu.auteurs ? jeu.auteurs.map((auteur: any) => ({
+              id: auteur.id,
+              nom: auteur.nom,
+              prenom: auteur.prenom,
+            })) : [],
+          }));
+          console.log(`✅ Jeux de l'éditeur ${editeurId} chargés et mappés:`, jeux);
+          this._jeux.set(jeux);
+        },
+        error: (err) =>  {
+          console.error('❌ Erreur chargement jeux éditeur', err);
+          this.loadJeux(); 
+        }
+      });
   }
 
   /**
@@ -111,7 +123,7 @@ export class JeuListService {
         const newJeu: JeuDto = {
           id: data.id,
           nom: data.nom,
-          typeG: data.typeG,
+          typeG: data.typeG || data.typeg,
           age_min: data.age_min,
           age_max: data.age_max,
           editeur_id: data.editeur_id,
@@ -142,7 +154,7 @@ export class JeuListService {
         const updatedJeu: JeuDto = {
           id: data.id,
           nom: data.nom,
-          typeG: data.typeg,
+          typeG: data.typeG || data.typeg,
           age_min: data.age_min,
           age_max: data.age_max,
           editeur_id: data.editeur_id,

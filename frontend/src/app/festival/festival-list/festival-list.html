@@ -1,34 +1,53 @@
-<div class="header-section">
-  <h1>Gestion des Festivals</h1>
-  <h4 class="count">Nombre de festivals : {{ nbFestival() }}</h4>
+<div class="page-header">
+  <div class="title-group">
+    <h1>Gestion des Festivals</h1>
+    @if (!showForm) {
+      <span class="badge-count">Total : {{ nbFestival() }}</span>
+    }
+  </div>
 
-  @if (showForm) {
-    <div class="form-container">
-      <app-festival-form 
-        [festivalAEditer]="festivalEnEdition()"
-        (add)="onAdd($event)"
-        (update)="onUpdate($event)">
-      </app-festival-form>
-      <button class="btn-cancel" (click)="showForm = false; festivalEnEdition.set(undefined)">Annuler</button>
+  @if (auth.currentUser()?.role === 'admin') {
+    
+    @if (!showForm) {
+      <button class="btn-action" (click)="add()">
+        + Ajouter un festival
+      </button>
+    } 
+    
+    @else {
+      <button class="btn-action cancel" (click)="cancel()">
+        Annuler
+      </button>
+    }
+
+  }
+</div>
+
+@if (showForm) {
+  <div class="form-wrapper">
+    <app-festival-form 
+      [festivalAEditer]="festivalEnEdition()"
+      (add)="onAdd($event)"
+      (update)="onUpdate($event)">
+    </app-festival-form>
+  </div>
+} 
+
+@else {
+  @if (festivals().length > 0) {
+    <div class="festival-grid">
+      @for (f of festivals(); track f.id) {
+        <app-festival-component 
+            [festival]="f"
+            [canEdit]="auth.currentUser()?.role === 'admin'"
+            (edit)="onEdit($event)"
+            (click)="openWorkspace(f.id!)">
+        </app-festival-component>
+      }
     </div>
   } @else {
-    <button class="btn-primary" (click)="add()">+ Ajouter un Festival</button>
+    <div class="empty-state">
+      <p>Aucun festival disponible pour le moment.</p>
+    </div>
   }
-</div>
-
-<div class="festival-grid">
-  @for (f of festivals(); track f.id) {
-    <app-festival-component 
-        [festival]="f"
-        [canEdit]="true"
-        (edit)="onEdit($event)"
-        (click)="openWorkspace(f.id!)">
-    </app-festival-component>
-  }
-</div>
-
-@if (festivals().length === 0 && !showForm) {
-  <div class="empty-state">
-    <p>Aucun festival enregistré. Cliquez sur "Ajouter un Festival" pour commencer.</p>
-  </div>
 }

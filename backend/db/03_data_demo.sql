@@ -1,5 +1,5 @@
 -- ===================================================================================
--- SCÉNARIOS DE DÉMONSTRATION (À lancer APRÈS le gros seed.sql)
+-- SCÉNARIOS DE DÉMONSTRATION
 -- ===================================================================================
 
 -- 1. CRÉATION DES HUMAINS (Avec IDs forcés pour la cohérence)
@@ -28,20 +28,19 @@ INSERT INTO Editeur_Contact (editeur_id, contact_id, poste, est_contact_principa
 -- Queendomino (35) -> Bruno Cathala (1)
 INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES (35, 1);
 
--- 7 Wonders (ID 170 à vérifier dans votre CSV, sinon prenons un autre exemple sûr)
--- Attention : L'ID 170 doit exister dans Jeu. Si incertain, on commente :
--- INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES (170, 2);
+
+INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES (170, 2);
 
 -- Kingdomino (392) -> Bruno Cathala (1)
 INSERT INTO Auteurs_Jeux (jeu_id, auteur_id) VALUES (392, 1);
 
--- 4. SUIVI CRM (Correction Enum 'A_CONTACTER' -> 'PAS_CONTACTE' ou 'CONTACTE')
+-- 4. SUIVI CRM
 INSERT INTO SuiviEditeur (festival_id, editeur_id, etat, compte_rendu) VALUES
 (1, 100, 'CONFIRME', 'Gros stand prévu, viennent avec Lorcana.'), -- Asmodee
 (1, 138, 'CONTACTE', 'Message laissé sur répondeur le 12/04.'),   -- Gigamic
 (1, 104, 'DISCUSSION', 'Hésitent entre 2 et 3 tables.'),          -- Blue Orange
 (1, 146, 'REFUS', 'Pas de budget cette année.'),                  -- Iello
-(1, 161, 'PAS_CONTACTE', NULL);                                   -- Ravensburger (Correction ici)
+(1, 161, 'PAS_CONTACTE', NULL);                                   -- Ravensburger
 
 -- 5. RÉSERVATIONS
 
@@ -50,7 +49,7 @@ INSERT INTO Reservation (festival_id, type, editeur_id, statut, nombre_prises, e
 VALUES (1, 'Editeur', 100, 'FACTUREE', 3, true, 'Besoin de 200m2 minimum.', 100.00);
 
 -- On récupère l'ID de la résa qu'on vient de créer pour les lignes suivantes
-INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_unitaire_applique) VALUES
+INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_moment_reservation) VALUES
 ((SELECT id FROM Reservation WHERE editeur_id = 100 AND festival_id = 1), 1, 'TABLE', 10, 50.00),
 ((SELECT id FROM Reservation WHERE editeur_id = 100 AND festival_id = 1), 2, 'TABLE', 5, 70.00);
 
@@ -63,7 +62,7 @@ INSERT INTO JeuReserve (reservation_id, jeu_id, zone_plan_id, type_table, tables
 INSERT INTO Reservation (festival_id, type, editeur_id, statut, nombre_prises, est_present) 
 VALUES (1, 'Editeur', 104, 'PRESENT', 1, true);
 
-INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_unitaire_applique) VALUES
+INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_moment_reservation) VALUES
 ((SELECT id FROM Reservation WHERE editeur_id = 104 AND festival_id = 1), 1, 'TABLE', 4, 50.00);
 
 INSERT INTO JeuReserve (reservation_id, jeu_id, zone_plan_id, type_table, tables_occupees, nb_exemplaires) VALUES

@@ -4,18 +4,20 @@ import { Festival } from "../../types/festival-dto";
 import { FestivalComponent } from "../festival-component/festival-component";
 import { FestivalForm } from "../festival-form/festival-form";
 import { FestivalListService } from "../festival-service/festival-list-service";
-import { RouterLink, Router } from "@angular/router";
+import { AuthService } from '../../shared/auth/auth.service';
+import { Router } from "@angular/router";
 
 @Component({
   selector: 'app-festival-list',
   standalone: true,
-  imports: [CommonModule, FestivalComponent, FestivalForm, RouterLink],
+  imports: [CommonModule, FestivalComponent, FestivalForm],
   templateUrl: './festival-list.html',
   styleUrl: './festival-list.css'
 })
 export class FestivalList implements OnInit {
   readonly svc = inject(FestivalListService);
   private router = inject(Router);
+  public auth = inject(AuthService);
 
   readonly festivals = this.svc.festivals;
   showForm: boolean = false;
@@ -75,6 +77,11 @@ export class FestivalList implements OnInit {
       this.showForm = false;
       this.festivalEnEdition.set(undefined);
     }
+  }
+
+  cancel() {
+    this.showForm = false;
+    this.festivalEnEdition.set(undefined);
   }
 
   nbFestival = computed(() => {

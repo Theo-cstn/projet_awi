@@ -27,8 +27,10 @@ export class ZoneTarifaireComponent {
   }
   
   onRemove(): void {
-    if (this.zoneT()?.id) {
-      this.remove.emit(this.zoneT()!.id);
+    const id = this.zoneT()?.id;
+    
+    if (id !== undefined) {
+      this.remove.emit(id);
     }
   }
 }

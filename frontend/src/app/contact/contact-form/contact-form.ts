@@ -80,6 +80,7 @@ export class ContactForm {
           nom: this.form.value.nom!,
           prenom: this.form.value.prenom!,
           email: this.form.value.email!,
+          fonction: this.form.value.fonction!,
           editeur: this.editeurId()
         });
       }

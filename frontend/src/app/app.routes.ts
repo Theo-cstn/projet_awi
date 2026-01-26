@@ -80,6 +80,13 @@ export const routes: Routes = [
       // Jeux filtrés pour ce festival
       { path: 'jeux', component: JeuList },
 
+      // SUIVI DES ÉDITEURS (WORKFLOW)
+      {
+        path: 'suivi',
+        loadComponent: () =>
+          import('./festival/suivi-list/suivi-list').then(m => m.SuiviList)
+      },
+
       // RÉSERVATIONS (LISTE + NEW + DETAILS)
       {
         path: 'reservations',

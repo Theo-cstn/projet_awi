@@ -1,21 +1,24 @@
 import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router'; // Ajout de Router
+import { ActivatedRoute, Router } from '@angular/router';
 import { JeuListService } from '../jeu-service/jeu-list-service';
-import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service'; // Ajout du service éditeur
+import { EditeurListService } from '../../editeur/editeur-service/editeur-list-service';
 import { AuthService } from '../../shared/auth/auth.service';
 import { JeuComponent } from '../jeu-component/jeu-component';
 import { JeuForm } from '../jeu-form/jeu-form';
 import { JeuDto } from '../../types/jeu-dto';
 
+type SortField = 'age_min' | 'age_max' ;
+type SortDirection = 'asc' | 'desc';
+
 @Component({
   selector: 'app-jeu-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, JeuComponent, JeuForm],
+  imports: [CommonModule, JeuComponent, JeuForm],
   templateUrl: './jeu-list.html',
   styleUrl: './jeu-list.css',
 })
-export class JeuList implements OnInit {
+export class JeuList {
   // Services
   readonly svc = inject(JeuListService);
   readonly editeurService = inject(EditeurListService);
@@ -30,6 +33,9 @@ export class JeuList implements OnInit {
   editeurId = signal<number | undefined>(undefined);
 
   isFestivalMode = signal(false);
+
+  currentPage = signal(1);
+  pageSize = 50; // Nombre d'éléments par page
   
   // On récupère l'objet éditeur complet si on a un ID
   editeur = computed(() => {
@@ -51,10 +57,66 @@ export class JeuList implements OnInit {
 
   afficherFormulaire = signal(false);
 
-  // --- INITIALISATION ---
+  // gestion du tris
+  sortField = signal<SortField>('age_min');
+  sortDirection = signal<SortDirection>('asc');
 
-  ngOnInit(): void {
-    this.detectContextAndLoad();
+  // Filtre par type
+  selectedType = signal<string | 'all'>('all');
+  gameTypes = ['Action', 'Aventure', 'RPG', 'Reflexion', 'Simulation', 'Strategie', 'Sport', 'Carte'];
+
+  // Barre de recherche
+  searchTerm = signal('');
+
+  filteredJeux = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    const field = this.sortField();
+    const direction = this.sortDirection();
+    const type = this.selectedType();
+
+    let filtered = this.jeux()?.filter(j => j.nom.toLowerCase().includes(term)) || [];
+    if (type !== 'all') {
+      filtered = filtered.filter(j => j.typeG === type);
+    }
+
+    // Appliquer le tri
+    filtered.sort((a, b) => {
+      let valueA: any = a[field];
+      let valueB: any = b[field];
+
+      // Comparaison
+      if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+      if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  });
+
+  paginatedJeux = computed(() => {
+    const list = this.filteredJeux(); // On prend la liste déjà filtrée et triée
+    const startIndex = (this.currentPage() - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    
+    return list.slice(startIndex, endIndex);
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredJeux().length / this.pageSize);
+  });
+
+  constructor() {
+    effect(() => {
+      this.detectContextAndLoad();
+    });
+
+    effect(() => {
+      // On lit ces signaux uniquement pour déclencher le reset de la page quand ils changent
+      this.searchTerm();
+      this.selectedType();
+      this.sortField();
+      this.currentPage.set(1);
+    });
   }
 
   private detectContextAndLoad() {
@@ -108,14 +170,14 @@ export class JeuList implements OnInit {
 
   onAdd(formData: any): void {
     // Si on est sur la page d'un éditeur, on force l'ID
-    const targetEditeurId = this.editeurId() || formData.editeurId;
+    const targetEditeurId = this.editeurId() || formData.editeur_id; 
 
     const newJeu: JeuDto = {
       id: undefined, 
       nom: formData.nom,
-      typeG: formData.type,  
-      age_min: formData.ageMin,  
-      age_max: formData.ageMax,
+      typeG: formData.typeG,  
+      age_min: formData.age_min,  
+      age_max: formData.age_max,
       editeur_id: targetEditeurId, 
       editeur: undefined, 
       auteurs: [] 
@@ -142,10 +204,30 @@ export class JeuList implements OnInit {
     this.jeuEnEdition.set(undefined);
   }
 
-  // barre de recherche
-  searchTerm = signal('');
-  filteredJeux = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-    return this.jeux()?.filter(j => j.nom.toLowerCase().includes(term)) || [];
-  });
+  setSortField(field: SortField): void {
+    // Si on clique sur le même champ, inverser la direction
+    if (this.sortField() === field) {
+      this.sortDirection.update(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortField.set(field);
+      this.sortDirection.set('asc');
+    }
+  }
+
+  getSortIndicator(field: SortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortDirection() === 'asc' ? ' ▲' : ' ▼';
+  }
+
+  changePage(newPage: number) {
+    if (newPage >= 1 && newPage <= this.totalPages()) {
+      this.currentPage.set(newPage);
+      
+      setTimeout(() => {
+        window.scrollTo({ 
+          top: 0
+        });
+      }, 0);
+    }
+  }
 }

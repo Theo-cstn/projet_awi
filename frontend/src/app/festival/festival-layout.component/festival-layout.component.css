@@ -1,22 +1,22 @@
-/* On fixe la navbar en haut pour ce mode "Travail" */
 .festival-nav {
   position: sticky;
   top: 0;
   z-index: 50;
-  justify-content: flex-start; /* On aligne tout à gauche contrairement au MainLayout */
+  justify-content: flex-start;
 }
 
-/* Le trait de séparation vertical après le bouton retour */
 .context-border {
   padding-right: 20px;
   margin-right: 10px;
   border-right: 1px solid #ddd;
 }
 
-/* Style du titre du festival */
 .festival-title {
   font-weight: bold;
   color: #333;
   font-size: 1.1rem;
   white-space: nowrap;
 }
+
+.nav-link-suivi { color: #059669; }
+.nav-link-resa { color: #d97706; }

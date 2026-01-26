@@ -1,0 +1,158 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.pending-section, .active-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.pending-section {
+  background-color: #fffbeb;
+}
+
+.pending-header h3 {
+  color: #b45309;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+}
+
+.pending-header p {
+  color: #92400e;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.active-section h3 {
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  background-color: white;
+}
+
+th {
+  text-align: left;
+  padding: 12px 16px;
+  background-color: #f9fafb;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #eee;
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+  color: #374151;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.table-active tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+strong {
+  color: #111;
+  font-weight: 600;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+  min-width: 160px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+select:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.btn-refuse {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.btn-refuse:hover {
+  background-color: #dc2626;
+}
+
+.btn-delete-icon {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  color: #6b7280;
+}
+
+.btn-delete-icon:hover:not(:disabled) {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.btn-delete-icon:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.disabled-self {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

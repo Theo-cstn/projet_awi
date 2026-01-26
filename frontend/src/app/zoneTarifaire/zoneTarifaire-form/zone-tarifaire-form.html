@@ -1,9 +1,12 @@
-<div style="margin:.5rem 0;">
+<div class="tarifaire-form-wrapper">
     <h3>{{ modeEdition() ? 'Modifier la Zone Tarifaire' : 'Ajouter une Zone Tarifaire' }}</h3>
 
     <form [formGroup]="form" (ngSubmit)="onSubmitForm()">
         <input type="text" formControlName="nom" placeholder="Nom de la zone">
-        <input type="number" formControlName="nbTotalTables" placeholder="Nombre total de tables">
+        <div class="calculated-field">
+            <label>Nombre total de tables : </label>
+            <strong>{{ nbTotalTables() }}</strong>
+        </div>
         <input type="number" formControlName="prixTable" placeholder="Prix d'une table (€)">
         <input type="number" formControlName="prixM" placeholder="Prix au m² (€)">
 

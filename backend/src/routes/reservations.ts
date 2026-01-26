@@ -4,6 +4,17 @@ import pool from '../db/database.js';
 
 const router = Router();
 
+export enum TailleTable {
+    PETITE = 'PETITE',
+    GRANDE = 'GRANDE',
+    MAIRIE = 'MAIRIE'
+}
+
+export enum TypeEmplacement {
+    TABLE = 'TABLE',
+    M2 = 'M2'
+}
+
 // ==============================================================================
 // 1. LECTURE PUBLIQUE (Visiteurs / App Mobile)
 // Règle : Pas de prix, on veut juste savoir QUI vient et avec QUOI.
@@ -54,13 +65,33 @@ router.get('/festival/:id', requireOrganisateurReservations(), async (req, res) 
             SELECT 
                 r.*,
                 COALESCE(e.nom, r.autre_nom_reservant) as nom_reservant,
+                
+                -- CORRECTION : On récupère les lignes sous forme de tableau JSON
+                COALESCE(
+                    (
+                        SELECT json_agg(lr)
+                        FROM LigneReservation lr
+                        WHERE lr.reservation_id = r.id
+                    ),
+                    '[]'::json
+                ) as lignes,
+
+                -- On récupère aussi les jeux pour être complet
+                COALESCE(
+                    (
+                        SELECT json_agg(jr)
+                        FROM JeuReserve jr
+                        WHERE jr.reservation_id = r.id
+                    ),
+                    '[]'::json
+                ) as jeux,
+
                 -- Calcul dynamique du total dû (Somme des lignes - Remise)
                 (
-                  SELECT COALESCE(SUM(quantite * prix_unitaire_applique), 0) 
+                  SELECT COALESCE(SUM(quantite * prix_moment_reservation), 0) 
                   FROM LigneReservation WHERE reservation_id = r.id
-                ) - COALESCE(r.remise_generale, 0) as total_a_payer,
-                -- Indicateur si des jeux sont déjà placés (Logistique commencée ?)
-                (SELECT COUNT(*) FROM JeuReserve WHERE reservation_id = r.id) as nb_jeux
+                ) - COALESCE(r.remise_generale, 0) as total_a_payer
+
             FROM Reservation r
             LEFT JOIN Editeur e ON r.editeur_id = e.id
             WHERE r.festival_id = $1
@@ -69,6 +100,7 @@ router.get('/festival/:id', requireOrganisateurReservations(), async (req, res) 
         const result = await pool.query(query, [id]);
         res.json(result.rows);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Erreur chargement gestion' });
     }
 });
@@ -141,9 +173,15 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
         if (lignes && lignes.length > 0) {
             for (const l of lignes) {
                 await client.query(
-                    `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_unitaire_applique)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [reservationId, l.zone_tarifaire_id, l.type_emplacement, l.quantite, l.prix_unitaire_applique]
+                    `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_moment_reservation)
+                    VALUES ($1, $2, $3, $4, $5)`,
+                    [
+                    reservationId, 
+                    l.zone_tarifaire_id, 
+                    l.type_emplacement || 'TABLE',
+                    l.quantite, 
+                    l.prix_moment_reservation
+                    ]
                 );
             }
         }
@@ -160,7 +198,7 @@ router.post('/', requireOrganisateurReservations(), async (req, res) => {
                         reservationId, 
                         j.jeu_id, 
                         j.nb_exemplaires || 1, 
-                        j.type_table || 'PETITE', 
+                        j.type_table || TailleTable.PETITE, 
                         j.tables_occupees || 1,
                         j.zone_plan_id || null // Optionnel à la création
                     ]
@@ -201,7 +239,7 @@ router.post('/:id/jeux', requireOrganisateurReservations(), async (req, res) => 
             `INSERT INTO JeuReserve 
              (reservation_id, jeu_id, zone_plan_id, type_table, tables_occupees, nb_exemplaires)
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [id, jeu_id, zone_plan_id, type_table || 'PETITE', tables_occupees || 1, nb_exemplaires || 1]
+            [id, jeu_id, zone_plan_id, type_table || TailleTable.PETITE, tables_occupees || 1, nb_exemplaires || 1]
         );
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -253,6 +291,183 @@ router.delete('/:id', requireOrganisateurReservations(), async (req, res) => {
         res.json({ message: 'Réservation supprimée' });
     } catch (error) {
         res.status(500).json({ error: 'Erreur suppression' });
+    }
+});
+
+
+// ==============================================================================
+// 6. MISE À JOUR INTELLIGENTE (CRM -> LOGISTIQUE)
+// Permet de modifier les lignes (facturation) ET les jeux (placement) à tout moment
+// ==============================================================================
+router.put('/:id', requireOrganisateurReservations(), async (req, res) => {
+    const { id } = req.params;
+    const { 
+        nombre_prises, est_present, remise_generale, preferences_tables,
+        lignes, 
+        jeux
+    } = req.body;
+
+    // 1. Validation des types simples et des plages de valeurs pour eviter de faire confiance à l'entrée utilisateur
+    if (typeof nombre_prises !== 'number' || nombre_prises < 0) {
+        return res.status(400).json({ error: "Le nombre de prises doit être un nombre positif." });
+    }
+
+    if (typeof remise_generale !== 'number' || remise_generale < 0) {
+        return res.status(400).json({ error: "La remise générale doit être un nombre positif." });
+    }
+
+    if (typeof est_present !== 'boolean') {
+        return res.status(400).json({ error: "Le champ 'est_present' doit être un booléen." });
+    }
+
+    // preferences_tables est optionnel, mais s'il est là, ce doit être une string
+    if (preferences_tables !== undefined && preferences_tables !== null && typeof preferences_tables !== 'string') {
+        return res.status(400).json({ error: "Les préférences tables doivent être du texte." });
+    }
+
+    // 2. Validation structurelle des tableaux (Optionnel mais recommandé par la review)
+    if (lignes && !Array.isArray(lignes)) {
+        return res.status(400).json({ error: "Le format des lignes tarifaires est invalide." });
+    }
+    
+    if (jeux && !Array.isArray(jeux)) {
+        return res.status(400).json({ error: "Le format des jeux est invalide." });
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // A. Mise à jour de l'en-tête (Infos globales)
+        await client.query(
+            `UPDATE Reservation 
+             SET nombre_prises = $1, est_present = $2, remise_generale = $3, preferences_tables = $4
+             WHERE id = $5`,
+            [nombre_prises, est_present, remise_generale, preferences_tables, id]
+        );
+
+        // B. Gestion Intelligente des Lignes Tarifaires (Facturation)
+        if (lignes) {
+            // 1. Récupérer les IDs reçus pour savoir quoi garder
+            const receivedLigneIds = lignes.filter((l: any) => l.id).map((l: any) => l.id);
+            
+            // 2. Supprimer les lignes qui ne sont plus dans la liste
+            if (receivedLigneIds.length > 0) {
+                await client.query(
+                    `DELETE FROM LigneReservation 
+                     WHERE reservation_id = $1 
+                     AND id <> ALL($2)`, 
+                    [id, receivedLigneIds]
+                );
+            } else {
+                await client.query(`DELETE FROM LigneReservation WHERE reservation_id = $1`, [id]);
+            }
+
+            // 3. Upsert (Update ou Insert)
+            for (const l of lignes) {
+                if (l.id) {
+                    await client.query(
+                        `UPDATE LigneReservation 
+                        SET zone_tarifaire_id = $1, quantite = $2, prix_moment_reservation = $3, type_emplacement = $4 
+                        WHERE id = $5`,
+                        [
+                            l.zone_tarifaire_id, 
+                            l.quantite, 
+                            l.prix_moment_reservation, 
+                            l.type_emplacement || 'TABLE',
+                            l.id
+                        ]
+                    );
+                } else {
+                    await client.query(
+                        `INSERT INTO LigneReservation (reservation_id, zone_tarifaire_id, type_emplacement, quantite, prix_moment_reservation)
+                        VALUES ($1, $2, $3, $4, $5)`,
+                        [
+                            id,
+                            l.zone_tarifaire_id, 
+                            l.type_emplacement || 'TABLE',
+                            l.quantite,
+                            l.prix_moment_reservation
+                        ]
+                    );
+                }
+            }
+        }
+
+        // C. Gestion Intelligente des Jeux (Placement)
+        if (jeux) {
+            const receivedJeuIds = jeux.filter((j: any) => j.id).map((j: any) => j.id);
+
+            // 1. Suppression
+            if (receivedJeuIds.length > 0) {
+                await client.query(
+                    `DELETE FROM JeuReserve 
+                     WHERE reservation_id = $1 
+                     AND id <> ALL($2)`, 
+                    [id, receivedJeuIds]
+                );
+            } else {
+                await client.query(`DELETE FROM JeuReserve WHERE reservation_id = $1`, [id]);
+            }
+
+            // 2. Upsert
+            for (const j of jeux) {
+                if (j.id) {
+                    // Update : On peut changer le placement (zone_plan_id) ici !
+                    await client.query(
+                        `UPDATE JeuReserve 
+                         SET jeu_id = $1, nb_exemplaires = $2, tables_occupees = $3, zone_plan_id = $4 
+                         WHERE id = $5`,
+                        [j.jeu_id, j.nb_exemplaires, j.tables_occupees, j.zone_plan_id || null, j.id]
+                    );
+                } else {
+                    // Insert
+                    await client.query(
+                        `INSERT INTO JeuReserve (reservation_id, jeu_id, nb_exemplaires, tables_occupees, type_table, zone_plan_id)
+                         VALUES ($1, $2, $3, $4, $5, $6)`,
+                        [id, j.jeu_id, j.nb_exemplaires, j.tables_occupees, TailleTable.PETITE, j.zone_plan_id || null]
+                    );
+                }
+            }
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'Réservation mise à jour', id });
+
+    } catch (error: any) {
+        await client.query('ROLLBACK');
+        console.error("Erreur update réservation:", error);
+
+        if (error && typeof error === 'object' && 'code' in error) {
+            const dbError = error as { code: string; detail?: string; message?: string };
+
+            if (dbError.code === '23503') {
+                return res.status(409).json({
+                    error: 'Conflit de données : certains éléments sont liés à d’autres ressources et ne peuvent être modifiés ainsi.',
+                    details: dbError.detail || dbError.message,
+                    code: dbError.code
+                });
+            }
+
+            if (dbError.code === '23505') {
+                return res.status(409).json({
+                    error: 'Cette ressource existe déjà (violation d’unicité).',
+                    details: dbError.detail || dbError.message,
+                    code: dbError.code
+                });
+            }
+
+            return res.status(500).json({
+                error: 'Erreur lors de la mise à jour en base de données',
+                details: dbError.detail || dbError.message,
+                code: dbError.code
+            });
+        }
+
+        res.status(500).json({ error: 'Erreur mise à jour serveur' });
+    } finally {
+        client.release();
     }
 });
 

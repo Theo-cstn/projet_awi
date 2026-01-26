@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin } from '../middleware/roles.js';
+import {requireOrganisateurJeux } from '../middleware/roles.js';
 import pool from '../db/database.js';
 
 const router = Router();
@@ -10,12 +10,11 @@ const router = Router();
 // ==============================================================================
 
 // GET /personnes - Liste complète
-router.get('/', requireAdmin(), async (_req, res) => {
+router.get('/', requireOrganisateurJeux(), async (_req, res) => {
     try {
         const query = `
             SELECT 
                 p.*,
-                -- Compter les relations (éditeurs + jeux)
                 (SELECT COUNT(*) FROM Editeur_Contact ec WHERE ec.contact_id = p.id) as nb_editeurs,
                 (SELECT COUNT(*) FROM Auteurs_Jeux aj WHERE aj.auteur_id = p.id) as nb_jeux
             FROM Personne p
@@ -30,7 +29,7 @@ router.get('/', requireAdmin(), async (_req, res) => {
 });
 
 // POST /personnes - Créer une personne
-router.post('/', requireAdmin(), async (req, res) => {
+router.post('/', requireOrganisateurJeux(), async (req, res) => {
     const { nom, prenom, email } = req.body;
     try {
         const result = await pool.query(
@@ -48,7 +47,7 @@ router.post('/', requireAdmin(), async (req, res) => {
 });
 
 // PUT /personnes/:id - Modifier
-router.put('/:id', requireAdmin(), async (req, res) => {
+router.put('/:id', requireOrganisateurJeux(), async (req, res) => {
     const { id } = req.params;
     const { nom, prenom, email } = req.body;
     try {
@@ -67,7 +66,7 @@ router.put('/:id', requireAdmin(), async (req, res) => {
 });
 
 // DELETE /personnes/:id - Supprimer (avec vérifications)
-router.delete('/:id', requireAdmin(), async (req, res) => {
+router.delete('/:id', requireOrganisateurJeux(), async (req, res) => {
     const { id } = req.params;
     try {
         const result = await pool.query('DELETE FROM Personne WHERE id = $1 RETURNING *', [id]);

@@ -222,6 +222,43 @@ router.post('/:id/contacts', requireOrganisateurReservations(), async (req, res)
   }
 });
 
+
+// PUT -- Modifier un contact
+router.put('/:id/contacts/:contactId', requireOrganisateurReservations(), async (req, res) => {
+  const { id, contactId } = req.params;
+  const { nom, prenom, email, fonction, est_contact_principal } = req.body;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Mise à jour de la personne
+    await client.query(
+      'UPDATE Personne SET nom = $1, prenom = $2, email = $3 WHERE id = $4',
+      [nom, prenom, email, contactId]
+    );
+
+    // 2. Mise à jour du lien (poste, etc.)
+    await client.query(
+      'UPDATE Editeur_Contact SET poste = $1, est_contact_principal = $2 WHERE editeur_id = $3 AND contact_id = $4',
+      [fonction, est_contact_principal || false, id, contactId]
+    );
+
+    await client.query('COMMIT');
+    res.status(200).json({ message: 'Contact mis à jour avec succès' });
+
+  } catch (error: any) {
+    await client.query('ROLLBACK');
+    if (error.code === '23505') {
+       return res.status(409).json({ error: "Cet email est déjà utilisé par une autre personne." });
+    }
+    console.error('Error updating contact:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la modification' });
+  } finally {
+    client.release();
+  }
+});
+
 // DELETE /editeurs/:id/contacts/:contactId - Supprimer un contact (Smart Delete)
 router.delete('/:id/contacts/:contactId', requireOrganisateurReservations(), async (req, res) => {
   const { id, contactId } = req.params;
@@ -230,14 +267,11 @@ router.delete('/:id/contacts/:contactId', requireOrganisateurReservations(), asy
   try {
     await client.query('BEGIN');
 
-    // 1. On coupe le lien avec cet éditeur
     await client.query(
       'DELETE FROM Editeur_Contact WHERE editeur_id = $1 AND contact_id = $2',
       [id, contactId]
     );
 
-    // 2. VÉRIFICATION D'ORPHELIN
-    // Est-ce que cette personne est liée à un AUTRE éditeur ?
     const checkContact = await client.query(
       'SELECT 1 FROM Editeur_Contact WHERE contact_id = $1 LIMIT 1', 
       [contactId]
@@ -251,7 +285,7 @@ router.delete('/:id/contacts/:contactId', requireOrganisateurReservations(), asy
 
     let message = 'Contact retiré de cet éditeur.';
 
-    // 3. Si elle n'est nulle part ailleurs, on la supprime définitivement pour nettoyer la base
+    // Si elle n'est nulle part ailleurs, on la supprime définitivement pour nettoyer la base
     if (checkContact.rowCount === 0 && checkAuteur.rowCount === 0) {
       await client.query('DELETE FROM Personne WHERE id = $1', [contactId]);
       message += ' (Fiche personne supprimée car orpheline).';

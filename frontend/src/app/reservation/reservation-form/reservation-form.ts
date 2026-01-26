@@ -20,11 +20,17 @@ export class ReservationForm {
   private zoneService = inject(ZoneTarifaireListService); 
   private jeuService = inject(JeuListService)
   private reservationService = inject(ReservationListService);
+  readonly RATIO_M2_TABLE = 4;
 
   festivalId = signal<number>(0);
   remiseGenerale = signal(0)
+
+  reservationAEditer = input<any>(undefined);
+
   // 1 = Zones & quantités, 2 = Jeux, 3 = Disposition
   currentPhase = signal<1 | 2 | 3>(1);
+
+  close = output<void>();
 
   // Liste des éditeurs 
   editeurs = this.editeurService.editeurs; 
@@ -44,7 +50,13 @@ export class ReservationForm {
     preferences_tables: new FormControl<string>('')
   });
 
-  lignes = signal<{ zone_tarifaire_id: number; quantite: number; prix_unitaire_applique: number }[]>([]);
+  lignes = signal<{ 
+    id?: number;
+    zone_tarifaire_id: number; 
+    quantite: number; 
+    prix_moment_reservation: number;
+    type_emplacement: 'TABLE' | 'M2';
+  }[]>([]);
   lignesJeux = signal <{ jeu_id: number; nb_exemplaires: number, tables_occupees: number, zone_plan_id?: number}[]>([]);
 
   typeValue = signal<'Editeur' | 'Boutique' | 'Association' | 'Prestataire' | 'Autre'>('Autre');
@@ -53,7 +65,44 @@ export class ReservationForm {
     this.form.controls.type.valueChanges.subscribe(v => this.typeValue.set(v!));
     this.form.controls.remise_generale.valueChanges.subscribe(v => {
       this.remiseGenerale.set(v ?? 0)
-    })
+    });
+
+    effect(() => {
+      const resa = this.reservationAEditer();
+      if (resa) {
+        // 1. Remplir le formulaire principal
+        this.form.patchValue({
+          type: resa.type,
+          editeur_id: resa.editeur_id,
+          autre_nom_reservant: resa.autre_nom_reservant,
+          nombre_prises: resa.nombre_prises,
+          remise_generale: resa.remise_generale,
+          est_present: resa.est_present,
+          preferences_tables: resa.preferences_tables
+        });
+
+        // 2. Remplir les lignes (IMPORTANT: mapper les IDs pour le Smart Update)
+        if (resa.lignes) {
+             this.lignes.set(resa.lignes.map((l: any) => ({
+                 id: l.id,
+                 zone_tarifaire_id: l.zone_tarifaire_id,
+                 quantite: l.quantite,
+                 prix_moment_reservation: l.prix_moment_reservation
+             })));
+        }
+
+        // 3. Remplir les jeux
+        if (resa.jeux) {
+            this.lignesJeux.set(resa.jeux.map((j: any) => ({
+                id: j.id,
+                jeu_id: j.jeu_id,
+                nb_exemplaires: j.nb_exemplaires,
+                tables_occupees: j.tables_occupees,
+                zone_plan_id: j.zone_plan_id
+            })));
+        }
+      }
+    });
   }
 
   isEditeur = computed(() => this.typeValue() === 'Editeur');
@@ -74,46 +123,67 @@ export class ReservationForm {
   });
   
   totalTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite, 0) );
-  totalPrixTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite * l.prix_unitaire_applique, 0) );
+  totalPrixTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite * l.prix_moment_reservation, 0) );
   totalPrixBeforeRed = computed(() => this.totalPrixTables() + (250 * (this.form.controls.nombre_prises.value ?? 0)));
   totalPrixAfterRed = computed(() => this.totalPrixBeforeRed() - this.remiseGenerale() );
 
   // Calcule les tables libres restantes pour chaque zone en tenant compte des lignes actuelles
-  getTablesLibresRestantes = (zoneId: number): number => {
+  // ... dans ReservationForm ...
+
+  getTablesLibresRestantes = (zoneId: number | undefined, typeEmplacement: 'TABLE' | 'M2' = 'TABLE'): number => {
+    if (zoneId === undefined) return 0;
+
     const zone = this.zones().find(z => z.id === zoneId);
     if (!zone) return 0;
     
-    const tablesReservees = this.lignes()
+    // Calculer combien de "slots tables" sont déjà mangés par les autres lignes
+    const tablesDejaPrises = this.lignes()
       .filter(l => l.zone_tarifaire_id === zoneId)
-      .reduce((sum, l) => sum + l.quantite, 0);
+      .reduce((sum, l) => {
+        const coutEnTables = l.type_emplacement === 'M2' 
+          ? (l.quantite / this.RATIO_M2_TABLE) 
+          : l.quantite;
+        return sum + coutEnTables;
+      }, 0);
     
-    return zone.nbTablesLibres! - tablesReservees;
+    const tablesRestantes = (zone.nbTablesLibres || 0) - tablesDejaPrises;
+
+    if (typeEmplacement === 'M2') {
+      return Math.floor(tablesRestantes * this.RATIO_M2_TABLE);
+    }
+
+    return Math.max(0, tablesRestantes);
   };
 
   // ----------------ligne de reservation zone tarifaire --------------------------
   addLigne() { 
-    this.lignes.update(list => [ ...list, { zone_tarifaire_id: 0, quantite: 0, prix_unitaire_applique: 0 } ]); 
+    this.lignes.update(list => [ 
+      ...list, 
+      { zone_tarifaire_id: 0, quantite: 0, prix_moment_reservation: 0, type_emplacement: 'TABLE' } 
+    ]); 
   }
-  updateLigne(index: number, zoneId: number, quantite: number) { 
-    const zone = this.zones().find(z => z.id === zoneId); 
-    if (!zone) return; 
-    
-    // Récupère les tables libres RESTANTES (après les autres lignes)
-    const tablesLibresRestantes = this.getTablesLibresRestantes(zoneId);
-    
-    // Rejette les quantités invalides silencieusement
-    if (quantite < 0 || quantite > tablesLibresRestantes) {
-      return; 
-    } 
+  updateLigne(index: number, field: 'zone' | 'qty' | 'type', value: any) { 
     this.lignes.update(list => {
-      const updated = [...list]; 
-      updated[index] = {
-        zone_tarifaire_id: zoneId, 
-        quantite, 
-        prix_unitaire_applique: zone.prixTable 
-      }; 
-      return updated; 
-    }); 
+      const updated = [...list];
+      const ligne = { ...updated[index] };
+      
+      if (field === 'zone') ligne.zone_tarifaire_id = value;
+      if (field === 'qty') ligne.quantite = value;
+      if (field === 'type') ligne.type_emplacement = value;
+
+      const zone = this.zones().find(z => z.id === ligne.zone_tarifaire_id);
+      
+      if (zone) {
+        if (ligne.type_emplacement === 'M2') {
+          ligne.prix_moment_reservation = zone.prixM;
+        } else {
+          ligne.prix_moment_reservation = zone.prixTable;
+        }
+      }
+
+      updated[index] = ligne;
+      return updated;
+    });
   }
   removeLigne(index: number) { 
     this.lignes.update(list => list.filter((_, i) => i !== index)); 
@@ -154,7 +224,7 @@ export class ReservationForm {
 
   getSelectedZones = (): Array<any> => {
     const zoneIds = new Set(this.lignes().map(l => l.zone_tarifaire_id));
-    return this.zones().filter(z => zoneIds.has(z.id));
+    return this.zones().filter(z => z.id !== undefined && zoneIds.has(z.id));
   };
   getZonePlanById = (id: number): any => {
     for (const zone of this.zones()) {
@@ -253,18 +323,23 @@ export class ReservationForm {
 
   // nombre total tables réservées en phase 1
   getTotalTablesReserved = (): number => {
-    return this.lignes().reduce((sum, l) => sum + l.quantite, 0);
+    return this.lignes().reduce((sum, l) => {
+      if (l.type_emplacement === 'M2') {
+        return sum + (l.quantite / this.RATIO_M2_TABLE);
+      }
+      return sum + l.quantite;
+    }, 0);
   };
 
   // Vérifie s'il y a un dépassement
   hasTablesExceeded = (): boolean => {
-    return this.getTotalTablesUsed() > this.getTotalTablesReserved();
+    return this.getTotalTablesUsed() > Math.floor(this.getTotalTablesReserved());
   };
 
   // Message d'avertissement
   getTablesWarningMessage = (): string => {
     const used = this.getTotalTablesUsed();
-    const reserved = this.getTotalTablesReserved();
+    const reserved = Math.floor(this.getTotalTablesReserved());
     if (used > reserved) {
       return `⚠️ Dépassement ! Vous utilisez ${used} tables mais n'en avez réservé que ${reserved}`;
     }
@@ -305,21 +380,39 @@ export class ReservationForm {
       editeur_id: value.type === 'Editeur' ? (value.editeur_id ?? undefined) : undefined,
       autre_nom_reservant: value.type !== 'Editeur' ? (value.autre_nom_reservant ?? undefined) : undefined,      
       nombre_prises: value.nombre_prises ?? 0, 
-      remise_generale: value.remise_generale ?? 0, 
+      remise_generale: Number(value.remise_generale ?? 0),
       est_present: value.est_present ?? true, 
       preferences_tables: value.preferences_tables ?? '',
       lignes: this.lignes(),
       jeux: this.lignesJeux()
-    }; 
-    this.reservationService.create(payload).subscribe(() => { 
-      alert("Réservation créée"); 
-      this.reservationService.loadReservations(this.festivalId());
-      this.router.navigate([`/festivals/${this.festivalId()}/reservations`]);
-    }); 
-  } 
+    };
+
+    // 2. Détection du mode (Création vs Édition)
+    const existingResa = this.reservationAEditer();
+
+    if (existingResa) {
+      // UPDATE
+      this.reservationService.update(existingResa.id, payload).subscribe({
+        next: () => { 
+          alert("Réservation mise à jour !"); 
+          this.close.emit();
+        },
+        error: (err) => console.error("Erreur update:", err)
+      });
+    } else {
+      // CREATE
+      this.reservationService.create(payload).subscribe({
+        next: () => { 
+          alert("Réservation créée !"); 
+          this.close.emit();
+        },
+        error: (err) => console.error("Erreur create:", err)
+      }); 
+    }
+  }
 
   cancel() {
-    this.router.navigate([`/festivals/${this.festivalId()}/reservations`]);
+    this.close.emit();
   }
   
   
