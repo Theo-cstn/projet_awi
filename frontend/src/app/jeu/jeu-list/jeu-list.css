@@ -197,3 +197,12 @@
   cursor: not-allowed;
   background-color: #f9fafb;
 }
+
+.btn-action.cancel {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-action.cancel:hover {
+  background-color: #bb2d3b;
+}

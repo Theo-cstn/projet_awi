@@ -11,7 +11,9 @@
   </div>
 
   @if (!isFestivalMode() && (auth.currentUser()?.role === 'admin' || auth.currentUser()?.role === 'organisateur_jeux')) {
-    <button (click)="toggleFormulaire()" class="btn-action">
+    <button (click)="toggleFormulaire()" 
+            class="btn-action" 
+            [class.cancel]="afficherFormulaire()">
       {{ afficherFormulaire() ? 'Annuler' : '+ Ajouter un jeu' }}
     </button>
   }
