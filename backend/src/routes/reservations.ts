@@ -65,13 +65,33 @@ router.get('/festival/:id', requireOrganisateurReservations(), async (req, res) 
             SELECT 
                 r.*,
                 COALESCE(e.nom, r.autre_nom_reservant) as nom_reservant,
+                
+                -- CORRECTION : On récupère les lignes sous forme de tableau JSON
+                COALESCE(
+                    (
+                        SELECT json_agg(lr)
+                        FROM LigneReservation lr
+                        WHERE lr.reservation_id = r.id
+                    ),
+                    '[]'::json
+                ) as lignes,
+
+                -- On récupère aussi les jeux pour être complet
+                COALESCE(
+                    (
+                        SELECT json_agg(jr)
+                        FROM JeuReserve jr
+                        WHERE jr.reservation_id = r.id
+                    ),
+                    '[]'::json
+                ) as jeux,
+
                 -- Calcul dynamique du total dû (Somme des lignes - Remise)
                 (
                   SELECT COALESCE(SUM(quantite * prix_moment_reservation), 0) 
                   FROM LigneReservation WHERE reservation_id = r.id
-                ) - COALESCE(r.remise_generale, 0) as total_a_payer,
-                -- Indicateur si des jeux sont déjà placés (Logistique commencée ?)
-                (SELECT COUNT(*) FROM JeuReserve WHERE reservation_id = r.id) as nb_jeux
+                ) - COALESCE(r.remise_generale, 0) as total_a_payer
+
             FROM Reservation r
             LEFT JOIN Editeur e ON r.editeur_id = e.id
             WHERE r.festival_id = $1
@@ -80,6 +100,7 @@ router.get('/festival/:id', requireOrganisateurReservations(), async (req, res) 
         const result = await pool.query(query, [id]);
         res.json(result.rows);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Erreur chargement gestion' });
     }
 });
