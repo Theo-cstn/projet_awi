@@ -64,8 +64,8 @@
 
           <input type="number"
                 [value]="l.quantite"
+                [max]="getTablesLibresRestantes(l.zone_tarifaire_id, l.type_emplacement)"
                 min="0"
-                placeholder="Qté"
                 (input)="updateLigne($index, 'qty', +$any($event.target).value)">
 
           <button type="button" (click)="removeLigne($index)" class="danger">X</button>

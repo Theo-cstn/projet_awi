@@ -20,6 +20,7 @@ export class ReservationForm {
   private zoneService = inject(ZoneTarifaireListService); 
   private jeuService = inject(JeuListService)
   private reservationService = inject(ReservationListService);
+  readonly RATIO_M2_TABLE = 4;
 
   festivalId = signal<number>(0);
   remiseGenerale = signal(0)
@@ -127,17 +128,31 @@ export class ReservationForm {
   totalPrixAfterRed = computed(() => this.totalPrixBeforeRed() - this.remiseGenerale() );
 
   // Calcule les tables libres restantes pour chaque zone en tenant compte des lignes actuelles
-  getTablesLibresRestantes = (zoneId: number | undefined): number => {
+  // ... dans ReservationForm ...
+
+  getTablesLibresRestantes = (zoneId: number | undefined, typeEmplacement: 'TABLE' | 'M2' = 'TABLE'): number => {
     if (zoneId === undefined) return 0;
 
     const zone = this.zones().find(z => z.id === zoneId);
     if (!zone) return 0;
     
-    const tablesReservees = this.lignes()
+    // Calculer combien de "slots tables" sont déjà mangés par les autres lignes
+    const tablesDejaPrises = this.lignes()
       .filter(l => l.zone_tarifaire_id === zoneId)
-      .reduce((sum, l) => sum + l.quantite, 0);
+      .reduce((sum, l) => {
+        const coutEnTables = l.type_emplacement === 'M2' 
+          ? (l.quantite / this.RATIO_M2_TABLE) 
+          : l.quantite;
+        return sum + coutEnTables;
+      }, 0);
     
-    return (zone.nbTablesLibres || 0) - tablesReservees;
+    const tablesRestantes = (zone.nbTablesLibres || 0) - tablesDejaPrises;
+
+    if (typeEmplacement === 'M2') {
+      return Math.floor(tablesRestantes * this.RATIO_M2_TABLE);
+    }
+
+    return Math.max(0, tablesRestantes);
   };
 
   // ----------------ligne de reservation zone tarifaire --------------------------
@@ -308,18 +323,23 @@ export class ReservationForm {
 
   // nombre total tables réservées en phase 1
   getTotalTablesReserved = (): number => {
-    return this.lignes().reduce((sum, l) => sum + l.quantite, 0);
+    return this.lignes().reduce((sum, l) => {
+      if (l.type_emplacement === 'M2') {
+        return sum + (l.quantite / this.RATIO_M2_TABLE);
+      }
+      return sum + l.quantite;
+    }, 0);
   };
 
   // Vérifie s'il y a un dépassement
   hasTablesExceeded = (): boolean => {
-    return this.getTotalTablesUsed() > this.getTotalTablesReserved();
+    return this.getTotalTablesUsed() > Math.floor(this.getTotalTablesReserved());
   };
 
   // Message d'avertissement
   getTablesWarningMessage = (): string => {
     const used = this.getTotalTablesUsed();
-    const reserved = this.getTotalTablesReserved();
+    const reserved = Math.floor(this.getTotalTablesReserved());
     if (used > reserved) {
       return `⚠️ Dépassement ! Vous utilisez ${used} tables mais n'en avez réservé que ${reserved}`;
     }
