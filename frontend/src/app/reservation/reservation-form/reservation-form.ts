@@ -124,11 +124,9 @@ export class ReservationForm {
   
   totalTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite, 0) );
   totalPrixTables = computed(() => this.lignes().reduce((sum, l) => sum + l.quantite * l.prix_moment_reservation, 0) );
-  totalPrixBeforeRed = computed(() => this.totalPrixTables() + (250 * (this.form.controls.nombre_prises.value ?? 0)));
+  totalPrixBeforeRed = computed(() => this.totalPrixTables());
   totalPrixAfterRed = computed(() => this.totalPrixBeforeRed() - this.remiseGenerale() );
 
-  // Calcule les tables libres restantes pour chaque zone en tenant compte des lignes actuelles
-  // ... dans ReservationForm ...
 
   getTablesLibresRestantes = (zoneId: number | undefined, typeEmplacement: 'TABLE' | 'M2' = 'TABLE'): number => {
     if (zoneId === undefined) return 0;
@@ -373,6 +371,11 @@ export class ReservationForm {
   }
   
   submit() { 
+    if (this.form.invalid) {
+      alert("Formulaire incomplet !\nVeuillez vérifier les champs obligatoires (surlignés en rouge).");
+      this.form.markAllAsTouched();
+      return;
+    }
     const value = this.form.value; 
     const payload = { 
       festival_id: this.festivalId(), 
