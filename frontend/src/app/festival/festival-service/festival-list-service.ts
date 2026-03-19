@@ -16,26 +16,30 @@ export class FestivalListService {
   // Mapping des données reçues du backend vers le type Festival
   private mapFestival(data: any): Festival {
     return {
-      id: data.festival_id,
-      nom: data.festival_nom,
+      id: data.id, 
+      nom: data.nom,
       date_debut: new Date(data.date_debut),
       date_fin: new Date(data.date_fin),
-      nbTablesPetites: data.stock_tables_petites,
-      nbTablesGrandes: data.stock_tables_grandes,
-      nbTablesMairie: data.stock_tables_mairie,
-      nbTotalTables: data.stock_tables_petites + data.stock_tables_grandes + data.stock_tables_mairie,
-      zonesTarifaires: data.zones_tarifaires ? data.zones_tarifaires.map((zone: any) => ({
+      nbTablesPetites: data.nbTablesPetites,
+      nbTablesGrandes: data.nbTablesGrandes,
+      nbTablesMairie: data.nbTablesMairie,
+      
+      nbTotalTables: data.nbTablesPetites + data.nbTablesGrandes + data.nbTablesMairie,
+      
+      zonesTarifaires: data.zonesTarifaires ? data.zonesTarifaires.map((zone: any) => ({
         id: zone.id,
         nom: zone.nom,
-        prixTable: zone.prix_table,
-        prixM: zone.prix_table / 4,
-        zonesPlan: zone.zones_plan ? zone.zones_plan.map((plan: any) => ({
+        prixTable: zone.prixTable,
+        prixM: zone.prixM2,
+        
+        zonesPlan: zone.zonesPlan ? zone.zonesPlan.map((plan: any) => ({
           id: plan.id,
           nom: plan.nom,
-          nbTables: plan.nombre_tables,
+          nbTables: plan.nbTables,
         })) : [],
-        nbTotalTables: zone.nb_total_tables ?? (zone.zones_plan ? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0) : 0),
-        nbTablesLibres: zone.nb_tables_restantes ?? (zone.zones_plan ? zone.zones_plan.reduce((sum: number, plan: any) => sum + plan.nombre_tables, 0) : 0),
+        
+        nbTotalTables: zone.nb_total_tables ?? (zone.zonesPlan ? zone.zonesPlan.reduce((sum: number, plan: any) => sum + plan.nbTables, 0) : 0),
+        nbTablesLibres: zone.nb_tables_restantes ?? (zone.zonesPlan ? zone.zonesPlan.reduce((sum: number, plan: any) => sum + plan.nbTables, 0) : 0),
       })) : [],
     };
   }
@@ -69,15 +73,14 @@ export class FestivalListService {
       nom: festival.nom,
       date_debut: festival.date_debut,
       date_fin: festival.date_fin,
-      stock_tables_petites: festival.nbTablesPetites,
-      stock_tables_grandes: festival.nbTablesGrandes,
-      stock_tables_mairie: festival.nbTablesMairie,
+      nbTablesPetites: festival.nbTablesPetites,
+      nbTablesGrandes: festival.nbTablesGrandes,
+      nbTablesMairie: festival.nbTablesMairie,
       zonesTarifaires: festival.zonesTarifaires
     };
 
     this.http.put(`${this.apiUrl}/${festival.id}`, payload, { withCredentials: true }).subscribe({
       next: () => {
-        // Recharger les festivals pour avoir les données à jour
         this.loadFestivals();
       },
       error: (err) => console.error('Erreur update :', err)

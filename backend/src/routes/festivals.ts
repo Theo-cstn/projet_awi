@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireVisiteur, requireAdmin } from '../middleware/roles.js';
 import pool from '../db/database.js';
+import { mapFestivalData } from '../utils/mappers.js';
 
 const router = Router();
 
@@ -70,7 +71,7 @@ router.get('/', requireVisiteur(), async (req, res) => {
     sql += ` ORDER BY f.date_debut ${canSeeHistory ? 'DESC' : 'ASC'}`;
 
     const result = await pool.query(sql);
-    res.json(result.rows);
+    res.json(result.rows.map(mapFestivalData));
 
   } catch (error) {
     console.error('Erreur récupération festivals :', error);
@@ -141,7 +142,7 @@ router.get('/:id', requireVisiteur(), async (req, res) => {
     `;
     const result = await pool.query(sql, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Festival non trouvé' });
-    res.json(result.rows[0]);
+    res.json(mapFestivalData(result.rows[0]));
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
@@ -256,7 +257,7 @@ router.post('/', requireAdmin(), async (req, res) => {
 // PUT : Modification Intelligente
 router.put('/:id', requireAdmin(), async (req, res) => {
   const { id } = req.params;
-  const { nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie, zonesTarifaires } = req.body;
+  const { nom, date_debut, date_fin, nbTablesPetites, nbTablesGrandes, nbTablesMairie, zonesTarifaires } = req.body;
   
   const client = await pool.connect();
 
@@ -269,7 +270,7 @@ router.put('/:id', requireAdmin(), async (req, res) => {
        SET nom = $1, date_debut = $2, date_fin = $3, 
            stock_tables_petites = $4, stock_tables_grandes = $5, stock_tables_mairie = $6
        WHERE id = $7 RETURNING *`,
-      [nom, date_debut, date_fin, stock_tables_petites, stock_tables_grandes, stock_tables_mairie, id]
+      [nom, date_debut, date_fin, nbTablesPetites || 0, nbTablesGrandes || 0, nbTablesMairie || 0, id]
     );
     
     if (result.rows.length === 0) {
